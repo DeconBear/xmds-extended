@@ -31,18 +31,19 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          auto-activate-base: false
-          activate-environment: xmds-ci
-          channels: conda-forge,defaults
+          auto-activate: false
+          channels: conda-forge
+          conda-remove-defaults: true
           python-version: "3.11"
           use-mamba: true
 
-      - name: Install dependencies on Linux and macOS
+      - name: Create CI environment on Linux and macOS
         if: runner.os != 'Windows'
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euxo pipefail
-          mamba install -y \
+          mamba create -y -n xmds-ci \
+            python=3.11 \
             cheetah3 \
             "pyparsing!=2.0.0" \
             mpmath \
@@ -52,14 +53,15 @@ jobs:
             hdf5 \
             fftw \
             setuptools
-          python -V
+          conda run -n xmds-ci python -V
           c++ --version
 
-      - name: Install dependencies on Windows
+      - name: Create CI environment on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          conda install -n xmds-ci -y -c conda-forge -c defaults `
+          conda create -y -n xmds-ci -c conda-forge `
+            python=3.11 `
             cheetah3 `
             'pyparsing!=2.0.0' `
             mpmath `
@@ -73,16 +75,20 @@ jobs:
 
       - name: Smoke test on Linux and macOS
         if: runner.os != 'Windows'
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          PREFIX="$(python -c 'import sys; print(sys.prefix)')"
-          python bin/xmds2 --reconfigure \
+          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          conda run -n xmds-ci python bin/xmds2 --reconfigure \
             --include-path "$PREFIX/include" \
             --lib-path "$PREFIX/lib"
-          python bin/xmds2 examples/lorenz.xmds
-          ./lorenz
+          conda run -n xmds-ci python bin/xmds2 examples/lorenz.xmds
+          if [ "${RUNNER_OS}" = "macOS" ]; then
+            DYLD_LIBRARY_PATH="$PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" ./lorenz
+          else
+            LD_LIBRARY_PATH="$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ./lorenz
+          fi
 
       - name: Smoke test on Windows
         if: runner.os == 'Windows'
@@ -111,12 +117,12 @@ jobs:
 
       - name: Geometry regression on Linux
         if: runner.os == 'Linux'
-        shell: bash -el {0}
+        shell: bash
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-test-home"
-          PREFIX="$(python -c 'import sys; print(sys.prefix)')"
-          python bin/xmds2 --reconfigure \
+          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          conda run -n xmds-ci python bin/xmds2 --reconfigure \
             --include-path "$PREFIX/include" \
             --lib-path "$PREFIX/lib"
-          python run_tests.py geometry
+          conda run -n xmds-ci python run_tests.py geometry

@@ -25,6 +25,7 @@ reconfig.err
 testsuite_results/
 test_example/
 contrib/windows-native-release-kit/bundle/
+.ci-logs/
 
 # Root-level validation artifacts generated during Windows bring-up
 cross_propagation.cc
