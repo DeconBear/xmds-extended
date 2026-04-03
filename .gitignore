@@ -1,6 +1,8 @@
 # Local dependency bundles and test homes
 .conda-xmds-libs/
+.ci-conda/
 .xmds-test-home/
+.xmds-ci-home-local/
 
 # Python caches
 __pycache__/
@@ -20,6 +22,8 @@ __pycache__/
 # Local logs and transient outputs
 reconfig.out
 reconfig.err
+hdf5_probe.err
+hdf5_native_probe.err
 
 # Local test result artifacts
 testsuite_results/

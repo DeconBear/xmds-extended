@@ -140,6 +140,35 @@ jobs:
           $ErrorActionPreference = 'Stop'
           g++ --version
 
+      - name: Prepare HDF5 import libraries on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $libDir = Join-Path $env:CI_PREFIX 'Library\lib'
+          $binDir = Join-Path $env:CI_PREFIX 'Library\bin'
+          Push-Location $libDir
+          try {
+            foreach ($dllName in @('hdf5', 'hdf5_hl')) {
+              $dllPath = Join-Path $binDir "$dllName.dll"
+              if (-not (Test-Path $dllPath)) {
+                throw "Expected HDF5 runtime DLL not found: $dllPath"
+              }
+
+              $importLib = Join-Path $libDir "lib$dllName.dll.a"
+              if (Test-Path $importLib) {
+                Write-Host "Import library already exists: $importLib"
+                continue
+              }
+
+              gendef $dllPath
+              dlltool.exe -d "$dllName.def" -D "$dllName.dll" -l "lib$dllName.dll.a"
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
       - name: Reconfigure on Windows
         if: runner.os == 'Windows'
         shell: pwsh

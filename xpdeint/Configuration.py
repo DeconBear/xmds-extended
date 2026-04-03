@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 import os, sys, shutil
 
-from pkg_resources import resource_filename
 from xpdeint.Preferences import xpdeintUserDataPath
 from xpdeint.Utilities import unique
+from xpdeint._resource_compat import resource_filename
 
 import pickle, tempfile, shutil, logging
 
