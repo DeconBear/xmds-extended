@@ -31,19 +31,19 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
+          activate-environment: xmds-ci
           auto-activate: false
           channels: conda-forge
           conda-remove-defaults: true
           python-version: "3.11"
           use-mamba: true
 
-      - name: Create CI environment on Linux and macOS
+      - name: Install CI dependencies on Linux and macOS
         if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euxo pipefail
-          mamba create -y -n xmds-ci \
-            python=3.11 \
+          mamba install -y -n xmds-ci \
             cheetah3 \
             "pyparsing!=2.0.0" \
             mpmath \
@@ -55,13 +55,13 @@ jobs:
             setuptools
           conda run -n xmds-ci python -V
           c++ --version
+          conda run -n xmds-ci which h5cc || true
 
-      - name: Create CI environment on Windows
+      - name: Install CI dependencies on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          conda create -y -n xmds-ci -c conda-forge `
-            python=3.11 `
+          conda install -y -n xmds-ci -c conda-forge `
             cheetah3 `
             'pyparsing!=2.0.0' `
             mpmath `
