@@ -418,24 +418,35 @@ def configure(conf):
             )
         
         # Check for hdf5
+        h5cc_usable = False
         if conf.find_program('h5cc', var='H5CC', mandatory = False):
-            h5cc_shared_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-shlib'])
-            h5cc_static_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-noshlib'])
-            
-            hdf5_libpath = re.search(r'(\S*)/libhdf5\.a', h5cc_static_flags).group(1)
-            
-            conf.env.append_unique("LIBPATH_hdf5", hdf5_libpath)
-            
-            # h5cc uses absolute paths to the static libraries.  This interferes with how waf likes to link
-            # against static libraries.  Let's remove the absolute paths to the libraries, and add the static libraries
-            # again later.
-            h5cc_static_flags = re.sub(re.escape(hdf5_libpath) + r"/libhdf5\S*\.a", "", h5cc_static_flags)
-            
-            conf.parse_flags(h5cc_shared_flags, 'hdf5_shared')
-            conf.parse_flags(h5cc_static_flags, 'hdf5_static')
-            
-            conf.env['uselib'].extend(['hdf5_shared', 'hdf5_static'])
-            
+            try:
+                h5cc_shared_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-shlib'])
+                h5cc_static_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-noshlib'])
+
+                hdf5_libpath_match = re.search(r'(\S*)/libhdf5\.a', h5cc_static_flags)
+                if not hdf5_libpath_match:
+                    raise ValueError("h5cc static flags did not expose a libhdf5.a path")
+
+                hdf5_libpath = hdf5_libpath_match.group(1)
+
+                conf.env.append_unique("LIBPATH_hdf5", hdf5_libpath)
+
+                # h5cc uses absolute paths to the static libraries.  This interferes with how waf likes to link
+                # against static libraries.  Let's remove the absolute paths to the libraries, and add the static libraries
+                # again later.
+                h5cc_static_flags = re.sub(re.escape(hdf5_libpath) + r"/libhdf5\S*\.a", "", h5cc_static_flags)
+
+                conf.parse_flags(h5cc_shared_flags, 'hdf5_shared')
+                conf.parse_flags(h5cc_static_flags, 'hdf5_static')
+
+                conf.env['uselib'].extend(['hdf5_shared', 'hdf5_static'])
+                h5cc_usable = True
+            except Exception as exc:
+                conf.msg("Checking whether h5cc wrapper flags are usable", "no (falling back to direct library detection)")
+                conf.to_log("h5cc wrapper parsing failed: %r" % (exc,))
+
+        if h5cc_usable:
             check_cxx(
                 lib='hdf5',
                 header_name='hdf5.h',
@@ -453,7 +464,7 @@ def configure(conf):
                 uselib_store='hdf5',
                 msg = "Checking for HDF5",
             )
-            
+
 
             if 'hdf5' in conf.env['uselib']:
 
@@ -490,7 +501,7 @@ def configure(conf):
                     if 'hdf5_hl' in hdf5_stlib:
                         hdf5_stlib.remove('hdf5_hl')
                         hdf5_stlib.insert(0, 'hdf5_hl')
-                
+
 
                 check_cxx(
                     header_name='hdf5.h',
@@ -506,7 +517,7 @@ def configure(conf):
                             return 0;
                         } '''
                 )
-                
+
         else:
             check_cxx(
                 lib='hdf5',
