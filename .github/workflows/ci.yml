@@ -73,30 +73,50 @@ jobs:
             setuptools `
             m2w64-toolchain
 
-      - name: Smoke test on Linux and macOS
+      - name: Resolve CI prefix on Linux and macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          echo "CI_PREFIX=$PREFIX" >> "$GITHUB_ENV"
+
+      - name: Reconfigure on Linux and macOS
         if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
           conda run -n xmds-ci python bin/xmds2 --reconfigure \
-            --include-path "$PREFIX/include" \
-            --lib-path "$PREFIX/lib"
+            --include-path "$CI_PREFIX/include" \
+            --lib-path "$CI_PREFIX/lib"
+
+      - name: Compile lorenz on Linux and macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export XMDS_USER_DATA="$PWD/.xmds-ci-home"
           conda run -n xmds-ci python bin/xmds2 examples/lorenz.xmds
+
+      - name: Run lorenz on Linux and macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euxo pipefail
           if [ "${RUNNER_OS}" = "macOS" ]; then
-            DYLD_LIBRARY_PATH="$PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" ./lorenz
+            DYLD_LIBRARY_PATH="$CI_PREFIX/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" ./lorenz
           else
-            LD_LIBRARY_PATH="$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ./lorenz
+            LD_LIBRARY_PATH="$CI_PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ./lorenz
           fi
 
-      - name: Smoke test on Windows
+      - name: Resolve CI prefix on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
           $prefix = (conda run -n xmds-ci python -c "import sys; print(sys.prefix)").Trim()
+          "CI_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           $includePath = Join-Path $prefix 'Library\include'
           $libPath = Join-Path $prefix 'Library\lib'
           $extraPaths = @(
@@ -109,10 +129,40 @@ jobs:
           if (-not $extraPaths) {
             throw "No expected compiler/runtime paths were found under $prefix"
           }
-          $env:PATH = (($extraPaths -join ';') + ';' + $env:PATH)
+          foreach ($pathEntry in $extraPaths) {
+            $pathEntry | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+
+      - name: Check compiler on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
           g++ --version
+
+      - name: Reconfigure on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
+          $includePath = Join-Path $env:CI_PREFIX 'Library\include'
+          $libPath = Join-Path $env:CI_PREFIX 'Library\lib'
           conda run -n xmds-ci python bin\xmds2 --reconfigure --include-path $includePath --lib-path $libPath
+
+      - name: Compile lorenz on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
           conda run -n xmds-ci python bin\xmds2 examples\lorenz.xmds
+
+      - name: Run lorenz on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
           .\lorenz.cmd
 
       - name: Geometry regression on Linux
