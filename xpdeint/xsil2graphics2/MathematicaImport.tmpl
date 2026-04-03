@@ -1,0 +1,108 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MathematicaImport.tmpl
+
+Created by Joe Hope on 2009-01-07.
+Modified by Graham Dennis on 2009-01-29
+
+Copyright (c) 2009-2012, Joe Hope and Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+
+@def description: Creates text to import data from XSIL files into Mathematica.
+@attr $name = 'Mathematica 6+'
+
+@attr $defaultExtension = 'nb'
+
+@def printMathematicaListOrElement(listOrElement)
+  @# This is a function to turn an array into a Mathematica list.  Called recursively, and assumes the elements are floats or lists.
+  @if isinstance(listOrElement,float):
+${format(float(listOrElement),'f')}@slurp
+  @else:
+{${', '.join([$printMathematicaListOrElement(element) for element in listOrElement])}}@slurp
+  @end if
+@end def
+
+@def loadXSILFile($xsilFile)
+ @#
+SetDirectory[NotebookDirectory[]];
+ @set declaredVars=[]
+ @for objectNum, xsilObject in enumerate(xsilFile.xsilObjects):
+   @if xsilObject.data.format == 'ascii':
+     @set nIndepVar = len(xsilObject.independentVariables)
+     @for var in xsilObject.independentVariables:
+       @set varName = var["name"].replace('_','') + str(objectNum + 1)
+       @silent declaredVars.append(varName)
+Clear[$varName]
+$varName = {${', '.join([format(float(e),'f') for e in var["array"]])}};
+     @end for
+     @for varD in xsilObject.dependentVariables:
+       @set varName = varD["name"].replace('_','') + str(objectNum + 1)
+       @silent declaredVars.append(varName)
+Clear[$varName]
+$varName = $printMathematicaListOrElement($varD["array"]);      
+     @end for 
+@# Binary output, so we merely link to the requisite data file and write a script to import it
+   @elif xsilObject.data.format == 'binary':
+     @set nIndepVar = len(xsilObject.independentVariables)
+     @set machineFormat = {'BigEndian': '1', 'LittleEndian': '-1'}.get(xsilObject.data.encoding, '$ByteOrdering')
+     @set uLongFormat = {'uint32': 'UnsignedInteger32', 'uint64': 'UnsignedInteger64'}.get(xsilObject.data.uLong, 'UnsignedInteger32')
+     @set outputPrecision = {'single': 'Real32', 'double': 'Real64'}.get(xsilObject.data.precision, 'Real64')
+fpDat = OpenRead["$xsilObject.data.filename",BinaryFormat -> True];
+     @for var in xsilObject.independentVariables:
+        @set varName = var["name"].replace('_','') + str(objectNum + 1)
+        @silent declaredVars.append(varName)
+$(varName)Len = BinaryRead[fpDat, "$uLongFormat", ByteOrdering->$machineFormat];
+$(varName) = Flatten[BinaryReadList[fpDat, {"$outputPrecision"}, $(varName)Len, ByteOrdering->$machineFormat]];
+     @end for
+     @for varD in xsilObject.dependentVariables:
+        @set varName = varD["name"].replace('_','') + str(objectNum + 1)
+        @silent declaredVars.append(varName)
+$(varName)Len = BinaryRead[fpDat, "$uLongFormat", ByteOrdering->$machineFormat];
+        @if nIndepVar<=1:
+$varName = Flatten[BinaryReadList[fpDat, {"$outputPrecision"}, $(varName)Len, ByteOrdering->$machineFormat]];
+        @else:
+$varName = Flatten[Table[BinaryReadList[fpDat, {"$outputPrecision"}, $(xsilObject.independentVariables[-1]["name"])$(objectNum+1)Len, ByteOrdering->$machineFormat]@slurp
+          @for varIndex, varI in enumerate(xsilObject.independentVariables[0:-1])
+,{j$(varIndex+1),1,$(varI["name"].replace('_',''))$(objectNum+1)Len}@slurp
+          @end for
+],{@slurp
+          @for varIndex, varI2 in enumerate(xsilObject.independentVariables[0:-1]):
+{$(varIndex+1)},@slurp
+          @end for
+{$nIndepVar,$(nIndepVar+1)}}];
+        @end if
+     @end for
+Close[fpDat];
+   @elif xsilObject.data.format == 'hdf5'
+     @set $variables = xsilObject.independentVariables[:]
+     @silent variables.extend(xsilObject.dependentVariables)
+     @set $filename = xsilObject.data.filename
+     @set $groupName = xsilObject.data.groupName
+     @for var in variables
+       @set varName = var["name"].replace('_', '') + str(objectNum + 1)
+       @silent declaredVars.append(varName)
+${varName} = Import["${filename}", {"Datasets", "${groupName}/${var.name}"}];
+     @end for
+   @else
+     @raise Exception("No support for Mathematica output for XSIL format '%s'." % xsilObject.data.format)
+   @end if
+ @end for
+ResetDirectory[];
+
+declaredVariables={${', '.join([c'"$dV"' for dV in declaredVars])}}
+@end def

@@ -1,0 +1,106 @@
+@shBang #!/usr/bin/env python3
+
+@*
+SequenceSegment.tmpl
+
+Created by Graham Dennis on 2008-03-18.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments._Segment
+@from xpdeint.CallOnceGuards import callOncePerInstanceGuard
+
+@*
+  Description of template
+*@
+@def description: segment $segmentNumber (Sequence)
+
+@def segmentFunctionBody($function)
+  @#
+  @set $extraIndent = 0
+  @if $localCycles > 1
+// Initialise child segments
+${allocate}@slurp
+${initialise}@slurp
+for (unsigned long _cycle = 0; _cycle < ${localCycles}; _cycle++) {
+    @set $extraIndent = 2
+  @end if
+  @#
+${callChildSegments(function), extraIndent=extraIndent}@slurp
+  @#
+  @if $localCycles > 1
+}
+    @set $extraIndent = 0
+// Finalise child segments
+${finalise}@slurp
+${free}@slurp
+  @end if
+  @#
+@end def
+
+@def callChildSegments($function)
+  @#
+  @for $segment in $childSegments
+${segment.functions['segment'].call(parentFunction=function)}
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def allocate
+  @#
+  @super
+  @#
+  @for $segment in $childSegments
+$segment.allocate@slurp
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def free
+  @#
+  @super
+  @#
+  @for $segment in $childSegments
+$segment.free@slurp
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def initialise
+  @#
+  @super
+  @#
+  @for $segment in $childSegments
+$segment.initialise@slurp
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def finalise
+  @#
+  @super
+  @#
+  @for $segment in $childSegments
+$segment.finalise@slurp
+  @end for
+  @#
+@end def
+

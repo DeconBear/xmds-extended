@@ -1,0 +1,1163 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XMDS2 script elements &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML,http://www.xmds.org/_static/mathjax-use-tex-fonts.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Modified Midpoint Method" href="bulirschStoer.html" />
+    <link rel="prev" title="XMDS2 XML Schema" href="reference_schema.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="bulirschStoer.html" title="Modified Midpoint Method"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="reference_schema.html" title="XMDS2 XML Schema"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="reference_index.html" accesskey="U">Reference section</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">XMDS2 script elements</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="xmds2-script-elements">
+<span id="referenceelements"></span><span id="index-0"></span><h1>XMDS2 script elements<a class="headerlink" href="#xmds2-script-elements" title="Permalink to this headline">¶</a></h1>
+<p>This section outlines all the elements and options available in an XMDS2 script.  This is very much a <strong>work in progress</strong>, beginning with placeholders in most cases, as we have prioritised the tutorials for new users.  One of the most productive ways that non-developer veterans can contribute to the project is to help develop this documentation.</p>
+<div class="section" id="simulation-element">
+<span id="simulationelement"></span><span id="index-1"></span><h2>Simulation element<a class="headerlink" href="#simulation-element" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;simulation&gt;</span></code> element is the single top level element in an XMDS2 simulation, and contains all the other elements.  All XMDS scripts must contain exactly one simulation element, and it must have the <code class="docutils literal notranslate"><span class="pre">xmds-version=&quot;2&quot;</span></code> attribute defined.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="c">&lt;!-- Rest of simulation goes here --&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="name-element">
+<span id="nameelement"></span><span id="index-2"></span><h2>Name element<a class="headerlink" href="#name-element" title="Permalink to this headline">¶</a></h2>
+<p>The name of your simulation. This element is optional, but recommended. If it is set, it will be the name of the executable file generated from this script. It will also be the name of the output file (with an appropriate extension) if the <code class="docutils literal notranslate"><span class="pre">filename</span></code> attribute is not given a value in the <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;name&gt;</span> funky_solver <span class="nt">&lt;/name&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="author-element">
+<span id="authorelement"></span><span id="index-3"></span><h2>Author element<a class="headerlink" href="#author-element" title="Permalink to this headline">¶</a></h2>
+<p>The author(s) of this script. This element is optional, but can be useful if you need to find the person who has written an incomprehensible script and thinks comments are for the weak.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;author&gt;</span> Ima Mollusc <span class="nt">&lt;/author&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="description-element">
+<span id="descriptionelement"></span><span id="index-4"></span><h2>Description element<a class="headerlink" href="#description-element" title="Permalink to this headline">¶</a></h2>
+<p>A description of what the simulation does. Optional, but recommended, in case you (or someone else) has to revist the script at some distant point in the future.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;description&gt;</span>
+  Calculate the 3D ground state of a Rubidium BEC in a harmonic magnetic trap assuming
+  cylindrical symmetry about the z axis and reflection symmetry about z=0.
+  This permits us to use the cylindrical Bessel functions to expand the solution transverse
+  to z and a cosine series to expand the solution along z.
+<span class="nt">&lt;/description&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="features-elements">
+<span id="featureselement"></span><span id="index-5"></span><h2>Features Elements<a class="headerlink" href="#features-elements" title="Permalink to this headline">¶</a></h2>
+<p>Features elements are where simulation-wide options are specified. The <code class="docutils literal notranslate"><span class="pre">&lt;features&gt;</span></code> element wraps one or more elements describing features. There are many possible feature elements. Currently, a full list of the features supported is:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#argumentselement"><span class="std std-ref">arguments</span></a></p></li>
+<li><p><a class="reference internal" href="#autovectorise"><span class="std std-ref">auto_vectorise</span></a></p></li>
+<li><p><a class="reference internal" href="#benchmark"><span class="std std-ref">benchmark</span></a></p></li>
+<li><p><a class="reference internal" href="#bing"><span class="std std-ref">bing</span></a></p></li>
+<li><p><a class="reference internal" href="#cflags"><span class="std std-ref">cflags</span></a></p></li>
+<li><p><a class="reference internal" href="#chunkedoutput"><span class="std std-ref">chunked_output</span></a></p></li>
+<li><p><a class="reference internal" href="#diagnostics"><span class="std std-ref">diagnostics</span></a></p></li>
+<li><p><a class="reference internal" href="#errorcheck"><span class="std std-ref">error_check</span></a></p></li>
+<li><p><a class="reference internal" href="#haltnonfinite"><span class="std std-ref">halt_non_finite</span></a></p></li>
+<li><p><a class="reference internal" href="#fftw"><span class="std std-ref">fftw</span></a></p></li>
+<li><p><a class="reference internal" href="#globals"><span class="std std-ref">globals</span></a></p></li>
+<li><p><a class="reference internal" href="#openmp"><span class="std std-ref">OpenMP</span></a></p></li>
+<li><p><a class="reference internal" href="#precision"><span class="std std-ref">precision</span></a></p></li>
+<li><p><a class="reference internal" href="#validation"><span class="std std-ref">validation</span></a></p></li>
+</ul>
+</div></blockquote>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;precision&gt;</span> double <span class="nt">&lt;/precision&gt;</span>
+    ...
+  <span class="nt">&lt;/features&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="arguments-element">
+<span id="argumentselement"></span><span id="index-6"></span><h3>Arguments Element<a class="headerlink" href="#arguments-element" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;arguments&gt;</span></code> element is optional, and allows defining variables that can be passed to the simulation at run time. These variables are then globally accessible throughout the simulation script. Each of the variables must be defined in an <code class="docutils literal notranslate"><span class="pre">&lt;argument&gt;</span></code> element (see below). The variables can then be passed to the simulation executable as options on the command line. For example, one could define the variables <code class="docutils literal notranslate"><span class="pre">size</span></code>, <code class="docutils literal notranslate"><span class="pre">number</span></code>, and <code class="docutils literal notranslate"><span class="pre">pulse_shape</span></code></p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;name&gt;</span> arguments_test <span class="nt">&lt;/name&gt;</span>
+<span class="nt">&lt;features&gt;</span>
+  <span class="nt">&lt;arguments&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;size&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;20.0&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;number&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">default_value=</span><span class="s">&quot;7&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;pulse_shape&quot;</span> <span class="na">type=</span><span class="s">&quot;string&quot;</span> <span class="na">default_value=</span><span class="s">&quot;gaussian&quot;</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/arguments&gt;</span>
+<span class="nt">&lt;/features&gt;</span>
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">XMDS2</span></code> is run on this script the executable <code class="docutils literal notranslate"><span class="pre">arguments_test</span></code> is created. The values of <code class="docutils literal notranslate"><span class="pre">size</span></code>, <code class="docutils literal notranslate"><span class="pre">number</span></code>, and <code class="docutils literal notranslate"><span class="pre">pulse_shape</span></code> can then be set to whatever is desired at runtime via</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>./arguments_test --size=1.3 --number=2 --pulse_shape=lorentzian
+</pre></div>
+</div>
+<p>It is also possible to include an optional <code class="docutils literal notranslate"><span class="pre">CDATA</span></code> block inside the <code class="docutils literal notranslate"><span class="pre">&lt;arguments&gt;</span></code> block. This code will run after the arguments have been initialised with the values passed from the command line. This code block could be used, for example, to sanity check the parameters passed in, or for assigning values to global variables based on those parameters.  Any references to variables defined in an <code class="docutils literal notranslate"><span class="pre">&lt;argument&gt;</span></code> element should be made here rather than in the <a class="reference internal" href="#globals"><span class="std std-ref">Globals</span></a> element, or else the variables will only have their default values.  For example, one could have the following</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;features&gt;</span>
+  <span class="nt">&lt;globals&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="nf">real</span> <span class="n">atom_kick</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;globals&gt;</span>
+  <span class="nt">&lt;arguments&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;bragg_order&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">default_value=</span><span class="s">&quot;2&quot;</span><span class="nt">/&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">atom_kick</span> <span class="o">=</span> <span class="n">bragg_order</span> <span class="o">*</span> <span class="mi">2</span><span class="o">*</span><span class="n">M_PI</span> <span class="o">/</span> <span class="mf">780e-9</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/arguments&gt;</span>
+<span class="nt">&lt;/features&gt;</span>
+</pre></div>
+</div>
+<p>The arguments and their values can be added to the filename of the output files by using the <code class="docutils literal notranslate"><span class="pre">append_args_to_output_filename</span></code> attribute.  For example:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;name&gt;</span> arguments_test <span class="nt">&lt;/name&gt;</span>
+<span class="nt">&lt;features&gt;</span>
+  <span class="nt">&lt;arguments</span> <span class="na">append_args_to_output_filename=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;size&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;20.0&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;number&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">default_value=</span><span class="s">&quot;7&quot;</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;pulse_shape&quot;</span> <span class="na">type=</span><span class="s">&quot;string&quot;</span> <span class="na">default_value=</span><span class="s">&quot;gaussian&quot;</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/arguments&gt;</span>
+<span class="nt">&lt;/features&gt;</span>
+</pre></div>
+</div>
+<p>When the <code class="docutils literal notranslate"><span class="pre">arguments_test</span></code> executable is run, it will create output files named <code class="docutils literal notranslate"><span class="pre">arguments_test.number_7.pulse_shape_gaussian.size_20.0.xsil</span></code> and <code class="docutils literal notranslate"><span class="pre">arguments_test.number_7.pulse_shape_gaussian.size_20.0.h5</span></code>.</p>
+<div class="section" id="argument-element">
+<span id="argumentelement"></span><span id="index-7"></span><h4>Argument element<a class="headerlink" href="#argument-element" title="Permalink to this headline">¶</a></h4>
+<p id="index-8">Each <code class="docutils literal notranslate"><span class="pre">&lt;argument&gt;</span></code> element describes one variable that can be passed to the simulation at runtime via the command line. There are three mandatory attributes: <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, and <code class="docutils literal notranslate"><span class="pre">default_value</span></code>. <code class="docutils literal notranslate"><span class="pre">name</span></code> is the name by which you can refer to that variable later in the script, as well as the name of the command line parameter. <code class="docutils literal notranslate"><span class="pre">type</span></code> defines the data type of the variable, and <code class="docutils literal notranslate"><span class="pre">default_value</span></code> is the value to which the variable is set if it is not given a value on the command line.</p>
+</div>
+</div>
+<div class="section" id="auto-vectorise-element">
+<span id="autovectorise"></span><span id="index-9"></span><h3>Auto_vectorise element<a class="headerlink" href="#auto-vectorise-element" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;auto_vectorise</span> <span class="pre">/&gt;</span></code> feature attempts to activate automatic vectorisation for large loops, if it is available in the compiler.  This should make some simulations go faster.</p>
+</div>
+<div class="section" id="benchmark">
+<span id="index-10"></span><span id="id1"></span><h3>Benchmark<a class="headerlink" href="#benchmark" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;benchmark</span> <span class="pre">/&gt;</span></code> feature includes a timing routine in the generated code, so that it is possible to see how long the simulations take to run.</p>
+</div>
+<div class="section" id="bing">
+<span id="index-11"></span><span id="id2"></span><h3>Bing<a class="headerlink" href="#bing" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;bing</span> <span class="pre">/&gt;</span></code> feature causes the simulation to make an invigorating sound when the simulation finishes executing.</p>
+</div>
+<div class="section" id="c-flags">
+<span id="cflags"></span><span id="index-12"></span><h3>C Flags<a class="headerlink" href="#c-flags" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;cflags&gt;</span></code> feature allows extra flags to be passed to the compiler.  This can be useful for optimisation, and also using specific external libraries.  The extra options to be passed are defined with a ‘CDATA’ block.  The compile options can be made visible by running XMDS2 either with the “-v” (verbose) option, or the “-g” (debug) option.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;cflags&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+        <span class="o">-</span><span class="n">O4</span>
+    <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/cflags&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="chunked-output">
+<span id="chunkedoutput"></span><span id="index-13"></span><h3>Chunked Output<a class="headerlink" href="#chunked-output" title="Permalink to this headline">¶</a></h3>
+<p>By default, XMDS2 keeps the contents of all output moment groups in memory until the end of the simulation when they are written to the output file.  This can be a problem if your simulation creates a very large amount of output.  <code class="docutils literal notranslate"><span class="pre">&lt;chunked_output</span> <span class="pre">/&gt;</span></code> causes the simulation to save the output data in chunks as the simulation progresses.  For some simulations this can significantly reduce the amount of memory required.  The amount of data in a chunk can be specified with the <code class="docutils literal notranslate"><span class="pre">size</span></code> attribute where the suffixes “KB” (kilobytes), “MB” (megabytes), “GB” (gigabytes) and “TB” (terabytes) are understood.  Note that <code class="docutils literal notranslate"><span class="pre">size</span></code> specifies the chunk size per output sampling group, per MPI process.  So a chunk size of 4MB for a distributed-MPI simulation using 20 processes will cause each process to save up 4MB of data, and data to be written to the output file 80MB at a time.</p>
+<p>Limitations (XMDS will give you an error if you violate any of these):</p>
+<ul class="simple">
+<li><p>This feature cannot be used with the ASCII output file format due to limitations in the file format.</p></li>
+<li><p>This feature cannot be used with the <code class="docutils literal notranslate"><span class="pre">multi-path</span></code> drivers because all sampling data is required to compute the mean and standard error statistics.</p></li>
+<li><p>Neither is this feature compatible with the <code class="docutils literal notranslate"><span class="pre">error_check</span></code> feature as that relies on all sampling data being available to compute the error.</p></li>
+</ul>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;features&gt;</span>
+        <span class="nt">&lt;chunked_output</span> <span class="na">size=</span><span class="s">&quot;5MB&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/features&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="diagnostics">
+<span id="index-14"></span><span id="id3"></span><h3>Diagnostics<a class="headerlink" href="#diagnostics" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;diagnostics</span> <span class="pre">/&gt;</span></code> feature causes a simulation to output more information as it executes.  This should be useful when a simulation is dying / giving bad results to help diagnose the cause.  Currently, it largely outputs step error information.</p>
+</div>
+<div class="section" id="error-check">
+<span id="errorcheck"></span><span id="index-15"></span><h3>Error Check<a class="headerlink" href="#error-check" title="Permalink to this headline">¶</a></h3>
+<p>It’s often important to know whether you’ve got errors.  This feature runs each integration twice: once with the specified error tolerance or defined lattice spacing in the propagation dimension, and then again with half the lattice spacing, or an equivalently lower error tolerance.  Each component of the output then shows the difference between these two integrations as an estimate of the error.  This feature is particularly useful when integrating stochastic equations, as it treats the noise generation correctly between the two runs, and thus makes a reasonable estimate of the strong convergence of the equations.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;features&gt;</span>
+        <span class="nt">&lt;error_check</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/features&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="halt-non-finite">
+<span id="haltnonfinite"></span><span id="index-16"></span><h3>Halt_Non_Finite<a class="headerlink" href="#halt-non-finite" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;halt_non_finite</span> <span class="pre">/&gt;</span></code> feature is used to stop computations from continuing to run after the vectors stop having numerical values.  This can occur when a number is too large to represent numerically, or when an illegal operation occurs.  Processing variables with non-numerical values is usually much slower than normal processing, and the results are meaningless.  Of course, there is a small cost to introducing a run-time check, so this feature is optional.</p>
+</div>
+<div class="section" id="fftw-element">
+<span id="fftw"></span><span id="index-17"></span><h3>fftw element<a class="headerlink" href="#fftw-element" title="Permalink to this headline">¶</a></h3>
+<p id="index-18">The <code class="docutils literal notranslate"><span class="pre">&lt;fftw</span> <span class="pre">\&gt;</span></code> feature can be used to pass options to the <a class="reference external" href="http://fftw.org">Fast Fourier Transform library</a> used by XMDS.  This library tests algorithms on each architecture to determine the fastest method of solving each problem.  Typically this costs very little overhead, as the results of all previous tests are stored in the directory “~/.xmds/wisdom”.  The level of detail for the search can be specified using the <code class="docutils literal notranslate"><span class="pre">plan</span></code> attribute, which can take values of <code class="docutils literal notranslate"><span class="pre">&quot;estimate&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;measure&quot;</span></code>,``”patient”<code class="docutils literal notranslate"><span class="pre">,</span> <span class="pre">or</span> <span class="pre">``&quot;exhaustive&quot;</span></code>, in order of the depth of the search.  The number of threads for threaded FFTs can be specified with the <code class="docutils literal notranslate"><span class="pre">threads</span></code> attribute, which must be a positive integer.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;fftw</span> <span class="na">plan=</span><span class="s">&quot;patient&quot;</span> <span class="na">threads=</span><span class="s">&quot;3&quot;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="globals">
+<span id="index-19"></span><span id="id4"></span><h3>Globals<a class="headerlink" href="#globals" title="Permalink to this headline">¶</a></h3>
+<p>The globals feature places the contents of a ‘CDATA’ block near the top of the generated program.  Amongst other things, this is useful for defining variables that are then accessible throughout the entire program.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;globals&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="k">const</span> <span class="nf">real</span> <span class="n">omegaz</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">M_PI</span><span class="o">*</span><span class="mi">20</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="n">Nparticles</span> <span class="o">=</span> <span class="mi">50000</span><span class="p">;</span>
+
+    <span class="cm">/* offset constants */</span>
+    <span class="nf">real</span> <span class="n">frequency</span> <span class="o">=</span> <span class="n">omegaz</span><span class="o">/</span><span class="mi">2</span><span class="o">/</span><span class="n">M_PI</span><span class="p">;</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/globals&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="openmp">
+<span id="index-20"></span><span id="id5"></span><h3>OpenMP<a class="headerlink" href="#openmp" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;openmp</span> <span class="pre">/&gt;</span></code> feature instructs compatible compilers to parallelise key loops using the <a class="reference external" href="http://www.openmp.org">OpenMP API</a> standard.  By default the simulation will use all available CPUs.  The number of threads used can be restricted by specifying the number of threads in the script with <code class="docutils literal notranslate"><span class="pre">&lt;openmp</span> <span class="pre">threads=&quot;2&quot;/&gt;</span></code>, or by setting the <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code> environment variable at run-time like so:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>OMP_NUM_THREADS=2 ./simulation_name
+</pre></div>
+</div>
+</div>
+<div class="section" id="precision">
+<span id="index-21"></span><span id="id6"></span><h3>Precision<a class="headerlink" href="#precision" title="Permalink to this headline">¶</a></h3>
+<p>This specifies the precision of the XMDS2 <code class="docutils literal notranslate"><span class="pre">real</span></code> and <code class="docutils literal notranslate"><span class="pre">complex</span></code> datatypes, as well as the precision used when computing transforms. Currently two values are accepted: <code class="docutils literal notranslate"><span class="pre">single</span></code> and <code class="docutils literal notranslate"><span class="pre">double</span></code>. If this feature isn’t specified, XMDS2 defaults to using double precision for its variables and internal calculations.</p>
+<p>Single precision has approximately 7.2 decimal digits of accuracy, with a minimum value of 1.4×10<sup>-45</sup> and a maximum of 3.8×10<sup>34</sup>. Double precision has approximately 16 decimal digits of accuracy, a minimum value of 4.9×10<sup>-324</sup> and a maximum value of 1.8×10<sup>308</sup>.</p>
+<p>Using single precision can be attractive, as it can be more than twice as fast, depending on whether a simulation is CPU bound, memory bandwidth bound, MPI bound or bottlenecked elsewhere, although in some situations you may see no speed-up at all. Caution should be exercised, however. Keep in mind how many timesteps your simulation requires, and take note of the tolerance you have set per step, to see if the result will lie within your acceptable total error - seven digit precision isn’t a lot. Quite apart from the precision, the range of single precision can often be inadequate for many physical problems. In atomic physics, for example, intermediate values below 1.4×10<sup>-45</sup> are easily obtained, and will be taken as zero. Similarly, values above 3.8×10<sup>34</sup> will result in NaNs and make the simulation results invalid.</p>
+<p>Also note that when using an adaptive step integrator, setting a tolerance close to limits of the precision can lead to very slow performance.</p>
+<p>A further limitation is that not all the combinations of random number generators and probability distributions that are supported in double precision are supported in single precision. For example, the <code class="docutils literal notranslate"><span class="pre">solirte</span></code> generator does not support single precision gaussian distributions. <code class="docutils literal notranslate"><span class="pre">dsfmt</span></code>, however, is one of the fastest generators, and does support single precision.</p>
+<p>WARNING: Single precision mode has not been tested anywhere near as thoroughly as the default double precision mode, and there is a higher chance you will run into bugs.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;features&gt;</span>
+        <span class="nt">&lt;precision&gt;</span> single <span class="nt">&lt;/precision&gt;</span>
+    <span class="nt">&lt;/features&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="validation">
+<span id="index-22"></span><span id="id7"></span><h3>Validation<a class="headerlink" href="#validation" title="Permalink to this headline">¶</a></h3>
+<p>XMDS2 makes a large number of checks in the code generation process to verify that the values for all parameters are safe choices.  Sometimes we wish to allow these parameters to be specified by variables.  This opens up many possibilities, but requires that any safety checks for parameters be performed during the execution of the program itself.  The <code class="docutils literal notranslate"><span class="pre">&lt;validation&gt;</span></code> feature activates that option, with allowable attributes being “run-time”, “compile-time” and “none”.</p>
+<p>As an example, one may wish to define the number of grid points and the range of the grid at run-time rather than explicitly define them in the XMDS2 script. To accomplish this, one could do the following:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span> <span class="nt">&lt;name&gt;</span> validation_test <span class="nt">&lt;/name&gt;</span>
+ <span class="nt">&lt;features&gt;</span>
+   <span class="nt">&lt;validation</span> <span class="na">kind=</span><span class="s">&quot;run-time&quot;</span> <span class="nt">/&gt;</span>
+   <span class="nt">&lt;arguments&gt;</span>
+     <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;xmin&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;-1.0&quot;</span><span class="nt">/&gt;</span>
+     <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;xmax&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;1.0&quot;</span><span class="nt">/&gt;</span>
+     <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;numGridPoints&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">default_value=</span><span class="s">&quot;128&quot;</span><span class="nt">/&gt;</span>
+   <span class="nt">&lt;/arguments&gt;</span>
+ <span class="nt">&lt;/features&gt;</span>
+
+ <span class="nt">&lt;geometry&gt;</span>
+   <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+   <span class="nt">&lt;transverse_dimensions&gt;</span>
+     <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;numGridPoints&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(xmin, xmax)&quot;</span> <span class="nt">/&gt;</span>
+   <span class="nt">&lt;/transverse_dimensions&gt;</span>
+<span class="nt">&lt;/geometry&gt;</span>
+</pre></div>
+</div>
+<p>and then run the resulting executable with:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>./validation_test --xmin=-2.0 --xmax=2.0 --numGridPoints=64
+</pre></div>
+</div>
+<p>This approach means that when XMDS2 is parsing the script it is unable to tell, for example, if the number of sampling points requested is less than or equal to the lattice size. Consequently it will create an executable with “numGridPoints” as an internal variable, and make the check at run-time, when it knows the value of “numGridPoints” rather than at compile time, when it doesn’t.</p>
+<p id="index-23">..index:: MPI</p>
+</div>
+</div>
+<div class="section" id="driver-element">
+<span id="driverelement"></span><h2>Driver Element<a class="headerlink" href="#driver-element" title="Permalink to this headline">¶</a></h2>
+<p>The driver element controls the overall management of the simulation, including how many paths of a stochastic simulation are to be averaged, and whether or not it is to be run using distributed memory parallelisation.  If it is not included, then the simulation is performed once without using MPI parallelisation.  If it is included, it must have a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute can have values of “none” (which is equivalent to the default option of not specifying a driver), “distributed-mpi”, “multi-path”, “mpi-multi-path” or “adaptive-mpi-multi-path”.</p>
+<p>Choosing the <code class="docutils literal notranslate"><span class="pre">name=&quot;distributed-mpi&quot;</span></code> option allows a single integration over multiple processors.  The resulting executable can then be run according to your particular implementation of MPI.  The FFTW library only allows MPI processing of multidimensional vectors, as otherwise shared memory parallel processing requires too much inter-process communication to be efficient.  Maximally efficient parallelisation occurs where evolution is entirely local in one transverse dimension (see <a class="reference internal" href="#transversedimensionselement"><span class="std std-ref">transverse dimensions</span></a> below).  In that case, that dimension should be listed first in the <a class="reference internal" href="#geometryelement"><span class="std std-ref">&lt;geometry&gt;</span></a> element.  As noted in the worked example <a class="reference internal" href="worked_examples.html#wignerarguments"><span class="std std-ref">Wigner Function</span></a>, it is wise to test the speed of the simulation using different numbers of processors.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">name=&quot;multi-path&quot;</span></code> option is used for stochastic simulations, which are typically run multiple times and averaged.  It requires a <code class="docutils literal notranslate"><span class="pre">paths</span></code> attribute with the number of iterations of the integration to be averaged.  The output will report the averages of the desired samples, and the standard error in those averages.
+The <code class="docutils literal notranslate"><span class="pre">name=&quot;mpi-multi-path&quot;</span></code> option integrates separate paths on different processors, which is typically a highly efficient process.
+The <code class="docutils literal notranslate"><span class="pre">name=&quot;adaptive-mpi-multi-path&quot;</span></code> option integrates separate paths on different processors with load balancing.</p>
+<p>If you wish to use a multi-path driver but retain the information for each path rather than having them averaged, you can use the <code class="docutils literal notranslate"><span class="pre">export_all_paths</span> <span class="pre">=</span> <span class="pre">&quot;yes&quot;</span></code> attribute in the <a class="reference internal" href="#samplinggroupelement"><span class="std std-ref">Sampling Group Element</span></a>. Note that this currently only works with the “multi-path” and “mpi-multi-path” drivers, not the “adaptive-mpi-multi-path” driver.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;distributed-mpi&quot;</span> <span class="nt">/&gt;</span>
+        <span class="c">&lt;!-- or --&gt;</span>
+    <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;multi-path&quot;</span> <span class="na">paths=</span><span class="s">&quot;10&quot;</span> <span class="nt">/&gt;</span>
+        <span class="c">&lt;!-- or --&gt;</span>
+    <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;mpi-multi-path&quot;</span> <span class="na">paths=</span><span class="s">&quot;1000&quot;</span> <span class="nt">/&gt;</span>
+                <span class="c">&lt;!-- or --&gt;</span>
+    <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;adaptive-mpi-multi-path&quot;</span> <span class="na">paths=</span><span class="s">&quot;1000&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="geometry-element">
+<span id="geometryelement"></span><span id="index-24"></span><h2>Geometry Element<a class="headerlink" href="#geometry-element" title="Permalink to this headline">¶</a></h2>
+<p id="propagationdimensionelement"><span id="index-25"></span>The <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element describes the dimensions used in your simulation, and is required.  The only required element inside is the <code class="docutils literal notranslate"><span class="pre">&lt;propagation_dimension&gt;</span></code> element, which defines the name of the dimension along which your simulation will integrate.  Nothing else about this dimension is specified, as requirements for the lattice along the integration dimension is specified by the <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> blocks themselves, as described in section <a class="reference internal" href="#integrateelement"><span class="std std-ref">Integrate element</span></a>.</p>
+<span class="target" id="transversedimensionselement"><span id="index-26"></span></span><p id="dimensionelement"><span id="index-27"></span>If there are other dimensions in your problem, they are called “transverse dimensions”, and are described in the <code class="docutils literal notranslate"><span class="pre">&lt;transverse_dimensions&gt;</span></code> element.  Each dimension is then described in its own <code class="docutils literal notranslate"><span class="pre">&lt;dimension&gt;</span></code> element.  A transverse dimension must have a unique name defined by a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.  If it is not specified, the type of dimension will default to “real”, otherwise it can be specified with the <code class="docutils literal notranslate"><span class="pre">type</span></code> attribute.  Allowable types (other than “real”) are “long”, “int”, and “integer”, which are actually all synonyms for an integer-valued dimension.</p>
+<p id="index-28">Each transverse dimension must specify how many points or modes it requires, and the range over which it is defined.  This is done by the <code class="docutils literal notranslate"><span class="pre">lattice</span></code> and <code class="docutils literal notranslate"><span class="pre">domain</span></code> attributes respectively.  The <code class="docutils literal notranslate"><span class="pre">lattice</span></code> attribute is an integer, and is optional for integer dimensions, where it can be defined implicitly by the domain.  The <code class="docutils literal notranslate"><span class="pre">domain</span></code> attribute is specified as a pair of numbers (e.g. <code class="docutils literal notranslate"><span class="pre">domain=&quot;(-17,3)&quot;</span></code>) defining the minimum and maximum of the grid.</p>
+<p id="index-29">Any dimension can have a number of aliases.  These act exactly like copies of that dimension, but must be included explicitly in the definition of subsequent vectors (i.e. they are not included in the default list of dimensions for a new vector).  The list of aliases for a dimension are included in an <code class="docutils literal notranslate"><span class="pre">aliases</span></code> attribute.  They are useful for non-local reference of variables.  See <code class="docutils literal notranslate"><span class="pre">groundstate_gaussian.xmds</span></code> and <code class="docutils literal notranslate"><span class="pre">2DMultistateSE.xmds</span></code> as examples.</p>
+<p id="index-30">Integrals over a dimension can be multiplied by a common prefactor, which is specified using the <code class="docutils literal notranslate"><span class="pre">volume_prefactor</span></code> attribute.  For example, this allows the automatic inclusion of a factor of two due to a reflection symmetry by adding the attribute <code class="docutils literal notranslate"><span class="pre">volume_prefactor=&quot;2&quot;</span></code>.  In very specific cases, you may wish to refer to volume elements explicitly.  This will lead to grid-dependent behaviour, which is sometimes required in certain stochastic field simulations, for example.  In this case, the volume element for each variable is described by a <code class="docutils literal notranslate"><span class="pre">d</span></code> prefix (e.g. <code class="docutils literal notranslate"><span class="pre">lambda</span></code> would be referred to as <code class="docutils literal notranslate"><span class="pre">dlambda</span></code>).  These volume elements contain any implicit prefactors (for example, the radial coordinate for dimensions defined using <a class="reference internal" href="#besseltransform"><span class="std std-ref">Bessel transforms</span></a>), including the <code class="docutils literal notranslate"><span class="pre">volume_prefactor</span></code> element.</p>
+<p>If you are using the <code class="docutils literal notranslate"><span class="pre">distributed-mpi</span></code> driver to parallelise the simulation, place the dimension you wish to split over multiple processors first.  The most efficient parallelisation would involve distributing a dimension with only local evolution, as the different memory blocks would not need to communicate.  Nonlocal evolution that is local in Fourier space is the second preference, as the Fourier transform can also be successfully parallelised with minimum communication.</p>
+<p id="transforms"><span id="index-31"></span>Each transverse dimension can be associated with a transform.  This allows the simulation to manipulate vectors defined on that dimension in the transform space.  The default is Fourier space (with the associated transform being the discrete Fourier transform, or “dft”), but others can be specified with the <code class="docutils literal notranslate"><span class="pre">transform</span></code> attribute.  The other options are “none”, “dst”, “dct”, “bessel”, “spherical-bessel”, “bessel-neumann” and “hermite-gauss”.  Using the right transform can dramatically improve the speed of a calculation.</p>
+<p id="index-32">An advanced feature discussed further in <a class="reference internal" href="advanced_topics.html#dimensionaliases"><span class="std std-ref">Dimension aliases</span></a> are dimension aliases, which are specified by the <code class="docutils literal notranslate"><span class="pre">aliases</span></code> attribute.  This feature is useful for example, when calculating correlation functions.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="c">&lt;!-- A real-valued dimension from -1.5 to 1.5 --&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1.5, 1.5)&quot;</span> <span class="nt">/&gt;</span>
+
+            <span class="c">&lt;!-- An integer-valued dimension with the 6 values -2, -1, 0, 1, 2, 3 --&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;j&quot;</span>               <span class="na">domain=</span><span class="s">&quot;(-2,3)&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="nt">/&gt;</span>
+
+            <span class="c">&lt;!-- A real-valued dimension using the bessel transform for a radial coordinate --&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;r&quot;</span> <span class="na">lattice=</span><span class="s">&quot;64&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0, 5)&quot;</span>  <span class="na">transform=</span><span class="s">&quot;bessel&quot;</span> <span class="na">volume_prefactor=</span><span class="s">&quot;2.0*M_PI&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="the-dft-transform">
+<span id="dft-transform"></span><span id="index-33"></span><h3>The “dft” transform<a class="headerlink" href="#the-dft-transform" title="Permalink to this headline">¶</a></h3>
+<p id="index-34">The “dft” transform is performed using the the normal discrete Fourier transform, which means that it enforces periodic boundary conditions on vectors defined on that dimension.  Another implication is that it can only be used with complex-valued vectors.  The discrete Fourier transform is almost exactly the same as a standard Fourier transform.  The standard Fourier transform is</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}\left[f(x)\right](k) = \frac{1}{\sqrt{2\pi}}\int_{x_\text{min}}^{x_\text{max}} f(x) e^{-i k x} dx\]</div>
+<p>The discrete Fourier transform has no information about the domain of the lattice, so the XMDS2 transform is equivalent to</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{\mathcal{F}}\left[f(x)\right](k) &amp;= \frac{1}{\sqrt{2\pi}}\int_{x_\text{min}}^{x_\text{max}} f(x) e^{-i k (x+ x_\text{min})} dx \\
+&amp;= e^{-i x_\text{min} k} \mathcal{F}\left[f(x)\right](k)\end{split}\]</div>
+<p>The standard usage in an XMDS simulation involves moving to Fourier space, applying a transformation, and then moving back.  For this purpose, the two transformations are entirely equivalent as the extra phase factor cancels.  However, when fields are explicitly defined in Fourier space, care must be taken to include this phase factor explicitly.  See section <a class="reference internal" href="advanced_topics.html#convolutions"><span class="std std-ref">Convolutions and Fourier transforms</span></a> in the Advanced Topics section.</p>
+<p>When a dimension uses the “dft” transform, then the Fourier space variable is defined as the name of the dimension prefixed with a “k”.  For example, the dimensions “x”, “y”, “z” and “tau” will be referenced in Fourier space as “kx”,”ky”, “kz” and “ktau”.</p>
+<p>Fourier transforms allow easy calculation of derivatives, as the n<sup>th</sup> derivative of a field is proportional to the n<sup>th</sup> moment of the field in Fourier space:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}\left[\frac{\partial^n f(x)}{\partial x^n}\right](k_x) = \left(i \;k_x\right)^n \mathcal{F}\left[f(x)\right](k_x)\]</div>
+<p>This identity can be used to write the differential operator <span class="math notranslate nohighlight">\(\mathcal{L} = \frac{\partial}{\partial x}\)</span> as an <code class="docutils literal notranslate"><span class="pre">IP</span></code> or <code class="docutils literal notranslate"><span class="pre">EX</span></code> operator as <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">i*kx;</span></code> (see <a class="reference internal" href="#operatorselement"><span class="std std-ref">Operators and operator elements</span></a> for more details).</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="c">&lt;!-- transform=&quot;dft&quot; is the default, omitting it wouldn&#39;t change anything --&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1.5, 1.5)&quot;</span> <span class="na">transform=</span><span class="s">&quot;dft&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-dct-transform">
+<span id="dct-transform"></span><span id="index-35"></span><h3>The “dct” transform<a class="headerlink" href="#the-dct-transform" title="Permalink to this headline">¶</a></h3>
+<p id="index-36">The “dct” (discrete cosine transform) is a Fourier-based transform that implies different boundary conditions for associated vectors.  XMDS uses the type-II DCT, often called “the DCT”, and its inverse, which is also called the type-III DCT.  This transform assumes that any vector using this dimension is both periodic, and also even around a specific point within each period.  The grid is therefore only defined across a half period in order to sample each unique point once, and can therefore be of any shape where all the odd derivatives are zero at each boundary.  This is a very different boundary condition compared to the DFT, which demands periodic boundary conditions, and is therefore suitable for different simulations.  For example, the DCT is a natural choice when implementing zero Neumann boundary conditions.</p>
+<p>As the DCT transform can be defined on real data rather only complex data, it can also be superior to DFT-based spectral methods for simulations of real-valued fields where boundary conditions are artificial.</p>
+<p>XMDS labels the cosine transform space variables the same as for <a class="reference internal" href="#dft-transform"><span class="std std-ref">Fourier transforms</span></a> and all the even derivatives can be calculated the same way.  Odd moments of the cosine-space variables are in fact <em>not</em> related to the corresponding odd derivatives by an inverse cosine transform.</p>
+<p>Discrete cosine transforms allow easy calculation of even-order derivatives, as the 2n<sup>th</sup> derivative of a field is proportional to the 2n<sup>th</sup> moment of the field in DCT-space:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}_\text{DCT}\left[\frac{\partial^{2n} f(x)}{\partial x^{2n}}\right](k_x) = (-k_x^2)^{n}\; \mathcal{F}_\text{DCT}\left[f(x)\right](k_x)\]</div>
+<p>This identity can be used to write the differential operator <span class="math notranslate nohighlight">\(\mathcal{L} = \frac{\partial^2}{\partial x^2}\)</span> as an <code class="docutils literal notranslate"><span class="pre">IP</span></code> or <code class="docutils literal notranslate"><span class="pre">EX</span></code> operator as <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">-kx*kx;</span></code> (see <a class="reference internal" href="#operatorselement"><span class="std std-ref">Operators and operator elements</span></a> for more details).</p>
+<p>For problems where you are defining the simulation domain over only half of the physical domain to take advantage of reflection symmetry, consider using <code class="docutils literal notranslate"><span class="pre">volume_prefactor=&quot;2.0&quot;</span></code> so that all volume integrals are over the entire physical domain, not just the simulation domain. i.e. integrals would be over -1 to 1 instead of 0 to 1 if the domain was specified as <code class="docutils literal notranslate"><span class="pre">domain=&quot;(0,1)&quot;</span></code>.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1.5, 1.5)&quot;</span> <span class="na">transform=</span><span class="s">&quot;dct&quot;</span> <span class="nt">/&gt;</span>
+                <span class="c">&lt;!-- Or to cause volume integrals to be multiplied by 2 --&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;y&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0, 1)&quot;</span> <span class="na">transform=</span><span class="s">&quot;dct&quot;</span> <span class="na">volume_prefactor=</span><span class="s">&quot;2.0&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-dst-transform">
+<span id="dst-transform"></span><span id="index-37"></span><h3>The “dst” transform<a class="headerlink" href="#the-dst-transform" title="Permalink to this headline">¶</a></h3>
+<p>The “dst” (discrete sine transform) is a counterpart to the DCT transform.  XMDS uses the type-II DST and its inverse, which is also called the type-III DST.  This transform assumes that fields are periodic in this dimension, but also that they are also odd around a specific point within each period.  The grid is therefore only defined across a half period in order to sample each unique point once, and can therefore be of any shape where all the even derivatives are zero at each boundary.</p>
+<p id="index-38">The DST transform can be defined on real-valued vectors.  As odd-valued functions are zero at the boundaries, this is a natural transform to use when implementing zero Dirichlet boundary conditions.</p>
+<p>XMDS labels the sine transform space variables the same as for <a class="reference internal" href="#dft-transform"><span class="std std-ref">Fourier transforms</span></a> and all the even derivatives can be calculated the same way.  Odd moments of the sine-space variables are in fact <em>not</em> related to the corresponding odd derivatives by an inverse sine transform.</p>
+<p>Discrete sine transforms allow easy calculation of even-order derivatives, as the 2n<sup>th</sup> derivative of a field is proportional to the 2n<sup>th</sup> moment of the field in DST-space:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}_\text{DST}\left[\frac{\partial^{2n} f(x)}{\partial x^{2n}}\right](k_x) = (-k_x^2)^{n}\; \mathcal{F}_\text{DST}\left[f(x)\right](k_x)\]</div>
+<p>This identity can be used to write the differential operator <span class="math notranslate nohighlight">\(\mathcal{L} = \frac{\partial^2}{\partial x^2}\)</span> as an <code class="docutils literal notranslate"><span class="pre">IP</span></code> or <code class="docutils literal notranslate"><span class="pre">EX</span></code> operator as <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">-kx*kx;</span></code> (see <a class="reference internal" href="#operatorselement"><span class="std std-ref">Operators and operator elements</span></a> for more details).</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0, 1.5)&quot;</span> <span class="na">transform=</span><span class="s">&quot;dst&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-bessel-and-bessel-neumann-transforms">
+<span id="besseltransform"></span><span id="index-39"></span><h3>The “bessel” and “bessel-neumann” transforms<a class="headerlink" href="#the-bessel-and-bessel-neumann-transforms" title="Permalink to this headline">¶</a></h3>
+<p>Just as the Fourier basis is useful for finding derivatives in Euclidean geometry, the basis of Bessel functions is useful for finding certain common operators in cylindrical co-ordinates.  In particular, we use the Bessel functions of the first kind, <span class="math notranslate nohighlight">\(J_m(u)\)</span>.  The relevant transform is the Hankel transform:</p>
+<div class="math notranslate nohighlight">
+\[F_m(k) = \mathcal{H}_m \left[f\right](k) = \int_0^\infty r f(r) J_m(k r) dr\]</div>
+<p>which has the inverse transform:</p>
+<div class="math notranslate nohighlight">
+\[f(r) = \mathcal{H}^{-1}_m \left[F_m\right](r) = \int_0^\infty k F_m(k) J_m(k r) dk\]</div>
+<p>This transform pair has the useful property that the Laplacian in cylindrical co-ordinates is diagonal in this basis:</p>
+<div class="math notranslate nohighlight">
+\[\nabla^2 \left(f(r) e^{i m \theta}\right) &amp;= \left(\frac{\partial^2 f}{\partial r^2} +\frac{1}{r}\frac{\partial f}{\partial r} -\frac{m^2}{r^2} f \right) e^{i m \theta} = \left\{\mathcal{H}^{-1}_m \left[(-k^2) F_m(k)\right](r) \right\} e^{i m \theta}\]</div>
+<p>XMDS labels the variables in the transformed space with a prefix of ‘k’, just as for <a class="reference internal" href="#dft-transform"><span class="std std-ref">Fourier transforms</span></a>.  The order <span class="math notranslate nohighlight">\(m\)</span> of the transform is defined by the <code class="docutils literal notranslate"><span class="pre">order</span></code> attribute in the <code class="docutils literal notranslate"><span class="pre">&lt;dimension&gt;</span></code> element, which must be assigned as a non-negative integer.  If the order is not specified, it defaults to zero which corresponds to the solution being independent of the angular coordinate <span class="math notranslate nohighlight">\(\theta\)</span>.</p>
+<p id="index-40">The difference between the “bessel” and “bessel-neumann” transforms is that the “bessel” transform enforces Dirichlet boundary conditions at the edge of the computational domain (<span class="math notranslate nohighlight">\(f(R) = 0\)</span>), while “bessel-neumann” enforces Neumann boundary conditions (<span class="math notranslate nohighlight">\(\left.\frac{\partial}{\partial r}f(r) \right|_{r=R} = 0\)</span>).</p>
+<p>It can often be useful to have a different sampling in normal space and Hankel space.  Reducing the number of modes in either space dramatically speeds simulations.  To set the number of lattice points in Hankel space to be different to the number of lattice points for the field in its original space, use the attribute <code class="docutils literal notranslate"><span class="pre">spectral_lattice</span></code>.  The Bessel space lattice is chosen such that the boundary condition at the edge of the domain is zero.  This ensures that all of the Bessel modes are orthogonal.  The spatial lattice is also chosen in a non-uniform manner so that Gaussian quadrature methods can be usedfor spectrally accurate transforms.</p>
+<p>Hankel transforms allow easy calculation of the Laplacian of fields with cylindrical symmetry.  Applying the operator <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">-kr*kr</span></code> in Hankel space is therefore equivalent to applying the operator</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L} = \left(\frac{\partial^2}{\partial r^2} +\frac{1}{r}\frac{\partial}{\partial r} -\frac{m^2}{r^2} \right)\]</div>
+<p>in coordinate space.</p>
+<p>In non-Euclidean co-ordinates, integrals have non-unit volume elements.  For example, in cylindrical co-ordinates with a radial co-ordinate ‘r’, integrals over this dimension have a volume element <span class="math notranslate nohighlight">\(r dr\)</span>.  When performing integrals along a dimension specified by the “bessel” transform, the factor of the radius is included implicitly.  If you are using a geometry with some symmetry, it is common to have prefactors in your integration.  For example, for a two-dimensional volume in cylindrical symmetry, all integrals would have a volume element of <span class="math notranslate nohighlight">\(2\pi r dr\)</span>.  This extra factor of <span class="math notranslate nohighlight">\(2 \pi\)</span> can be included for all integrals by specifying the attribute <code class="docutils literal notranslate"><span class="pre">volume_prefactor=&quot;2*M_PI&quot;</span></code>.  See the example <code class="docutils literal notranslate"><span class="pre">bessel_cosine_groundstate.xmds</span></code> for a demonstration.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;r&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0, 3)&quot;</span> <span class="na">transform=</span><span class="s">&quot;bessel&quot;</span> <span class="na">volume_prefactor=</span><span class="s">&quot;2*M_PI&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-spherical-bessel-transform">
+<span id="spherical-bessel-transform"></span><span id="index-41"></span><h3>The “spherical-bessel” transform<a class="headerlink" href="#the-spherical-bessel-transform" title="Permalink to this headline">¶</a></h3>
+<p>When working in spherical coordinates, it is often useful to use the spherical Bessel functions <span class="math notranslate nohighlight">\(j_l(x)=\sqrt{\frac{\pi}{2x}}J_{l+\frac{1}{2}}(x)\)</span> as a basis.  These are eigenfunctions of the radial component of Laplace’s equation in spherical coordinates:</p>
+<div class="math notranslate nohighlight">
+\[\nabla^2 \left[j_l(k r)\; Y^m_l(\theta, \phi)\right] &amp;= \left[\frac{\partial^2 }{\partial r^2} +\frac{2}{r}\frac{\partial }{\partial r} -\frac{l(l+1)}{r^2}\right] j_l(k r) \; Y^m_l(\theta, \phi) = -k^2 j_l(k r)\; Y^m_l(\theta, \phi)\]</div>
+<p>Just as the Bessel basis above, the transformed dimensions are prefixed with a ‘k’, and it is possible (and usually wise) to use the <code class="docutils literal notranslate"><span class="pre">spectral_lattice</span></code> attribute to specify a different lattice size in the transformed space.  Also, the spacing of these lattices are again chosen in a non-uniform manner to Gaussian quadrature methods for spectrally accurate transforms.  Finally, the <code class="docutils literal notranslate"><span class="pre">order</span></code> attribute can be used to specify the order <span class="math notranslate nohighlight">\(l\)</span> of the spherical Bessel functions used.</p>
+<p>If we denote the transformation to and from this basis by <span class="math notranslate nohighlight">\(\mathcal{SH}\)</span>, then we can write the useful property:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial^2 f}{\partial r^2} +\frac{2}{r}\frac{\partial f}{\partial r} -\frac{l (l+1)}{r^2} = \mathcal{SH}^{-1}_l \left[(-k^2) F_l(k)\right](r)\]</div>
+<p>Spherical Bessel transforms allow easy calculation of the Laplacian of fields with spherical symmetry. Applying the operator <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">-kr*kr</span></code> in Spherical Bessel space is therefore equivalent to applying the operator</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L} = \left( \frac{\partial^2}{\partial r^2} +\frac{2}{r}\frac{\partial}{\partial r} -\frac{l (l+1)}{r^2} \right)\]</div>
+<p>in coordinate space.</p>
+<p>In non-Euclidean co-ordinates, integrals have non-unit volume elements.  For example, in spherical co-ordinates with a radial co-ordinate ‘r’, integrals over this dimension have a volume element <span class="math notranslate nohighlight">\(r^2 dr\)</span>.  When performing integrals along a dimension specified by the “spherical-bessel” transform, the factor of the square of the radius is included implicitly.  If you are using a geometry with some symmetry, it is common to have prefactors in your integration.  For example, for a three-dimensional volume in spherical symmetry, all integrals would have a volume element of <span class="math notranslate nohighlight">\(4\pi r^2 dr\)</span>.  This extra factor of <span class="math notranslate nohighlight">\(4 \pi\)</span> can be included for all integrals by specifying the attribute <code class="docutils literal notranslate"><span class="pre">volume_prefactor=&quot;4*M_PI&quot;</span></code>.  This is demonstrated in the example bessel_transform.xmds.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;r&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0, 3)&quot;</span> <span class="na">transform=</span><span class="s">&quot;spherical-bessel&quot;</span> <span class="na">volume_prefactor=</span><span class="s">&quot;4*M_PI&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-hermite-gauss-transform">
+<span id="hermite-gauss-transform"></span><span id="index-42"></span><h3>The “hermite-gauss” transform<a class="headerlink" href="#the-hermite-gauss-transform" title="Permalink to this headline">¶</a></h3>
+<p>The “hermite-gauss” transform allows transformations to and from the basis of Hermite functions <span class="math notranslate nohighlight">\(\psi_n(x)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\psi_n(x) = \left(2^n n! \sigma \sqrt{\pi}\right)^{-1/2} e^{-x^2/2\sigma^2} H_n(\sigma x)\]</div>
+<p>where the functions <span class="math notranslate nohighlight">\(H_n(x)\)</span> are the Hermite polynomials:</p>
+<div class="math notranslate nohighlight">
+\[H_n(x) &amp;= (-1)^n e^{x^2} \frac{d^n}{dx^n} \left(e^{-x^2}\right)\]</div>
+<p>which are eigenfunctions of the Schroedinger equation for a harmonic oscillator:</p>
+<div class="math notranslate nohighlight">
+\[- \frac{\hbar^2}{2 m} \frac{\partial^2 \psi_n}{\partial x^2} + \frac{1}{2} m \omega^2 x^2 \psi_n(x) = \hbar \omega\left(n+\frac{1}{2}\right) \psi_n(x),\]</div>
+<p>with <span class="math notranslate nohighlight">\(\sigma = \sqrt{\frac{\hbar}{m \omega}}\)</span>.</p>
+<p id="index-43">This transform is different to the others in that it requires a <code class="docutils literal notranslate"><span class="pre">length_scale</span></code> attribute rather than a <code class="docutils literal notranslate"><span class="pre">domain</span></code> attribute, as the range of the lattice will depend on the number of basis functions used. The <code class="docutils literal notranslate"><span class="pre">length_scale</span></code> attribute defines the scale of the domain as the standard deviation <span class="math notranslate nohighlight">\(\sigma\)</span> of the lowest order Hermite function <span class="math notranslate nohighlight">\(\psi_0(x)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\psi_0(x) = (\sigma^2 \pi)^{-1/4} e^{-x^2/2 \sigma^2}\]</div>
+<p>When a dimension uses the “hermite-gauss” transform, then the variable indexing the basis functions is defined as the name of the dimension prefixed with an “n”.  For example, when referencing the basis function indices for the dimensions “x”, “y”, “z” and “tau”, use the variable “nx”, “ny”, “nz” and “ntau”.</p>
+<p>Applying the operator <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">=</span> <span class="pre">nx</span> <span class="pre">+</span> <span class="pre">0.5</span></code> in Hermite space is therefore equivalent to applying the operator</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{L} = \left(- \frac{\sigma^2}{2}\frac{\partial^2}{\partial x^2} + \frac{1}{2 \sigma^2} x^2 \right)\]</div>
+<p>in coordinate space.</p>
+<p>The Hermite-Gauss transform permits one to work in energy-space for the harmonic oscillator.  The normal Fourier transform of “hermite-gauss” dimensions can also be referenced using the dimension name prefixed with a “k”.  See the examples <code class="docutils literal notranslate"><span class="pre">hermitegauss_transform.xmds</span></code> and <code class="docutils literal notranslate"><span class="pre">hermitegauss_groundstate.xmds</span></code> for examples.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;r&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">length_scale=</span><span class="s">&quot;1.0&quot;</span> <span class="na">transform=</span><span class="s">&quot;hermite-gauss&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="vector-element">
+<span id="vectorelement"></span><span id="index-44"></span><h2>Vector Element<a class="headerlink" href="#vector-element" title="Permalink to this headline">¶</a></h2>
+<p>Vectors are arrays of data, defined over any subset of the transverse dimensions defined in your <a class="reference internal" href="#geometryelement"><span class="std std-ref">Geometry Element</span></a>.  These dimensions are listed in the attribute <code class="docutils literal notranslate"><span class="pre">dimensions</span></code>, which can be an empty string if you wish the vector to not be defined on any dimensions.  If you do not include a <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> attribute then the vector defaults to being a function of all transverse dimensions, not including any aliases.  Vectors are used to store static or dynamic variables, but you do not have to specify their purpose when they are defined.  They can then be referenced and/or changed by sequence elements, as described below.</p>
+<p id="index-45">Each <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> element has a unique name, defined by a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.  It is either complex-valued (the default) or real-valued, which can be specified using the <code class="docutils literal notranslate"><span class="pre">type=&quot;real&quot;</span></code> attribute.</p>
+<p id="componentselement"><span id="index-46"></span>A vector contains a list of variables, each defined by name in the <code class="docutils literal notranslate"><span class="pre">&lt;components&gt;</span></code> element.  The name of each component is the name used to reference it later in the simulation.</p>
+<p id="index-47">Vectors are initialised at the beginning of a simulation, either from code or from an input file.  The basis choice for this initialisation defaults to the normal space as defined in the <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element, but any transverse dimension can be initialised in their transform basis by specifying them in an <code class="docutils literal notranslate"><span class="pre">initial_basis</span></code> attribute.  The <code class="docutils literal notranslate"><span class="pre">initial_basis</span></code> attribute lists dimensions either by their name as defined by the <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element, or by their transformed name.  For example, to initialise a two-dimensional vector defined with <code class="docutils literal notranslate"><span class="pre">dimensions=&quot;x</span> <span class="pre">y&quot;</span></code> in Fourier space for the y-dimension, we would include the attribute <code class="docutils literal notranslate"><span class="pre">initial_basis=&quot;x</span> <span class="pre">ky&quot;</span></code>, or just <code class="docutils literal notranslate"><span class="pre">initial_basis=&quot;ky&quot;</span></code>.</p>
+<p id="initialisationelement"><span id="index-48"></span>When initialising the vector within the XMDS script, the appropriate code is placed in a ‘CDATA’ block inside an <code class="docutils literal notranslate"><span class="pre">&lt;initialisation&gt;</span></code> element.  This code is in standard C-syntax, and should reference the components of the vector by name.  XMDS defines a few useful <a class="reference internal" href="#xmdscsyntax"><span class="std std-ref">shorthand macros</span></a> for this C-code.  If you wish to initialise all the components of the vector as zeros, then it suffices simply to add the attribute <code class="docutils literal notranslate"><span class="pre">kind=&quot;zero&quot;</span></code> or to omit the <code class="docutils literal notranslate"><span class="pre">&lt;initialisation&gt;</span></code> element entirely.</p>
+<p id="referencingnonlocal"><span id="index-49"></span>While the default XMDS behaviour is to reference all variables locally, any vector can be referenced non-locally.  The notation for referencing the value of a vector ‘phi’ with a dimension ‘j’ at a value of ‘j=jk’ is <code class="docutils literal notranslate"><span class="pre">phi(j</span> <span class="pre">=&gt;</span> <span class="pre">jk)</span></code>.  Multiple non-local dimensions are addressed by adding the references in a list, e.g. <code class="docutils literal notranslate"><span class="pre">phi(j</span> <span class="pre">=&gt;</span> <span class="pre">jk,</span> <span class="pre">x</span> <span class="pre">=&gt;</span> <span class="pre">y)</span></code>.  See <code class="docutils literal notranslate"><span class="pre">2DMultistateSE.xmds</span></code> for an example.</p>
+<p>Dimensions can only be accessed non-locally if one of the following conditions is true:</p>
+<ul class="simple">
+<li><p>The dimension is an <code class="docutils literal notranslate"><span class="pre">integer</span></code> dimension,</p></li>
+<li><p>The dimension is accessed with an <a class="reference internal" href="advanced_topics.html#dimensionaliases"><span class="std std-ref">alias</span></a> of that dimension. For example, <code class="docutils literal notranslate"><span class="pre">phi(x</span> <span class="pre">=&gt;</span> <span class="pre">y)</span></code> if the dimension <code class="docutils literal notranslate"><span class="pre">x</span></code> has <code class="docutils literal notranslate"><span class="pre">y</span></code> as an alias, or vice-versa.</p></li>
+<li><p>The dimension is a Fourier transform dimension (<code class="docutils literal notranslate"><span class="pre">dft</span></code>), used in the spectral basis (i.e. <code class="docutils literal notranslate"><span class="pre">kx</span></code> for an <code class="docutils literal notranslate"><span class="pre">x</span></code> dimension) and it is accessed with the negative of that dimension.  For example <code class="docutils literal notranslate"><span class="pre">phi(kx</span> <span class="pre">=&gt;</span> <span class="pre">-kx)</span></code>.</p></li>
+<li><p>The dimension is uniformly spaced (i.e. corresponds to the spatial basis of a dimension with a transform of <code class="docutils literal notranslate"><span class="pre">dft</span></code>, <code class="docutils literal notranslate"><span class="pre">dct</span></code>, <code class="docutils literal notranslate"><span class="pre">dst</span></code> or <code class="docutils literal notranslate"><span class="pre">none</span></code>), the dimension is symmetric about zero and it is accessed with the negative of the dimension name.  For example <code class="docutils literal notranslate"><span class="pre">phi(x</span> <span class="pre">=&gt;</span> <span class="pre">-x)</span></code> for a dimension with domain of <code class="docutils literal notranslate"><span class="pre">(-1.2,</span> <span class="pre">1.2)</span></code>.</p></li>
+<li><p>The dimension is uniformly spaced (i.e. corresponds to the spatial basis of a dimension with a transform of <code class="docutils literal notranslate"><span class="pre">dft</span></code>, <code class="docutils literal notranslate"><span class="pre">dct</span></code>, <code class="docutils literal notranslate"><span class="pre">dst</span></code> or <code class="docutils literal notranslate"><span class="pre">none</span></code>), and it is accessed with the lower limit of that dimension.  For example, <code class="docutils literal notranslate"><span class="pre">phi(x</span> <span class="pre">=&gt;</span> <span class="pre">-1.2)</span></code> for a dimension with a domain of <code class="docutils literal notranslate"><span class="pre">(-1.2,</span> <span class="pre">1.2)</span></code>.  Note that the dimension must be accessed with the exact characters used in the definition of the domain.  For the previous example <code class="docutils literal notranslate"><span class="pre">phi(x</span> <span class="pre">=&gt;</span> <span class="pre">-1.20)</span></code> does not satisfy this condition.</p></li>
+<li><p><strong>Advanced behaviour</strong>: The value of a variable at an arbitrary point can be accessed via the integer index for that dimension. For example <code class="docutils literal notranslate"><span class="pre">phi(x_index</span> <span class="pre">=&gt;</span> <span class="pre">3)</span></code> accesses the value of <code class="docutils literal notranslate"><span class="pre">phi</span></code> at the grid point with index 3.  As <code class="docutils literal notranslate"><span class="pre">x_index</span></code> is zero-based, this will be the <em>fourth</em> grid point.  It is highly recommended that the <a class="reference internal" href="#diagnostics"><span class="std std-ref">diagnostics</span></a> feature be used when writing simulations using this feature.  Once the simulation has been tested, <code class="docutils literal notranslate"><span class="pre">&lt;diagnostics&gt;</span></code> can be turned off for data-taking runs.</p></li>
+</ul>
+<p id="index-50">Note that a dimension cannot be accessed non-locally in <code class="docutils literal notranslate"><span class="pre">distributed-mpi</span></code> simulations if the simulation is distributed across that dimension.</p>
+<span class="target" id="filenameelement"><span id="index-51"></span></span><p id="index-52">If you wish to initialise from a file, then you can choose to initialise from an hdf5 file using <code class="docutils literal notranslate"><span class="pre">kind=&quot;hdf5&quot;</span></code> in the <code class="docutils literal notranslate"><span class="pre">&lt;initialisation&gt;</span></code> element, and then supply the name of the input file with the <code class="docutils literal notranslate"><span class="pre">filename</span></code> element.  This is a standard data format which can be generated from XMDS, or from another program.  An example for generating a file in another program for input into XMDS is detailed in the Advanced topic: <a class="reference internal" href="advanced_topics.html#importing"><span class="std std-ref">Importing data</span></a>.</p>
+<p id="index-53">When initialising from a file, the default is to require the lattice of the transverse dimensions to exactly match the lattice defined by XMDS.  There is an option to import data defined on a subset or superset of the lattice points.  Obviously, the dimensionality of the imported field still has to be correct.  This option is activated by defining the attribute <code class="docutils literal notranslate"><span class="pre">geometry_matching_mode=&quot;loose&quot;</span></code>.  The default option is defined as <code class="docutils literal notranslate"><span class="pre">geometry_matching_mode=&quot;strict&quot;</span></code>.  A requirement of the initialisation geometry is that the lattice points of the input file are spaced identically to those of the simulation grid.  This allows expanding or contracting a domain between simulations.  If used in Fourier space, this feature can be used for coarsening or refining a simulation grid.  See <a class="reference internal" href="advanced_topics.html#loosegeometrymatchingmode"><span class="std std-ref">‘Loose’ geometry_matching_mode</span></a> for details.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1, 1)&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+
+    <span class="c">&lt;!-- A one-dimensional vector with dimension &#39;x&#39; --&gt;</span>
+    <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;initialisation&gt;</span>
+            <span class="cp">&lt;![CDATA[</span>
+                <span class="c1">// &#39;cis(x)&#39; is cos(x) + i * sin(x)</span>
+                <span class="n">phi</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="mf">-0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">cis</span><span class="p">(</span><span class="mi">40</span> <span class="o">*</span> <span class="n">x</span><span class="p">);</span>
+            <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/initialisation&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+
+    <span class="c">&lt;!-- A zero-dimensional real vector with components u and v --&gt;</span>
+    <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;zero_dim&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span>
+            u v
+        <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;initialisation</span> <span class="na">kind=</span><span class="s">&quot;hdf5&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;filename&gt;</span>data.h5<span class="nt">&lt;/filename&gt;</span>
+        <span class="nt">&lt;/initialisation&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="the-dependencies-element">
+<span id="dependencies"></span><span id="index-54"></span><h3>The dependencies element<a class="headerlink" href="#the-dependencies-element" title="Permalink to this headline">¶</a></h3>
+<p>Often a vector, computed vector, filter, integration operator or output group will reference the values in one or more other vectors, computed vectors or noise vectors.  These dependencies are defined via a <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element, which lists the names of the vectors.  The components of those vectors will then be available for use in the ‘CDATA’ block, and can be referenced by their name.</p>
+<p id="index-55">For a vector, the basis of the dependent vectors, and therefore the basis of the dimensions available in the ‘CDATA’ block, are defined by the <code class="docutils literal notranslate"><span class="pre">initial_basis</span></code> of the vector.  For a <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> <code class="docutils literal notranslate"><span class="pre">&lt;integration_vector&gt;</span></code>, or moment group vector, the basis of the dependencies can be specified by a <code class="docutils literal notranslate"><span class="pre">basis</span></code> attribute in the <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element.  For example, <code class="docutils literal notranslate"><span class="pre">basis=&quot;x</span> <span class="pre">ny</span> <span class="pre">kz&quot;</span></code>.</p>
+<p>Any transverse dimensions that appear in the <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element that do not appear in the <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> attribute of the vector are integrated out.  For integer dimensions, this is simply an implicit sum over the dimension.  For real-valued dimensions, this is an implicit integral over the range of that dimension.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1, 1)&quot;</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;y&quot;</span> <span class="na">lattice=</span><span class="s">&quot;10&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-3, 2)&quot;</span> <span class="na">transform=</span><span class="s">&quot;dct&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+
+    <span class="c">&lt;!-- A one-dimensional vector with dimension &#39;x&#39; --&gt;</span>
+    <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;initialisation&gt;</span>
+            <span class="c">&lt;!--</span>
+<span class="c">                The initialisation of the vector &#39;wavefunction&#39; depends on information</span>
+<span class="c">                in the &#39;two_dim&#39; vector.  The vector two_dim is DCT-transformed into the</span>
+<span class="c">                (x, ky) basis, and the ky dimension is implicitly integrated over in the</span>
+<span class="c">                following initialisation code</span>
+<span class="c">              --&gt;</span>
+            <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;x ky&quot;</span><span class="nt">&gt;</span>two_dim<span class="nt">&lt;/dependencies&gt;</span>
+            <span class="cp">&lt;![CDATA[</span>
+                <span class="c1">// &#39;cis(x)&#39; is cos(x) + i * sin(x)</span>
+                <span class="n">phi</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="mf">-0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">v</span><span class="p">)</span> <span class="o">*</span> <span class="n">cis</span><span class="p">(</span><span class="n">u</span> <span class="o">*</span> <span class="n">x</span><span class="p">);</span>
+            <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/initialisation&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+
+    <span class="c">&lt;!-- A two-dimensional real vector with components u and v --&gt;</span>
+    <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;two_dim&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span>
+            u v
+        <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;initialisation</span> <span class="na">kind=</span><span class="s">&quot;hdf5&quot;</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;filename&gt;</span>data.h5<span class="nt">&lt;/filename&gt;</span>
+        <span class="nt">&lt;/initialisation&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="computed-vector-element">
+<span id="computedvectorelement"></span><span id="index-56"></span><h2>Computed Vector Element<a class="headerlink" href="#computed-vector-element" title="Permalink to this headline">¶</a></h2>
+<p id="evaluationelement"><span id="index-57"></span>Computed vectors are arrays of data much like normal <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> elements, but they are always calculated as they are referenced, so they cannot be initialised from file.  It is defined with a <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> element, which has a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute, optional <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> attributes, and a <code class="docutils literal notranslate"><span class="pre">&lt;components&gt;</span></code> element, just like a <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> element.  Instead of an &lt;<a class="reference internal" href="#initialisationelement"><span class="std std-ref">initialisation</span></a>&gt; element, it has an <code class="docutils literal notranslate"><span class="pre">&lt;evaluation&gt;</span></code> element that serves the same purpose.  The <code class="docutils literal notranslate"><span class="pre">&lt;evaluation&gt;</span></code> element contains a <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element (see <code class="docutils literal notranslate"><span class="pre">above&lt;Dependencies&gt;</span></code>), and a ‘CDATA’ block containing the code that defines it.</p>
+<p>As it is not being stored, a <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> does not have or require an <code class="docutils literal notranslate"><span class="pre">initial_basis</span></code> attribute, as it will be transformed into an appropriate basis for the element that references it.  The basis for its evaluation will be determined entirely by the <code class="docutils literal notranslate"><span class="pre">basis</span></code> attribute of the <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1, 1)&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+
+    <span class="c">&lt;!-- A one-dimensional vector with dimension &#39;x&#39; --&gt;</span>
+    <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;initialisation&gt;</span>
+            <span class="cp">&lt;![CDATA[</span>
+                <span class="c1">// &#39;cis(x)&#39; is cos(x) + i * sin(x)</span>
+                <span class="n">phi</span> <span class="o">=</span> <span class="n">exp</span><span class="p">(</span><span class="mf">-0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">cis</span><span class="p">(</span><span class="mi">40</span> <span class="o">*</span> <span class="n">x</span><span class="p">);</span>
+            <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/initialisation&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+
+    <span class="c">&lt;!-- A zero-dimensional real computed vector with components Ncalc --&gt;</span>
+    <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;zero_dim&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span>
+            Ncalc
+        <span class="nt">&lt;/components&gt;</span>
+        <span class="nt">&lt;evaluation&gt;</span>
+            <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+            <span class="cp">&lt;![CDATA[</span>
+                <span class="c1">// Implicitly integrating over the dimension &#39;x&#39;</span>
+                <span class="n">Ncalc</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+            <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/evaluation&gt;</span>
+    <span class="nt">&lt;/computed_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="noise-vector-element">
+<span id="noisevectorelement"></span><span id="index-58"></span><h2>Noise Vector Element<a class="headerlink" href="#noise-vector-element" title="Permalink to this headline">¶</a></h2>
+<p>Noise vectors are used like computed vectors, but when they are evaluated they generate arrays of random numbers of various kinds.  They do not depend on other vectors, and are not initialised by code.  They are defined by a <code class="docutils literal notranslate"><span class="pre">&lt;noise_vector&gt;</span></code> element, which has a <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute, and optional <code class="docutils literal notranslate"><span class="pre">dimensions</span></code>, <code class="docutils literal notranslate"><span class="pre">initial_basis</span></code> and <code class="docutils literal notranslate"><span class="pre">type</span></code> attributes, which work identically as for normal vectors.</p>
+<p>The choice of pseudo-random number generator (RNG) can be specified with the <code class="docutils literal notranslate"><span class="pre">method</span></code> attribute, which has options “posix” (the default), “mkl”, “solirte” and “dsfmt”.  It is only possible to use any particular method if that library is available.  Although “posix” is the default, it is also the slowest, and produces the lowest quality random numbers (although this is typically not a problem).  “mkl” refers to the Intel Math Kernel Library, and is only available if installed.  “solirte” and “dsfmt” are fast, hardware-accelerated random number sources that should work on most systems. “mkl”, “solirte” and “dsfmt” have comparable performance.</p>
+<p>The random number generators can be provided with a seed using the <code class="docutils literal notranslate"><span class="pre">seed</span></code> attribute, which should typically consist of a list of three integers.  All RNGs require positive integers as seeds.  It is possible to use the <a class="reference internal" href="#validation"><span class="std std-ref">&lt;validation kind=”run-time”/&gt;</span></a> feature to use passed variables as seeds.  It is advantageous to use fixed seeds rather than timer-based seeds, as the <a class="reference internal" href="#errorcheck"><span class="std std-ref">&lt;error_check&gt;</span></a> element can test for strong convergence if the same seeds are used for both integrations.  If the <code class="docutils literal notranslate"><span class="pre">seed</span></code> attribute is not specified, then seeds will be generated at the time the simulation is run.  Different executions of the same simulation will therefore give different results.  However, results can be reproduced by examining the <code class="docutils literal notranslate"><span class="pre">.xsil</span></code> file produced by the simulation which contains the generated seeds.  If these seeds are used for the <code class="docutils literal notranslate"><span class="pre">seed</span></code> attribute, the same results can be reproduced.  Unless you need to reproduce particular results, it is unnecessary to specify the <code class="docutils literal notranslate"><span class="pre">seed</span></code> attribute.</p>
+<p>The different types of noise vectors are defined by a mandatory <code class="docutils literal notranslate"><span class="pre">kind</span></code> attribute, which must take the value of ‘gauss’, ‘gaussian’, ‘wiener’, ‘poissonian’,’jump’ or ‘uniform’.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;geometry&gt;</span>
+        <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+        <span class="nt">&lt;transverse_dimensions&gt;</span>
+            <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1, 1)&quot;</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/transverse_dimensions&gt;</span>
+    <span class="nt">&lt;/geometry&gt;</span>
+
+    <span class="c">&lt;!--</span>
+<span class="c">        A one-dimensional complex wiener noise vector.</span>
+<span class="c">        This noise is appropriate for using in the complex</span>
+<span class="c">        random-walk equation of motion:</span>
+<span class="c">            dz_dt = eta;</span>
+<span class="c">    --&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;noise&quot;</span> <span class="na">kind=</span><span class="s">&quot;wiener&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;components&gt;</span>
+            eta
+        <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="uniform-noise">
+<span id="uniformnoise"></span><span id="index-59"></span><h3>Uniform noise<a class="headerlink" href="#uniform-noise" title="Permalink to this headline">¶</a></h3>
+<p>Uniform noises defined over any transverse dimensions are simply uniformly distributed random numbers between zero and one.  This noise is an example of a “static” noise, i.e. one suitable for initial conditions of a field.  If it were included in the equations of motion for a field, then the effect of the noise would depend on the lattice spacing of the propagation dimension.  XMDS therefore does not allow this noise type to be used in integration elements.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;drivingNoise&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">kind=</span><span class="s">&quot;uniform&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="na">method=</span><span class="s">&quot;dsfmt&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>Eta<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/noise_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="gaussian-noise">
+<span id="gaussiannoise"></span><span id="index-60"></span><h3>Gaussian noise<a class="headerlink" href="#gaussian-noise" title="Permalink to this headline">¶</a></h3>
+<p>Noise generated with the “gaussian” method is gaussian distributed with zero mean.  For a real-valued noise vector, the variance at each point is the inverse of the volume element of the transverse dimensions in the vector.  This volume element for a single transverse dimension is that used to perform integrals over that dimension.  For example, it would include a factor of <span class="math notranslate nohighlight">\(r^2\)</span> for a dimension “r” defined with a <code class="docutils literal notranslate"><span class="pre">spherical-bessel</span></code> transform.  It can be non-uniform for dimensions based on non-Fourier transforms, and will include the product of the <code class="docutils literal notranslate"><span class="pre">volume_prefactor</span></code> attribute as specified in the <a class="reference internal" href="#geometryelement"><span class="std std-ref">Geometry</span></a> element.  The volume element for an integer-type dimension is unity (i.e. where the integral is just an unweighted sum).  The volume element for a <code class="docutils literal notranslate"><span class="pre">noise_vector</span></code> with multiple dimensions is simply the product of the volume elements of the individual dimensions.</p>
+<p>This lattice-dependent variance is typical in most applications of partial differential equations with stochastic initial conditions, as the physical quantity is the variance of the field over some finite volume, which does not change if the variance at each lattice site varies as described above.</p>
+<p>For complex-valued noise vector, the real and imaginary parts of the noise are independent, and each have half the variance of a real-valued noise.  This means that the modulus squared of a complex-valued noise vector has the same variance as a real-valued noise vector at each point.</p>
+<p>Gaussian noise vectors are an example of a “static” noise, i.e. one suitable for initial conditions of a field.  If they were included in the equations of motion for a field, then the effect of the noise would depend on the lattice spacing of the propagation dimension.  XMDS therefore does not allow this noise type to be used in integration elements.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;initialNoise&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">kind=</span><span class="s">&quot;gauss&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">method=</span><span class="s">&quot;posix&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>fuzz<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/noise_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="wiener-noise">
+<span id="wienernoise"></span><span id="index-61"></span><h3>Wiener noise<a class="headerlink" href="#wiener-noise" title="Permalink to this headline">¶</a></h3>
+<p>Noise generated with the “wiener” method is gaussian distributed with zero mean and the same variance as the static “gaussian” noise defined above, multiplied by a factor of the lattice step in the propagation dimension.  This means that these noise vectors can be used to define Wiener noises for standard stochastic ordinary or partial differential equations.  Most integrators in XMDS effectively interpret these noises as Stratonovich increments.</p>
+<p>As a dynamic noise, a Wiener process is not well-defined except in an <code class="docutils literal notranslate"><span class="pre">integrate</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;diffusion&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">kind=</span><span class="s">&quot;wiener&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">method=</span><span class="s">&quot;solirte&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>dW<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/noise_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="poissonian-noise">
+<span id="poissioniannoise"></span><span id="index-62"></span><h3>Poissonian noise<a class="headerlink" href="#poissonian-noise" title="Permalink to this headline">¶</a></h3>
+<p>A noise vector using the “poissonian” method generates a random variable from a Poissonian distribution.  While the the Poisson distribution is integer-valued, the variable will be cast as a real number.  The rate of the Poissonian distribution is defined by the <code class="docutils literal notranslate"><span class="pre">mean</span></code> or <code class="docutils literal notranslate"><span class="pre">mean-density</span></code> attributes.  These are are synonyms, and must be defined as positive real numbers.  For Poissonian noises defined over real-valued transverse dimensions, the rate is given by the product of this <code class="docutils literal notranslate"><span class="pre">mean-density</span></code> attribute and the volume element at that point, taking into account all transverse dimensions, including their <code class="docutils literal notranslate"><span class="pre">volume_prefactor</span></code> attributes.  The result is that the integral over each volume in space is a sample from a Poissonian distribution of that rate.</p>
+<p>Poissonian noise vectors are an example of a “static” noise, i.e. one suitable for initial conditions of a field.  If they were included in the equations of motion for a field, then the effect of the noise would depend on the lattice spacing of the propagation dimension.  XMDS therefore does not allow this noise type to be used in integration elements.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;initialDistribution&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">kind=</span><span class="s">&quot;poissonian&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">mean-density=</span><span class="s">&quot;2.7&quot;</span> <span class="na">method=</span><span class="s">&quot;solirte&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>Pdist<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/noise_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="jump-noise">
+<span id="jumpnoise"></span><span id="index-63"></span><h3>Jump noise<a class="headerlink" href="#jump-noise" title="Permalink to this headline">¶</a></h3>
+<p>A noise vector using the “jump” method is the dynamic version of the poissonian noise method, and must have the <code class="docutils literal notranslate"><span class="pre">mean-rate</span></code> attribute specified as a positive real number.  The variable at each point is chosen from a Poissonian distribution with a mean equal to the product of three variables: the <code class="docutils literal notranslate"><span class="pre">mean-rate</span></code> attribute; the volume of the element as defined by its transverse dimensions (including their <code class="docutils literal notranslate"><span class="pre">volume_prefactor</span></code> attributes); and the step size in the propagation dimension.  Normally defined in the limit where the noise value is zero almost always, with a few occurrences where it is unity, and none of any higher value, this type of noise is commonly used in differential equations with a Poissonian jump process.</p>
+<p>It is common to wish to vary the mean rate of a jump process, which means that the <code class="docutils literal notranslate"><span class="pre">mean-rate</span></code> attribute must be a variable or a piece of code.  These cannot be verified to be a positive real number at compile time, so they must be used with the <a class="reference internal" href="#validation"><span class="std std-ref">&lt;validation&gt;</span></a> feature with either the <code class="docutils literal notranslate"><span class="pre">kind=&quot;none&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">kind=&quot;run-time&quot;</span></code> attributes.</p>
+<p>As a dynamic noise, a jump process is not well-defined except in an <code class="docutils literal notranslate"><span class="pre">integrate</span></code> element.  The only algorithm that currently integrates jump noises correctly is the Euler algorithm.  This can be implemented by the “SI” method with the option <code class="docutils literal notranslate"><span class="pre">iterations=&quot;1&quot;</span></code>.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;initialDistribution&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">kind=</span><span class="s">&quot;jump&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">mean-rate=</span><span class="s">&quot;2.7&quot;</span> <span class="na">method=</span><span class="s">&quot;solirte&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>dN<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;/noise_vector&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="sequence-element">
+<span id="sequenceelement"></span><span id="index-64"></span><h2>Sequence Element<a class="headerlink" href="#sequence-element" title="Permalink to this headline">¶</a></h2>
+<p>All processing of vectors happens in sequence elements.  Each simulation must have exactly one main sequence element, but it can then contain any number of nested sequence elements.  A sequence element can contain any number of <code class="docutils literal notranslate"><span class="pre">&lt;sequence&gt;</span></code>, <a class="reference internal" href="#filterelement"><span class="std std-ref">&lt;filter&gt;</span></a>, <a class="reference internal" href="#integrateelement"><span class="std std-ref">&lt;integrate&gt;</span></a> and/or <a class="reference internal" href="#breakpointelement"><span class="std std-ref">&lt;breakpoint&gt;</span></a> elements, which are executed in the order they are written.  A sequence can be repeated a number of times by using the <code class="docutils literal notranslate"><span class="pre">cycles</span></code> attribute.  For example, <code class="docutils literal notranslate"><span class="pre">&lt;sequence</span> <span class="pre">cycles=&quot;10&quot;&gt;</span></code> will execute the elements in that sequence 10 times.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;sequence</span> <span class="na">cycles=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;sequence&gt;</span>  ... <span class="nt">&lt;/sequence&gt;</span>
+        <span class="nt">&lt;filter&gt;</span> ... <span class="nt">&lt;/filter&gt;</span>
+        <span class="nt">&lt;integrate&gt;</span> ...<span class="nt">&lt;/integrate&gt;</span>
+    <span class="nt">&lt;/sequence&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="filter-element">
+<span id="filterelement"></span><span id="index-65"></span><h2>Filter element<a class="headerlink" href="#filter-element" title="Permalink to this headline">¶</a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element can be placed inside the <code class="docutils literal notranslate"><span class="pre">&lt;simulation&gt;</span></code> element, a <a class="reference internal" href="#sequenceelement"><span class="std std-ref">&lt;sequence&gt;</span></a> element, or an <a class="reference internal" href="#integrateelement"><span class="std std-ref">&lt;integrate&gt;</span></a> element.  It contains a ‘CDATA’ block and an optional <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element, which may give access to variables in other <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> or <code class="docutils literal notranslate"><span class="pre">&lt;noise_vector&gt;</span></code> elements.  The code inside the ‘CDATA’ block is executed over the combined tensor product space of the dependencies, or simply once if there is no dependencies element.  This element therefore allows arbitrary execution of C-code.</p>
+<p id="index-66">If a <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element is placed in a <code class="docutils literal notranslate"><span class="pre">&lt;sequence&gt;</span></code> element, then it executes once at that point in the sequence.  If it is placed in an <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element, then it is executed each integration step as described in the description of the <a class="reference internal" href="#filterselement"><span class="std std-ref">&lt;filters&gt;</span></a> element.</p>
+<p>If a filter is placed in the <code class="docutils literal notranslate"><span class="pre">&lt;simulation&gt;</span></code> element, it must be given a name with the <code class="docutils literal notranslate"><span class="pre">name</span></code> attribute.  It can thenceforth be called in CDATA blocks by that name.  For example: <code class="docutils literal notranslate"><span class="pre">&lt;filter</span> <span class="pre">name=&quot;filterName&quot;&gt;</span></code> allows the function to be called using the C-function <code class="docutils literal notranslate"><span class="pre">filterName()</span></code>.  Other filters that are given names can also be called in that fashion. This is useful for applying a filter conditionally.  The most efficient way of doing this is to call the function from the piece of code that contains the conditional statement (likely another <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element) rather than embed the conditional function in the filter itself, as the latter method can involve the conditional statement being evaluated multiple times over the transverse dimensions.</p>
+<p>One of the common uses of a filter element is to apply discontinuous changes to the vectors and variables of the simulation.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;filter&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello world from the first filter segment!  This filter rather wastefully calls the second one.</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="n">fname</span><span class="p">();</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+
+    <span class="nt">&lt;filter</span> <span class="na">name=</span><span class="s">&quot;fname&quot;</span><span class="nt">&gt;</span>
+       <span class="nt">&lt;dependencies&gt;</span>normalisation wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+       <span class="cp">&lt;![CDATA[</span>
+         <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+       <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+<span class="nt">&lt;/sequence&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="integrate-element">
+<span id="integrateelement"></span><span id="index-67"></span><h2>Integrate element<a class="headerlink" href="#integrate-element" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element is at the heart of most XMDS simulations.  It is used to integrate a set of (potentially stochastic) first-order differential equations for one or more of the vectors defined using the <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> element along the propagation dimension.  At the beginning of the simulation, the value of the propagation dimension is set to zero, and the vectors are initialised as defined in the <a class="reference internal" href="#vectorelement"><span class="std std-ref">&lt;vector&gt;</span></a> element.  As successive sequence elements change these variables, each integrate element simply integrates onward from the current values.</p>
+<p id="index-68">The length of the integration is defined by the <code class="docutils literal notranslate"><span class="pre">interval</span></code> attribute, which must be a positive real number.  An <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element must have an <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> attribute defined, which defines the integration method.  Current methods include <a class="reference internal" href="#si"><span class="std std-ref">SI</span></a>, <a class="reference internal" href="#si"><span class="std std-ref">SIC</span></a>, <a class="reference internal" href="#rk4"><span class="std std-ref">RK4</span></a>, <a class="reference internal" href="#rk4"><span class="std std-ref">RK9</span></a>, <a class="reference internal" href="#ark45"><span class="std std-ref">ARK45</span></a>, and <a class="reference internal" href="#ark45"><span class="std std-ref">ARK89</span></a>.  Fixed step algorithms require a <code class="docutils literal notranslate"><span class="pre">steps</span></code> attribute, which must be a positive integer that defines the number of (evenly spaced) integration steps.  Adaptive stepsize algorithms require a <code class="docutils literal notranslate"><span class="pre">tolerance</span></code> attribute that must be a positive real number much smaller than one, which defines the allowable relative error per integration step.  If the <code class="docutils literal notranslate"><span class="pre">steps</span></code> attribute is specified for an adaptive stepsize algorithm, then it is used to generate the initial stepsize estimate.</p>
+<p id="sampleselement"><span id="index-69"></span>The optional <code class="docutils literal notranslate"><span class="pre">&lt;samples&gt;</span></code> element is used to track the evolution of one or more vectors or variables during an integration.  This element must contain a non-negative integer for each <a class="reference internal" href="#samplinggroupelement"><span class="std std-ref">&lt;sampling_group&gt;</span></a> element defined in the simulation’s <a class="reference internal" href="#outputelement"><span class="std std-ref">&lt;output&gt;</span></a> element.  The list of integers then defines the number of times that the moments defined in those groups will be sampled.  For a fixed step algorithm, each non-zero number of samples must be a factor of the total number of steps.</p>
+<p>The vectors to be integrated and the form of the differential equations are defined in the <a class="reference internal" href="#operatorselement"><span class="std std-ref">&lt;operators&gt;</span></a> element (or elements).  Filters to be applied each step can be defined with optional <a class="reference internal" href="#filterselement"><span class="std std-ref">&lt;filters&gt;</span></a> elements.</p>
+<p>Computed vectors can be defined with the <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> element.  These act exactly like a globally defined <a class="reference internal" href="#computedvectorelement"><span class="std std-ref">Computed Vector Element</span></a>, but are only available within the single <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK89&quot;</span> <span class="na">interval=</span><span class="s">&quot;1e-4&quot;</span> <span class="na">steps=</span><span class="s">&quot;10000&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-8&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;samples&gt;</span>20<span class="nt">&lt;/samples&gt;</span>
+  <span class="nt">&lt;filters&gt;</span>
+    <span class="nt">&lt;filter&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction normalisation<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>   <span class="c1">// Correct normalisation of the wavefunction</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+  <span class="nt">&lt;/filters&gt;</span>
+  <span class="nt">&lt;operators&gt;</span>
+    <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;operator_names&gt;</span>T<span class="nt">&lt;/operator_names&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="mf">-0.5</span><span class="o">*</span><span class="n">hbar</span><span class="o">/</span><span class="n">M</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/operator&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>potential<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">T</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">V1</span> <span class="o">+</span> <span class="n">Uint</span><span class="o">/</span><span class="n">hbar</span><span class="o">*</span><span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span><span class="o">*</span><span class="n">phi</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+  <span class="nt">&lt;/operators&gt;</span>
+<span class="nt">&lt;/integrate&gt;</span>
+</pre></div>
+</div>
+<div class="section" id="operators-and-operator-elements">
+<span id="operatorselement"></span><span id="index-70"></span><h3>Operators and operator elements<a class="headerlink" href="#operators-and-operator-elements" title="Permalink to this headline">¶</a></h3>
+<p>An <a class="reference internal" href="#integrateelement"><span class="std std-ref">&lt;integrate&gt;</span></a> element must contain one or more <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> elements, which define both which vectors are to be integrated, and their derivative in the propagation dimension.  When all vectors to be integrated have the same dimensionality, they can all be defined within a single <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> element, and when vectors with different dimension are to be integrated, each set of vectors with the same dimensionality should be placed in separate <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> elements.</p>
+<p id="integrationvectorselement"><span id="index-71"></span>Within each <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> element, the vectors that are to be integrated are listed by name in the <code class="docutils literal notranslate"><span class="pre">&lt;integration_vectors&gt;</span></code> element, and the differential equations are written in a ‘CDATA’ block.   The derivative of each component of the integration vectors must be defined along the propagation dimension.  For example, if the integration vectors have components ‘phi’ and ‘beta’, and the propagation dimension is labelled ‘tau’, then the ‘CDATA’ block must define the variables ‘dphi_dtau’ and ‘dbeta_dtau’.  These derivatives can be any function of the available variables, including any components from other vectors, computed vectors or noise vectors that are listed in the optional <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element.  These dependent vectors must be defined on a subset of the dimensions of the integration vectors.</p>
+<p>When noise vectors are referenced, equations with Wiener noises should be written as though the equations are in differential form, as described in the worked examples <a class="reference internal" href="worked_examples.html#kubo"><span class="std std-ref">Kubo Oscillator</span></a> and <a class="reference internal" href="worked_examples.html#fibre"><span class="std std-ref">Fibre Noise</span></a>.  Jump-based Poisson noises will also be written in an equivalent form, as modelled by the example <code class="docutils literal notranslate"><span class="pre">photodetector.xmds</span></code>.</p>
+<p id="index-72">By default, the name of each component references the local value of the vector, but <a class="reference internal" href="#referencingnonlocal"><span class="std std-ref">nonlocal variables</span></a> can be accessed using the standard syntax.  However, typically the most common (and most efficient) method of referencing nonlocal variables is to reference variables that are local in the <a class="reference internal" href="#transforms"><span class="std std-ref">transformed space</span></a> for a given transverse dimension.  This is done using <code class="docutils literal notranslate"><span class="pre">&lt;operator&gt;</span></code> elements.</p>
+<span class="target" id="operatorelement"><span id="index-73"></span></span><p id="index-74">There are three kinds of <code class="docutils literal notranslate"><span class="pre">&lt;operator&gt;</span></code> elements.  The first is denoted with a <code class="docutils literal notranslate"><span class="pre">kind=&quot;functions&quot;</span></code> attribute, and contains a ‘CDATA’ block that will be executed in the order that it is defined.  This is useful when you wish to calculate functions that do not depend on the transverse dimensions.  Defining these along with the main equations of motion causes them to be recalculated separately for each point.  The second kind of <code class="docutils literal notranslate"><span class="pre">&lt;operator&gt;</span></code> element is used to define an operation in a transformed space.  This is often an efficient method of calculating common nonlocal terms such as derivatives.  The third kind is used to define integration of one or more vectors along a transverse dimension.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;functions&quot;</span><span class="nt">&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+  <span class="n">f</span> <span class="o">=</span> <span class="n">cos</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/operator&gt;</span>
+</pre></div>
+</div>
+<p id="operatornameselement">The second kind of operator element defines a list of operators in an <code class="docutils literal notranslate"><span class="pre">&lt;operator_names&gt;</span></code> element.  The basis of these operators defaults to the transform space unless a different basis is specified using the <code class="docutils literal notranslate"><span class="pre">basis</span></code> attribute.  These operators must then be defined in a ‘CDATA’ block, using any <a class="reference internal" href="#dependencies"><span class="std std-ref">dependencies</span></a> as normal.  The operators defined in these elements can then be used in the ‘CDATA’ block that defines the equations of motion.  The application of operator ‘L’ to vector ‘psi’ is denoted <code class="docutils literal notranslate"><span class="pre">L[psi]</span></code>.  Operators can be applied to functions of vectors using the same notation, such as <code class="docutils literal notranslate"><span class="pre">L[psi*psi]</span></code>.  Aside from the example above, many examples can be found in the examples folder, and the <a class="reference internal" href="worked_examples.html#workedexamples"><span class="std std-ref">Worked Examples</span></a> section of the documentation.</p>
+<span class="target" id="index-75"></span><p id="index-76">Operators of this second kind have the <code class="docutils literal notranslate"><span class="pre">kind=&quot;IP&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">kind=&quot;EX&quot;</span></code> attribute, standing for ‘interaction picture’ and ‘explicit’ operators respectively.  Explicit operators can be used in all situations, and simply construct and calculate a new vector of the form in the square brackets.  IP operators use less memory and can improve speed by allowing larger timesteps, but have two important restrictions.  <strong>Use of IP operators without understanding these restrictions can lead to incorrect code</strong>.  The first restriction is that IP operators can only be applied to named components of one of the integration vectors, and not functions of those components.  The second restriction is that the equations of motion must be written such that the term with the operator is not multiplied by any quantity or used inside a function.  (For those interested, the reason for this is that the IP algorithm applies the operator separately to the rest of the evolution, and therefore the actual text of the <code class="docutils literal notranslate"><span class="pre">L[psi]</span></code> term is replaced by the numeral zero.)  If you must break either of those rules, then you need to use the EX algorithm.</p>
+<p id="index-77">If the IP or EX operator is constant across the integration, then the attribute <code class="docutils literal notranslate"><span class="pre">constant=&quot;yes&quot;</span></code> may be set to ensure that it is precalculated at the start of integration, otherwise the <code class="docutils literal notranslate"><span class="pre">constant=&quot;no&quot;</span></code> attribute ensures that the operator is recalculated at each step.  The <code class="docutils literal notranslate"><span class="pre">constant</span></code> attribute is optional and a sensible default is chosen if the attribute is omitted.  Note that for EX operators the default is <code class="docutils literal notranslate"><span class="pre">constant=&quot;no&quot;</span></code> because the EX operator is typically cheap to calculate and not precomputing it reduces memory bandwidth requirements, usually leading to faster simulations.  If your simulation has a computationally expensive EX operator, it may benefit from adding the <code class="docutils literal notranslate"><span class="pre">constant=&quot;yes&quot;</span></code> attribute.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span> <span class="na">constant=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;operator_names&gt;</span>T<span class="nt">&lt;/operator_names&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">T</span> <span class="o">=</span> <span class="mf">-0.5</span><span class="o">*</span><span class="n">hbar</span><span class="o">/</span><span class="n">M</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/operator&gt;</span>
+</pre></div>
+</div>
+<p id="index-78">The third kind of operator element is used to define an integration along a transverse dimension.  This kind of evolution is called “cross-propagation”, and is described briefly in the examples ‘tla.xmds’, ‘tla_sic.xmds’ and ‘sine_cross.xmds’.  This class of equations have a subset of vectors that have an initial condition on one side of a transverse dimension, and a differential equation defined in that dimension, and as such, this kind of operator element has much of the structure of an entire <a class="reference internal" href="#integrateelement"><span class="std std-ref">&lt;integrate&gt;</span></a> element.</p>
+<p id="index-79">An operator element with the <code class="docutils literal notranslate"><span class="pre">kind=&quot;cross_propagation&quot;</span></code> attribute must specify the transverse dimension along which the integration would proceed with the <code class="docutils literal notranslate"><span class="pre">propagation_dimension</span></code> attribute.  It must also specify its own <a class="reference internal" href="#integrationvectorselement"><span class="std std-ref">&lt;integration_vectors&gt;</span></a> element, its own <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> elements (of the second kind), and may define an optional <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element.  The algorithm to be used for the transverse integration is specified by the <code class="docutils literal notranslate"><span class="pre">algorithm</span></code> attribute, with options being <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;SI&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;RK4&quot;</span></code>.  The derivatives in the cross propagation direction are defined in a ‘CDATA’ block, just as for a normal <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element.</p>
+<span class="target" id="index-80"></span><p id="boundaryconditionelement"><span id="index-81"></span>The boundary conditions are specified by a <code class="docutils literal notranslate"><span class="pre">&lt;boundary_conditions&gt;</span></code> element, which requires the <code class="docutils literal notranslate"><span class="pre">kind=&quot;left&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">kind=&quot;right&quot;</span></code> attribute to specify on which side of the grid that the boundary conditions are specified.  The boundary conditions for the <code class="docutils literal notranslate"><span class="pre">&lt;integration_vectors&gt;</span></code> are then specified in a ‘CDATA’ block, which may refer to vectors in an optional <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element that can be contained in the <code class="docutils literal notranslate"><span class="pre">&lt;boundary_conditions&gt;</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;cross_propagation&quot;</span> <span class="na">algorithm=</span><span class="s">&quot;RK4&quot;</span> <span class="na">propagation_dimension=</span><span class="s">&quot;t&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;integration_vectors&gt;</span>cross<span class="nt">&lt;/integration_vectors&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>constants<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="nt">&lt;boundary_condition</span> <span class="na">kind=</span><span class="s">&quot;left&quot;</span><span class="nt">&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">v</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="n">w</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/boundary_condition&gt;</span>
+
+  <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span> <span class="na">constant=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;operator_names&gt;</span>L<span class="nt">&lt;/operator_names&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">L</span> <span class="o">=</span> <span class="kc">i</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/operator&gt;</span>
+
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">dv_dt</span> <span class="o">=</span> <span class="kc">i</span><span class="o">*</span><span class="n">v</span><span class="p">;</span>
+    <span class="n">dw_dt</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="n">w</span><span class="p">];</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/operator&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="algorithms">
+<span id="id8"></span><h3>Algorithms<a class="headerlink" href="#algorithms" title="Permalink to this headline">¶</a></h3>
+<p>The stability, efficiency and even convergence of a numerical integration can depend on the method.  Due to the varying properties of different sets of equations, it is impossible to define the best method for all equations, so XMDS provides an option to use different algorithms.  These include fixed step algorithms, which divide the integration region into equal steps, and adaptive stepsize algorithms, which attempt to estimate the error in the simulation in order to choose an appropriate size for the next step.  As a first guess, a good method for a deterministic integration would be <a class="reference internal" href="#ark45"><span class="std std-ref">ARK89</span></a>, and a good guess for a stochastic method would be the <a class="reference internal" href="#si"><span class="std std-ref">SI and SIC algorithms</span></a>.</p>
+<p>For the purposes of the descriptions below, we will assume that we are considering the following set of coupled differential equations for the vector of variables <span class="math notranslate nohighlight">\(\mathbf{x}(t)\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\frac{d x_j}{dt} = f_j(\mathbf{x}(t),t)\]</div>
+<div class="section" id="si-and-sic-algorithms">
+<span id="si"></span><span id="index-82"></span><h4>SI and SIC algorithms<a class="headerlink" href="#si-and-sic-algorithms" title="Permalink to this headline">¶</a></h4>
+<p>The SI algorithm is a semi-implicit fixed-step algorithm that finds the increment of the vector by solving</p>
+<div class="math notranslate nohighlight">
+\[x_j(t+\Delta t) = x_j(t) + f_j\left(\mathbf{x}(t+\frac{\Delta t}{2}),t+\frac{\Delta t}{2}\right) \;\Delta t\]</div>
+<p>using a simple iteration to find the values of the vector at the midpoint of the step self-consistently.  The number of iterations can be set using the <code class="docutils literal notranslate"><span class="pre">iterations</span></code> attribute, and it defaults to <code class="docutils literal notranslate"><span class="pre">iterations=&quot;3&quot;</span></code>.  The choice of <code class="docutils literal notranslate"><span class="pre">iterations=&quot;1&quot;</span></code> is therefore fully equivalent to the Euler algorithm, where</p>
+<div class="math notranslate nohighlight">
+\[x_j(t+\Delta t) = x_j(t) + f_j\left(\mathbf{x}(t),t\right) \;\Delta t.\]</div>
+<p>The Euler algorithm is the only safe algorithm for direct integration of <a class="reference internal" href="#jumpnoise"><span class="std std-ref">jump-based Poisson processes</span></a>.  Efficient numerical solution of those types of equations is best done via a process of triggered filters, which will be described in the <a class="reference internal" href="advanced_topics.html#advancedtopics"><span class="std std-ref">Advanced Topics</span></a> section.  Integrating using the Euler algorithm computes the Ito integral, as opposed to the Stratonovich integral, which all the other algorithms compute.</p>
+<p>When SI integration is used in conjunction with SI cross-propagation, a slight variant of the SI algorithm can be employed where the integration in both directions is contained within the iteration process.  This is activated by using <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;SIC&quot;</span></code> rather than <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;SI&quot;</span></code>.</p>
+<p>The SI algorithm is correct to second order in the step-size for deterministic equations, and first order in the step-size for Stratonovich stochastic equations with Wiener noises.  This makes it the highest order stochastic algorithm in XMDS, although there are many sets of equations that integrate more efficiently with lower order algorithms.  When called with the <code class="docutils literal notranslate"><span class="pre">iterations=&quot;1&quot;</span></code> option (the Euler algorithm), it is correct to first order in the step-size for deterministic equations, and one-half order in the step-size for Ito stochastic equations with Wiener noises.</p>
+</div>
+<div class="section" id="runge-kutta-algorithms">
+<span id="rk4"></span><span id="index-83"></span><h4>Runge-Kutta algorithms<a class="headerlink" href="#runge-kutta-algorithms" title="Permalink to this headline">¶</a></h4>
+<p>Runge-Kutta algorithms are the workhorse of numerical integration, and XMDS employs two fixed step versions: <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;RK4&quot;</span></code>, which is correct to fourth-order in the step size, and <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;RK9&quot;</span></code>, which is correct to ninth order in the step size.  It must be strongly noted that a higher order of convergence does not automatically mean a superior algorithm.  RK9 requires several times the memory of the RK4 algorithm, and each step requires significantly more computation.</p>
+<p>All Runge-Kutta algorithms are convergent for Stratonovich stochastic equations at the order of the square root of the step-size.  This ‘half-order’ convergence may seem very weak, but for some classes of stochastic equation this improves up to one half of the deterministic order of convergence.  Also, the convergence of some stochastic equations is limited by the ‘deterministic part’, which can be improved dramatically by using a higher order Runge-Kutta method.</p>
+</div>
+<div class="section" id="adaptive-runge-kutta-algorithms">
+<span id="ark45"></span><span id="index-84"></span><h4>Adaptive Runge-Kutta algorithms<a class="headerlink" href="#adaptive-runge-kutta-algorithms" title="Permalink to this headline">¶</a></h4>
+<p>Fixed step integrators can encounter two issues.  First, as the equations or parameters of a simulation are changed, the minimum number of steps required to integrate it may change.  This means that the convergence must be re-tested multiple times for each set of parameters, as overestimating the number of steps required to perform an integration to a specified error tolerance can be very inefficient. Second, even if the minimum acceptable number of steps required is known for a given simulation, it may be that there are regions of integration that are of wildly varying difficulty.  For a fixed step integrator, this means that the step-size must be small enough to handle the most difficult region, and is therefore inefficiently small for the easier regions.  Adaptive step-size
+algorithms get around this problem by testing the convergence during the integration, and adjusting the step-size until it reaches some target tolerance.</p>
+<p>XMDS employs two adaptive step-size algorithms based on ‘embedded Runge-Kutta’ methods.  These are Runge-Kutta methods that can output multiple variables that have different convergence.  The difference between the higher-order and the lower-order solutions gives an estimate of the error in each step, which can then be used to estimate an appropriate size for the next step.  We use <code class="docutils literal notranslate"><span class="pre">algorthim=&quot;ARK45&quot;</span></code>, which contains fourth and fifth order solutions, and <code class="docutils literal notranslate"><span class="pre">algorthim=ARK89</span></code>, which contains eighth and ninth order solutions.  Each algorithm converges with the order of the lowest order solution (fourth and eighth order respectively).  The overheads involved in estimating the error and step-size make the adaptive algorithms slower than fixed step integration using the same step-size, but overall there is typically a significant performance gain from being able to avoid doing this optimisation manually.</p>
+<p>All adaptive stepsize algorithms require a <code class="docutils literal notranslate"><span class="pre">tolerance</span></code> attribute, which must be a positive real number that defines the allowable error per step.  It is also possible to specify a <code class="docutils literal notranslate"><span class="pre">max_iterations</span></code> attribute, which is a positive integer that stops the integrator from trying too many times to find an acceptable stepsize.  The integrator will abort with an error if the number of attempts for a single step exceeds the maximum specified with this attribute.</p>
+<p>As all Runge-Kutta solutions have equal order of convergence for stochastic equations, <em>if the step-size is limited by the stochastic term then the step-size estimation is entirely unreliable</em>.  Adaptive Runge-Kutta algorithms are therefore not appropriate for stochastic equations.</p>
+</div>
+<div class="section" id="richardson-extrapolation-algorithms-and-the-bulirsch-stoer-method">
+<span id="realgorithm"></span><span id="index-85"></span><h4>Richardson Extrapolation Algorithms and the Bulirsch-Stoer Method<a class="headerlink" href="#richardson-extrapolation-algorithms-and-the-bulirsch-stoer-method" title="Permalink to this headline">¶</a></h4>
+<p>The Richardson Extrapolation technique begins with a large initial interval and uses another stepper algorithm to compute the solution for this interval. It does this by subdividing the interval into increasing subintervals (i.e. with smaller and smaller stepsizes) and uses rational extrapolation to produce a higher order result than would be obtained using the other stepper on its own. The number of extrapolations performed is controllable via the <code class="docutils literal notranslate"><span class="pre">extrapolations</span></code> attribute which is a positive integer (defaults to 4).</p>
+<p>Richardson Extrapolation provides the best trade off between computational effort and accuracy when paired with the Modified Midpoint stepper. This stepper is notable as its error scaling function contains only even powers of two. This means that each extrapolation performed in the Richardson technique gains two orders rather than one order as is expected for most other steppers. This combined with the low computational overhead of the Modified Midpoint makes it a powerful tool. The combination of Richardson Extrapolation and the Modified Midpoint stepper is known as the Bulirsch-Stoer method.</p>
+<p>A number of combinations of fixed-step, fixed-order Richardson Extrapolation are available in XMDS2. The most notable is the Bulirsch-Stoer method which can be selected using <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;BS&quot;</span></code> or alternatively <code class="docutils literal notranslate"><span class="pre">algorithm=&quot;REMM&quot;</span></code>. Other combinations include ‘RERK4’, ‘RERK9’ and ‘RESI’ (for stochastic equations). Please note that these additional combinations have not been tested as strictly as the the ‘REMM’ combination and so care should be taken to ensure the results are sane. Additionally the Modified Midpoint stepper is available as a standalone stepper under the mnemonic ‘MM’, although this is probably not useful outside of testing.</p>
+<p>Richardson Extrapolation in general uses more memory than other integrators as multiple result vectors must be stored at the same time, which is something users should be aware of if the <code class="docutils literal notranslate"><span class="pre">extrapolations</span></code> attribute is set too high (generally &lt; 10 should be sufficient).</p>
+<p>See the section on the <a class="reference internal" href="bulirschStoer.html#mmdetail"><span class="std std-ref">Bulirsch-Stoer Algorithm</span></a> for more details.</p>
+</div>
+</div>
+<div class="section" id="filters-element">
+<span id="filterselement"></span><span id="index-86"></span><h3>Filters element<a class="headerlink" href="#filters-element" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#filterelement"><span class="std std-ref">Filter elements</span></a> are used inside <a class="reference internal" href="#sequenceelement"><span class="std std-ref">sequence elements</span></a> to execute arbitrary code, or make discontinuous changes in the vectors.  Sometimes it is desirable to perform a filter element at the beginning or end of each step in an integration.  This can be done by placing <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> elements in a <code class="docutils literal notranslate"><span class="pre">&lt;filters&gt;</span></code> element within the <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element.  The <code class="docutils literal notranslate"><span class="pre">&lt;filters&gt;</span></code> element specifies whether the filters are to be executed at the end of each step or the beginning of each step with the <code class="docutils literal notranslate"><span class="pre">where=&quot;step</span> <span class="pre">end&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">where=&quot;step</span> <span class="pre">start&quot;</span></code> attributes respectively.  Each filter
+is then executed in the order found in the <code class="docutils literal notranslate"><span class="pre">&lt;filters&gt;</span></code> element.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;100000.0&quot;</span> <span class="na">steps=</span><span class="s">&quot;10000000&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-8&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;samples&gt;</span>5000 100<span class="nt">&lt;/samples&gt;</span>
+  <span class="nt">&lt;filters</span> <span class="na">where=</span><span class="s">&quot;step end&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;filter&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>vector1 vector2<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="n">y</span> <span class="o">*=</span> <span class="n">ynorm</span><span class="p">;</span>
+            <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+  <span class="nt">&lt;/filters&gt;</span>
+
+  <span class="nt">&lt;operators&gt;</span>
+    <span class="nt">&lt;integration_vectors&gt;</span>vector1<span class="nt">&lt;/integration_vectors&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+    <span class="n">dx_dt</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">;</span>
+    <span class="n">dy_dt</span> <span class="o">=</span> <span class="n">beta</span><span class="o">*</span><span class="n">y</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/operators&gt;</span>
+<span class="nt">&lt;/integrate&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="breakpoint-element">
+<span id="breakpointelement"></span><span id="index-87"></span><h2>Breakpoint element<a class="headerlink" href="#breakpoint-element" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;breakpoint&gt;</span></code> element is used to output the full state of one or more vectors.  Unlike sampled output, it executes immediately rather than at the end of a program, and can therefore be used to examine the current state of an ongoing simulation.  The vectors to be output are defined via a <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element, and the basis is chosen by the <code class="docutils literal notranslate"><span class="pre">basis</span></code> attribute supplied to that <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element, as usual.  A single <code class="docutils literal notranslate"><span class="pre">&lt;breakpoint&gt;</span></code> element must only contain vectors of equal dimension.  The data format is specified by the <code class="docutils literal notranslate"><span class="pre">format</span></code> attribute, with current options being “ascii”, “binary” and the recommended: “hdf5”.  The filename for the output can be specified by a <code class="docutils literal notranslate"><span class="pre">filename</span></code> attribute, in which case the same filename will be used each time the element is executed.  If the <code class="docutils literal notranslate"><span class="pre">filename</span></code> attribute is not specified, then the first output will default to “1.xsil”, and subsequent executions of the same breakpoint will increment the number by one.</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;breakpoint</span> <span class="na">filename=</span><span class="s">&quot;groundstate_break.xsil&quot;</span> <span class="na">format=</span><span class="s">&quot;hdf5&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;ky&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/breakpoint&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="output-element">
+<span id="outputelement"></span><span id="index-88"></span><h2>Output element<a class="headerlink" href="#output-element" title="Permalink to this headline">¶</a></h2>
+<p id="index-89">The <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element describes the output of the program.  It is often inefficient to output the complete state of all vectors at all times during a large simulation, so the purpose of this function is to define subsets of the information required for output.  Each different format of information is described in a different <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> element inside the output element.  The <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element may contain any number of <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> elements.  The format of the output data can be specified by the optional <code class="docutils literal notranslate"><span class="pre">format</span></code> attribute, which may take values of “ascii”, “binary”, and “hdf5” (the default).  The filename can be specified with the optional <code class="docutils literal notranslate"><span class="pre">filename</span></code> attribute, which otherwise defaults to the simulation name with the ‘.xsil’ suffix.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;samples&gt;</span></code> inside <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> elements defines a string of integers, with exactly one for each <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> element.  During that integration, the variables described in each <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> element will be sampled and stored that number of times.</p>
+<span class="target" id="index-90"></span><div class="section" id="sampling-group-element">
+<span id="samplinggroupelement"></span><span id="index-91"></span><h3>Sampling Group Element<a class="headerlink" href="#sampling-group-element" title="Permalink to this headline">¶</a></h3>
+<p>A <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> element defines a set of variables that we wish to output, and typically they are functions of some subset of vectors.  The names of the desired variables are listed in a <code class="docutils literal notranslate"><span class="pre">&lt;moments&gt;</span></code> element, just like the <code class="docutils literal notranslate"><span class="pre">&lt;components&gt;</span></code> element of a vector.  They are defined with a ‘<a class="reference internal" href="#xmdscsyntax"><span class="std std-ref">CDATA</span></a>’ block, accessing any components of vectors and computed vectors that are defined in a <a class="reference internal" href="#dependencies"><span class="std std-ref">&lt;dependencies&gt;</span></a> element, also just like a vector.  <a class="reference internal" href="#computedvectorelement"><span class="std std-ref">Computed vectors</span></a> and <a class="reference internal" href="#operatorelement"><span class="std std-ref">&lt;operator&gt;</span></a> elements can be defined and used in the definition, just like in an <a class="reference internal" href="#integrateelement"><span class="std std-ref">&lt;integrate&gt;</span></a> element.</p>
+<p id="index-92">The basis of the output is specified by the <code class="docutils literal notranslate"><span class="pre">basis</span></code> attribute.  This overrides any basis specification in the <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element.  Because we often wish to calculate these vectors on a finer grid than we wish to output, it is possible to specify that the output on a subset of the points defined for any transverse dimension.  This is done by adding a number in parentheses after that dimension in the basis string, e.g. <code class="docutils literal notranslate"><span class="pre">basis=&quot;x</span> <span class="pre">y(32)</span> <span class="pre">kz(64)&quot;</span></code>.  If the number is zero, then that dimension is integrated out.  If that number is one or more, then that dimension will be sampled on a subset of points in that space.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">initial_sample</span></code> attribute, which must be “yes” or “no”, determines whether the moment group will be sampled before any integration occurs.</p>
+<p>Finally, there is the optional <code class="docutils literal notranslate"><span class="pre">export_all_paths</span></code> attribute which, if used, must be “yes” or “no”. If omitted it defaults to “no”. This attribute only has meaning when the “multi-path” or “mpi-multi-path” driver is being used and the simulation is being run over many paths. If this attribute is set to “yes”, this means that the full output of every path is output, rather than just the moments’ means and standard deviations averaged over all the paths. Note that if many paths are being run, this will use a <em>lot</em> of memory (and output disk space) as the entire set of output moments, multiplied by the number of paths, must be kept in memory. Use with care!</p>
+<p>Example syntax:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;output</span> <span class="na">format=</span><span class="s">&quot;hdf5&quot;</span> <span class="na">filename=</span><span class="s">&quot;SimOutput.xsil&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;x y&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;filter3&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;components&gt;</span>sparemomentagain<span class="nt">&lt;/components&gt;</span>
+      <span class="nt">&lt;evaluation&gt;</span>
+        <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;kx ky&quot;</span><span class="nt">&gt;</span>integrated_u main<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">sparemomentagain</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">u</span><span class="p">);</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/evaluation&gt;</span>
+    <span class="nt">&lt;/computed_vector&gt;</span>
+    <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;operator_names&gt;</span>L<span class="nt">&lt;/operator_names&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="o">-</span><span class="n">T</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="o">/</span><span class="n">mu</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/operator&gt;</span>
+    <span class="nt">&lt;moments&gt;</span>amp ke<span class="nt">&lt;/moments&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>main filter1<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">amp</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">u</span> <span class="o">+</span> <span class="n">moment</span><span class="p">);</span>
+      <span class="n">ke</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">L</span><span class="p">[</span><span class="n">u</span><span class="p">]);</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/sampling_group&gt;</span>
+
+  <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;kx(0) ky(64)&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;moments&gt;</span>Dens_P <span class="nt">&lt;/moments&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>fields <span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">Dens_P</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">psi</span><span class="p">);</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/sampling_group&gt;</span>
+<span class="nt">&lt;/output&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="xmds-specific-c-syntax">
+<span id="xmdscsyntax"></span><h2>XMDS-specific C syntax<a class="headerlink" href="#xmds-specific-c-syntax" title="Permalink to this headline">¶</a></h2>
+<p>Sampling complex numbers can be written more efficiently using:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;![CDATA[</span>
+  <span class="n">_SAMPLE_COMPLEX</span><span class="p">(</span><span class="n">W</span><span class="p">);</span>
+<span class="cp">]]&gt;</span>
+</pre></div>
+</div>
+<p>which is short for</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;![CDATA[</span>
+  <span class="n">WR</span> <span class="o">=</span> <span class="n">W</span><span class="p">.</span><span class="n">Re</span><span class="p">();</span>
+  <span class="n">WI</span> <span class="o">=</span> <span class="n">W</span><span class="p">.</span><span class="n">Im</span><span class="p">();</span>
+<span class="cp">]]&gt;</span>
+</pre></div>
+</div>
+<p>Various properties of dimensions are available.  For example, for a dimension called <code class="docutils literal notranslate"><span class="pre">x</span></code>:</p>
+<ul class="simple" id="index-93">
+<li><p>The number of points is accessible with the variable <code class="docutils literal notranslate"><span class="pre">_lattice_x</span></code>,</p></li>
+<li><p>The minimum range of that dimension is <code class="docutils literal notranslate"><span class="pre">_min_x</span></code>,</p></li>
+<li><p>The maximum range of that dimension is <code class="docutils literal notranslate"><span class="pre">_max_x</span></code>,</p></li>
+<li><p>The step size of a dimension is <code class="docutils literal notranslate"><span class="pre">dx</span></code>, and if it is constant, also available using <code class="docutils literal notranslate"><span class="pre">_dx</span></code>, but note that the latter does not include the effect of any <code class="docutils literal notranslate"><span class="pre">volumePrefix</span></code> you may have set!</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">XMDS2 script elements</a><ul>
+<li><a class="reference internal" href="#simulation-element">Simulation element</a></li>
+<li><a class="reference internal" href="#name-element">Name element</a></li>
+<li><a class="reference internal" href="#author-element">Author element</a></li>
+<li><a class="reference internal" href="#description-element">Description element</a></li>
+<li><a class="reference internal" href="#features-elements">Features Elements</a><ul>
+<li><a class="reference internal" href="#arguments-element">Arguments Element</a><ul>
+<li><a class="reference internal" href="#argument-element">Argument element</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#auto-vectorise-element">Auto_vectorise element</a></li>
+<li><a class="reference internal" href="#benchmark">Benchmark</a></li>
+<li><a class="reference internal" href="#bing">Bing</a></li>
+<li><a class="reference internal" href="#c-flags">C Flags</a></li>
+<li><a class="reference internal" href="#chunked-output">Chunked Output</a></li>
+<li><a class="reference internal" href="#diagnostics">Diagnostics</a></li>
+<li><a class="reference internal" href="#error-check">Error Check</a></li>
+<li><a class="reference internal" href="#halt-non-finite">Halt_Non_Finite</a></li>
+<li><a class="reference internal" href="#fftw-element">fftw element</a></li>
+<li><a class="reference internal" href="#globals">Globals</a></li>
+<li><a class="reference internal" href="#openmp">OpenMP</a></li>
+<li><a class="reference internal" href="#precision">Precision</a></li>
+<li><a class="reference internal" href="#validation">Validation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#driver-element">Driver Element</a></li>
+<li><a class="reference internal" href="#geometry-element">Geometry Element</a><ul>
+<li><a class="reference internal" href="#the-dft-transform">The “dft” transform</a></li>
+<li><a class="reference internal" href="#the-dct-transform">The “dct” transform</a></li>
+<li><a class="reference internal" href="#the-dst-transform">The “dst” transform</a></li>
+<li><a class="reference internal" href="#the-bessel-and-bessel-neumann-transforms">The “bessel” and “bessel-neumann” transforms</a></li>
+<li><a class="reference internal" href="#the-spherical-bessel-transform">The “spherical-bessel” transform</a></li>
+<li><a class="reference internal" href="#the-hermite-gauss-transform">The “hermite-gauss” transform</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#vector-element">Vector Element</a><ul>
+<li><a class="reference internal" href="#the-dependencies-element">The dependencies element</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#computed-vector-element">Computed Vector Element</a></li>
+<li><a class="reference internal" href="#noise-vector-element">Noise Vector Element</a><ul>
+<li><a class="reference internal" href="#uniform-noise">Uniform noise</a></li>
+<li><a class="reference internal" href="#gaussian-noise">Gaussian noise</a></li>
+<li><a class="reference internal" href="#wiener-noise">Wiener noise</a></li>
+<li><a class="reference internal" href="#poissonian-noise">Poissonian noise</a></li>
+<li><a class="reference internal" href="#jump-noise">Jump noise</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sequence-element">Sequence Element</a></li>
+<li><a class="reference internal" href="#filter-element">Filter element</a></li>
+<li><a class="reference internal" href="#integrate-element">Integrate element</a><ul>
+<li><a class="reference internal" href="#operators-and-operator-elements">Operators and operator elements</a></li>
+<li><a class="reference internal" href="#algorithms">Algorithms</a><ul>
+<li><a class="reference internal" href="#si-and-sic-algorithms">SI and SIC algorithms</a></li>
+<li><a class="reference internal" href="#runge-kutta-algorithms">Runge-Kutta algorithms</a></li>
+<li><a class="reference internal" href="#adaptive-runge-kutta-algorithms">Adaptive Runge-Kutta algorithms</a></li>
+<li><a class="reference internal" href="#richardson-extrapolation-algorithms-and-the-bulirsch-stoer-method">Richardson Extrapolation Algorithms and the Bulirsch-Stoer Method</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#filters-element">Filters element</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#breakpoint-element">Breakpoint element</a></li>
+<li><a class="reference internal" href="#output-element">Output element</a><ul>
+<li><a class="reference internal" href="#sampling-group-element">Sampling Group Element</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xmds-specific-c-syntax">XMDS-specific C syntax</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="bulirschStoer.html" title="Modified Midpoint Method"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="reference_schema.html" title="XMDS2 XML Schema"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="reference_index.html" >Reference section</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">XMDS2 script elements</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

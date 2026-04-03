@@ -1,0 +1,58 @@
+@shBang #!/usr/bin/env python3
+
+@*
+VectorInitialisationFromCDATA.tmpl
+
+Created by Graham Dennis on 2007-08-29.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors.VectorInitialisation
+
+@*
+  Description of initialisation method
+*@
+@def description: Vector initialisation from CDATA
+
+
+@*
+  Initialise a vector
+*@
+@def initialiseVector
+ @#
+ @set $vectorOverrides = []
+ @if $vector.integratingComponents
+   @silent vectorOverrides.append($vector)
+ @end if
+$codeBlocks['initialisation'].loop(self.insideInitialisationLoops, vectorOverrides=vectorOverrides)@slurp
+ @#
+@end def
+
+
+@def insideInitialisationLoops($codeString)
+// The purpose of the following define is to give a (somewhat helpful) compile-time error
+// if the user has attempted to use the propagation dimension variable in the initialisation
+// block of a <vector> element. If they're trying to do this, what they really want is a 
+// <computed_vector> instead.
+#define ${propagationDimension} Dont_use_propagation_dimension_${propagationDimension}_in_vector_element_CDATA_block___Use_a_computed_vector_instead
+
+// ********** Initialisation code ***************
+${codeString}@slurp
+// **********************************************
+#undef ${propagationDimension}
+
+@end def

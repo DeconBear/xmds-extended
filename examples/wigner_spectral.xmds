@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>wigner_spectral</name>
+  <author>Graham Dennis</author>
+  <description>
+    Simulation of the Wigner function for an anharmonic oscillator with the initial state
+    being a coherent state.
+    
+    This is a modification of wigner.xmds to be more like a true spectral method by evaluating
+    the temporal derivatives in spectral (fourier) space. This script runs faster than the original
+    wigner.xmds
+    
+    WARNING: This simulation will take a couple of hours.
+  </description>
+  
+  <features>
+    <benchmark />
+    <!-- <error_check /> -->
+    <bing />
+    <fftw plan="patient" />
+
+    <validation kind="run-time" />
+    <globals>
+      <![CDATA[
+      /* physical constants */
+        const real hbar = 1.05457148e-34;
+        
+      /* system constants */
+        const real omega = 0.0;
+        const real Uint = 1.0*hbar;
+        
+      /* initial state constants */
+        const real alpha_0 = 3.0;
+        
+      /* used for calculating constants derived from arguments */
+        bool firstTime = true;
+        
+      /* absorbing boundary constants */
+       const real absorb = 8.0;
+       const real width = 0.3;
+       
+      /* derived constants */
+        const complex miOmega = -i*omega;
+        const complex miUint_hbar = -i*Uint/hbar;
+        const real Uint_hbar = Uint/hbar;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="128"  domain="(-6, 6)" />
+      <dimension name="y" lattice="128"  domain="(-6, 6)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x y" type="complex">
+    <components>
+      W
+    </components>
+    <initialisation>
+      <![CDATA[
+        W = 2.0/M_PI * exp(-2.0*(y*y + (x-alpha_0)*(x-alpha_0)));
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="dampConstants" initial_basis="x y" type="real">
+    <components>damping</components>
+    <initialisation>
+      <![CDATA[
+      real r = sqrt(x*x + y*y);
+      
+      if (r > _max_x-width)
+        damping = 0.0;
+      else
+        damping = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" tolerance="1e-7" interval="2.0*M_PI" steps="100000" home_space="k">
+      <samples>200</samples>
+      <operators>
+        <operator kind="ex" basis="x y">
+          <operator_names>Lx Ly LxR LyR</operator_names>
+          <![CDATA[
+            real r2 = x*x + y*y;
+            if (r2 > (_max_x-width)*(_max_x-width)) {
+              Lx = Ly = LxR = LyR = 0.0;
+            } else {
+              Lx = x;
+              Ly = y;
+              LxR = x*(r2-1.0);
+              LyR = y*(r2-1.0);
+            }
+          ]]>
+        </operator>
+        <integration_vectors basis="kx ky">main</integration_vectors>
+        <![CDATA[
+          dW_dt = -i*omega*(kx*Ly[W] - ky*Lx[W])
+                  -i*Uint_hbar*(kx*LyR[W] - ky*LxR[W])
+                  -i*Uint_hbar/16.0*((kx*kx*kx+ky*ky*kx)*Ly[W] - (ky*ky*ky + ky*kx*kx)*Lx[W]);
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x y" initial_sample="yes">
+        <moments>WR WI</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          WR = W.Re();
+          WI = W.Im();
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

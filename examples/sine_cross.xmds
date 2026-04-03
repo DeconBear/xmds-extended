@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>sine_cross</name>
+  <author>Graham Dennis</author>
+  <description>
+    Sine cross-propagation validity tests.
+    
+    The 'u' variable checks for errors caused by poorly interpolating
+    dependencies. The 'v' variable checks for errors just in the
+    cross-propagation algorithm. The 'w' variable checks for errors due
+    to IP cross-propagation (should be the smallest). The 'x' variable checks
+    for errors due to EX cross-propagation, they should be the same as 'v'.
+    You can choose the cross-propagation algorithm to be either 'SI' or 'RK4'.
+  </description>
+  
+  <features>
+    <benchmark />
+    <bing />
+    <!-- That's right, this script breaks the shackles with FFTW! -->
+  </features>
+  
+  <geometry>
+    <propagation_dimension> z </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="t" lattice="128"  domain="(0, 10)" transform="none" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" type="complex">
+    <components>
+      foo
+    </components>
+    <initialisation>
+      <![CDATA[
+      foo = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="constants" type="real">
+    <components>cosine</components>
+    <initialisation>
+      <![CDATA[
+        cosine = cos(t);
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="cross" type="complex">
+    <components>u v w x</components>
+    <initialisation>
+      <![CDATA[
+        u = 0.0;
+        v = 1.0;
+        w = 1.0;
+        x = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="RK9" interval="1" steps="2">
+      <samples>1</samples>
+      <operators>
+        <operator kind="cross_propagation" algorithm="SI" propagation_dimension="t">
+          <integration_vectors>cross</integration_vectors>
+          <dependencies>constants</dependencies>
+          <boundary_condition kind="left">
+            <![CDATA[
+              u = 0.0;
+              v = 1.0;
+              w = 1.0;
+              x = 1.0;
+            ]]>
+          </boundary_condition>
+          
+          <operator kind="ip">
+            <operator_names>L</operator_names>
+            <![CDATA[
+              L = i;
+            ]]>
+          </operator>
+          
+          <operator kind="ex">
+            <operator_names>M</operator_names>
+            <![CDATA[
+              M = i;
+            ]]>
+          </operator>
+          
+          <![CDATA[
+            du_dt = cosine;
+            dv_dt = i*v;
+            dw_dt = L[w]; // this one is pretty much exact
+            dx_dt = M[x];
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+        dfoo_dz = 0.0;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output format="ascii">
+      <sampling_group basis="t" initial_sample="no">
+        <moments>error_u error_v error_w error_x</moments>
+        <dependencies>cross</dependencies>
+        <![CDATA[
+          error_u = abs(u - sin(t));
+          error_v = abs(v - polar(1.0, t));
+          error_w = abs(w - polar(1.0, t));
+          error_x = abs(x - polar(1.0, t));
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

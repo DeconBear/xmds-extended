@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Installation &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quickstart Tutorial"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<span id="index-0"></span><span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p><strong>XMDS2</strong> can be installed on any Unix-like system including Linux and Mac OS X.  It requires a C++ compiler, python, and several installed packages.  Many of these packages are optional, but a good idea to obtain full functionality. Microsoft Windows is not officially supported at this time, but people have reported success in installing it under Windows 10 using the Windows Subsystem for Linux.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>If you’re using a Mac with OS X &gt;= 10.7, XMDS2 can be installed with the Homebrew package manager.</p>
+<p>If you are using a recent version of Ubuntu or Debian, XMDS2 is available as a package in your package / software manager. Note that if using the Ubuntu Software Centre rather than Synaptic, you must explicitly search for “xmds2” rather than “xmds”, or you will only get XMDS1 as a result.</p>
+<p>If you’re using a version of Linux that’s not Ubuntu / Debian, the easiest way to get started is to use the install shell script linked to below.</p>
+<p>If we don’t have an installer for your system, or you would like more control over the install, follow the <a class="reference internal" href="#manualinstallation"><span class="std std-ref">manual installation</span></a> instructions.</p>
+<table class="colwidths-given docutils align-default">
+<colgroup>
+<col style="width: 57%" />
+<col style="width: 43%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Linux (Ubuntu/Debian/Fedora/RedHat)</p></td>
+<td><p><a class="reference internal" href="#linux-installation"><span class="std std-ref">Linux install</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>Mac OS X</p></td>
+<td><p><a class="reference internal" href="#mac-installation"><span class="std std-ref">Mac OS X install</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Other systems</p></td>
+<td><p><a class="reference internal" href="#manualinstallation"><span class="std std-ref">Manual install</span></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>If you have one of the supported operating systems listed above, but you find the installer doesn’t work for you, please let us know by emailing xmds-devel &lt;at&gt; lists.sourceforge.net. If you’d like to tweak the linux installer to work on a distribution we haven’t tested, we’d love you to do that and let us know!</p>
+<p>Once you have it installed, see the <a class="reference internal" href="tutorial.html#quickstarttutorial"><span class="std std-ref">Quickstart Tutorial</span></a> for next steps. In addition, feel free to browse the extensive examples that come with XMDS2. Depending on the installation method, you can find them in the examples/ folder, or if that didn’t ship with your installer you can find them <a class="reference external" href="https://sourceforge.net/p/xmds/code/HEAD/tree/trunk/xpdeint/examples/">here</a>.</p>
+</div>
+<div class="section" id="linux-installation-instructions">
+<span id="linux-installation"></span><span id="index-1"></span><h2>Linux installation instructions<a class="headerlink" href="#linux-installation-instructions" title="Permalink to this headline">¶</a></h2>
+<p>Note: If you’re using Debian / Ubuntu, unless you want a developer install, you’re probably better off installing XMDS2 via your package manager rather than this install script.</p>
+<p>The linux installer has currently only been tested with Ubuntu, Debian, Fedora, and Red Hat. If you are using Red Hat you must have the EPEL repository enabled.</p>
+<p>Download the installer here: <a class="reference external" href="http://svn.code.sf.net/p/xmds/code/trunk/xpdeint/admin/linux_installer.sh">http://svn.code.sf.net/p/xmds/code/trunk/xpdeint/admin/linux_installer.sh</a></p>
+<p>Once you have downloaded it, make the installer executable and run it by typing the following into a terminal:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>chmod u+x linux_installer.sh
+./linux_installer.sh
+</pre></div>
+</div>
+<p>The linux installer installs all XMDS2 dependencies from your native package manager where possible (<code class="docutils literal notranslate"><span class="pre">apt-get</span></code> for Ubuntu/Debian, <code class="docutils literal notranslate"><span class="pre">yum</span></code> for Fedora/Red Hat) but will download and compile the source code for libraries not available through the package manager. It also downloads the XMDS2 code itself. This means you’ll need to be connected to the internet when running the installer. The installer should not be run with administrative privileges; it will ask you to enter your admin password at the appropriate point.</p>
+<p>For instructions on how to install XMDS2 on systems where you lack administrative rights, see <a class="reference internal" href="#manualinstallation"><span class="std std-ref">Manual installation from source</span></a>.</p>
+<p>By default, this installer will install a known stable version of XMDS, which can be updated at any time by navigating to the XMDS directory and typing ‘make update’. To install the latest developer version at the beginning, simply run the installer with the <code class="docutils literal notranslate"><span class="pre">--develop</span></code> option.</p>
+<p>Once XMDS2 has been installed, you can run it from the terminal by typing <code class="docutils literal notranslate"><span class="pre">xmds2</span></code>.</p>
+</div>
+<div class="section" id="mac-os-x-installation">
+<span id="mac-installation"></span><span id="index-2"></span><h2>Mac OS X installation<a class="headerlink" href="#mac-os-x-installation" title="Permalink to this headline">¶</a></h2>
+<p>You will need to install the <a class="reference external" href="https://brew.sh/">Homebrew package manager</a></p>
+<p>You will also need Xcode (Apple’s developer tools), which can be downloaded free of charge from the App store.</p>
+<p>Once you have Homebrew and Xcode, run the following in a terminal:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>brew install xmds2/xmds2/xmds2
+</pre></div>
+</div>
+<p>This will download and install everything required for XMDS2. Note that this may take a significant amount of time, as many packages need to be downloaded, and some libraries may need to be compiled locally on your machine. To uninstall XMDS2, run the following:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>brew uninstall xmds2
+</pre></div>
+</div>
+<p>Once XMDS2 has been installed, you can run it from the terminal by typing <code class="docutils literal notranslate"><span class="pre">xmds2</span></code>.</p>
+<p>Note that this installer does not install some python libraries used in XMDS2 development. If you wish to run the testsuite on your machine (not required for ordinary users), you will have to additionally install Python 3 versions of pyparsing, h5py and numpy. You can do this via <code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">pyparsing</span> <span class="pre">h5py</span> <span class="pre">numpy</span></code>.</p>
+</div>
+<div class="section" id="manual-installation-from-source">
+<span id="manualinstallation"></span><span id="index-3"></span><h2>Manual installation from source<a class="headerlink" href="#manual-installation-from-source" title="Permalink to this headline">¶</a></h2>
+<p>This installation guide will take you through a typical full install step by step. A large part of this procedure is obtaining and installing other libraries that XMDS2 requires, before installing XMDS2 itself.</p>
+<p>While the instructions below detail these packages individually, if you have administrative privileges (or can request packages from your administrator) and if you are using an Ubuntu, Debian, Fedora or Red Hat linux distribution, you can install all required and optional dependencies (but not XMDS2 itself), including those needed to build the documenation, via</p>
+<p>Ubuntu / Debian:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>sudo apt-get -y install build-essential subversion libfftw3-dev libfftw3-mpi-dev libopenmpi-dev openmpi-bin python3-dev python3-setuptools python3-numpy python3-pyparsing python3-lxml python3-mpmath libhdf5-serial-dev libgsl-dev python3-sphinx python3-h5py wget libatlas-base-dev python3-pip
+</pre></div>
+</div>
+<p>Fedora / Red Hat:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>sudo yum -y install gcc gcc-c++ blas-devel sqlite-devel make automake fftw-devel fftw-openmpi-devel gsl-devel hdf5-devel openmpi-devel python3-devel python3-h5py python3-lxml python3-mpmath python3-numpy python3-pyparsing python3-setuptools python3-sphinx python3-cheetah wget libxml2-devel libxslt-devel subversion
+</pre></div>
+</div>
+<p>Also note that this guide adds extra notes for users wishing to install XMDS2 using the SVN repository.  This requires a few extra steps, but allows you to edit your copy, and/or update your copy very efficiently (with all the usual advantages and disadvantages of using unreleased material).</p>
+<ol class="arabic" start="0">
+<li><dl class="simple">
+<dt>You will need a copy of XMDS2.</dt><dd><p>The current release can be found at <a class="reference external" href="http://sourceforge.net/projects/xmds/">Sourceforge</a>, and downloaded as a single file.
+Download this file, and expand it in a directory where you want to keep the program files.</p>
+<ul class="simple">
+<li><p>Developer-only instructions: You can instead check out a working copy of the source using SVN.
+In a directory where you want to check out the repository, run:
+<code class="docutils literal notranslate"><span class="pre">svn</span> <span class="pre">checkout</span> <span class="pre">https://svn.code.sf.net/p/xmds/code/trunk/xpdeint</span> <span class="pre">.</span></code>
+(Only do this once.  To update your copy, type <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">update</span></code> in the same directory, and then repeat any developer-only instructions below).
+A checkout with read/write permissions requires a checkout with your login details.  e.g.:
+<code class="docutils literal notranslate"><span class="pre">svn</span> <span class="pre">checkout</span> <span class="pre">--username=myusername</span> <span class="pre">https://myusername&#64;svn.code.sf.net/p/xmds/code/trunk/xpdeint</span> <span class="pre">.</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>You will need a working C++ compiler.</dt><dd><p>For Mac OS X, this means that the developer tools (XCode) should be installed. We also recommend you install the Xcode command line tools to gain access to Apple’s Accelerate framework and vecLib.
+One common free compiler is <a class="reference external" href="http://gcc.gnu.org/">gcc</a>.  It can be downloaded using your favourite package manager.
+XMDS2 can also use Intel’s C++ compiler if you have it.</p>
+</dd>
+</dl>
+</li>
+<li><p>You will need a <a class="reference external" href="http://www.python.org/">Python 3 distribution</a>.</p>
+<blockquote>
+<div><p>XMDS2 is written in Python 3. This will be almost certainly be preinstalled in a Linux distribution, but Macs only ship with Python 2.</p>
+<ul class="simple">
+<li><p>Mac OS X: Either install using something like the <a class="reference external" href="https://brew.sh/">Homebrew package manager</a> with <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">python3</span></code> (recommended) or directly from www.python.org</p></li>
+<li><p>Linux: It should be pre-installed. If not, install using your favourite package manager.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Install setuptools.</p>
+<p>This will almost certainly have been installed by your Python 3 distribution. If not, you can install with the Python 3 package manager (pip3) via <code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">setuptools</span></code></p>
+</li>
+<li><dl>
+<dt>Install HDF5 and FFTW3 (and optionally MPI). You may choose to build specific versions optimized for your machine, and install them somewhere under your home directory structure rather than in system library locations, by passing “–prefix=/home/myname/path/to/directory” as an argument to the ./configure command. If you do this, after installing XMDS2 you will have to tell it where to find these specific libraries by running <code class="docutils literal notranslate"><span class="pre">xmds2</span> <span class="pre">--reconfigure</span></code> as described below.</dt><dd><ol class="arabic" id="hdf5-installation">
+<li><dl>
+<dt><strong>HDF5</strong> is a library for reading and writing the <a class="reference external" href="http://www.hdfgroup.org/HDF5/">Hierarchical Data Format</a>.</dt><dd><p>This is a standardised data format which it is suggested that people use in preference to the older ‘binary’ output (which is
+compatible with xmds-1). The advantage of HDF5 is that this data format is understood by a variety of other tools. xsil2graphics2
+provides support for loading data created in this format into Mathematica and Matlab.</p>
+<p>XMDS2 only requires the single process version of HDF5, so there is no need to install the MPI version.</p>
+<p>* Sidebar: Installing HDF5 from source follows a common pattern, which you may find yourself repeating later:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>After extracting the source directory, type <code class="docutils literal notranslate"><span class="pre">./configure</span></code> and then add possible options.</p>
+<blockquote>
+<div><p>(For HDF5, install with the <code class="docutils literal notranslate"><span class="pre">--prefix=/usr/local/</span></code> option if you want XMDS2 to find the library automatically.  This is rarely needed for other packages.)</p>
+</div></blockquote>
+</li>
+<li><p>Once that is finished, type <code class="docutils literal notranslate"><span class="pre">make</span></code>.  Then wait for that to finish, which will often be longer than you think.</p></li>
+<li><p>Finally, type <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">make</span> <span class="pre">install</span></code> to install it into the appropriate directory.</p></li>
+</ol>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>FFTW</strong> is the library XMDS2 uses for Fourier transforms.</dt><dd><p>This is the transform most people will use in their simulations. If you need
+support for MPI distributed simulations, you must configure FFTW to use MPI.</p>
+<p>FFTW is available for free at the <a class="reference external" href="http://www.fftw.org/">FFTW website</a>.</p>
+<p>A reasonable configure command would be:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>./configure --disable-fortran --enable-mpi --enable-sse2 --enable-openmp --enable-avx --enable-avx2 --enable-threads
+make
+sudo make install
+</pre></div>
+</div>
+<p>If you want to be able to use the single precision option within XMDS2, you must additionally build the single precision FFTW libraries via:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>./configure --disable-fortran --enable-mpi --enable-single --enable-sse2 --enable-openmp --enable-avx --enable-avx2 --enable-threads
+make
+sudo make install
+</pre></div>
+</div>
+<p>Note that compiling OpenMP directives is difficult with a Mac as the Clang compiler doesn’t support OpenMP at this time (although MPI works fine), so you’ll probably want to omit the <code class="docutils literal notranslate"><span class="pre">--enable-openmp</span></code> flag. If you’re on a Mac and really want OpenMP functionality in XMDS2 (unlikely, as for most XMDS2 use cases MPI is faster), build FFTW with gcc, then tell XMDS2 to use gcc over clang in general use.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>MPI</strong> is an API for doing parallel processing.</dt><dd><p>XMDS2 can use MPI to parallelise simulations on multi-processor/multi-core computers, or clusters of computers. Highly recommended.
+Many supercomputing systems come with MPI libraries pre-installed.
+The <a class="reference external" href="http://www.open-mpi.org/">Open MPI</a> project has free distributions of this library available.</p>
+<p>If you intend to take advantage of XMDS2’s multi-processing features, you must install MPI, and build FFTW3 with the <code class="docutils literal notranslate"><span class="pre">--enable-mpi</span></code> flag in order to use it.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>There are a range of optional installs.  We recommend that you install them all if possible:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><dl class="simple">
+<dt>A Matrix library like <a class="reference external" href="http://math-atlas.sourceforge.net/">ATLAS</a>, Intel’s <a class="reference external" href="http://software.intel.com/en-us/intel-mkl/">MKL</a> or the <a class="reference external" href="http://www.gnu.org/software/gsl/">GNU Scientific library (GSL)</a></dt><dd><p>These libraries allow efficient implementation of transform spaces other than Fourier space.
+Mac OS X comes with its own matrix library (vecLib) if you install Xcode and the Xcode command line tools.
+You may wish to build the libraries specifically tuned and optimized for your machine. Instructions for doing so for the ATLAS project can be found on their <a class="reference external" href="http://math-atlas.sourceforge.net/">website</a>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>numpy</strong> is a python tool that XMDS2 uses for matrix transforms and running the testsuite.</dt><dd><p>It can be installed with <code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">numpy</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>lxml</strong> is used to validate the syntax of scripts passed to XMDS2.</dt><dd><p>This can be installed with the command <code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">lxml</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>h5py</strong> and <strong>pyparsing</strong> are needed for running the developer testsuite.</dt><dd><p>To install use <code class="docutils literal notranslate"><span class="pre">pip3</span> <span class="pre">install</span> <span class="pre">h5py</span></code></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div></blockquote>
+</li>
+<li><dl>
+<dt>Install XMDS2 into your python path by running (in the xmds-3.1.0/ directory):</dt><dd><p><code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">./setup.py</span> <span class="pre">develop</span></code></p>
+<p>If you want to install it into your home directory, type <code class="docutils literal notranslate"><span class="pre">./setup.py</span> <span class="pre">develop</span> <span class="pre">--prefix=~</span></code></p>
+<p>This step requires access to the internet, as it downloads any dependent packages.</p>
+<ul>
+<li><dl class="simple">
+<dt>Developer only instructions:</dt><dd><p>The Cheetah templates (*.tmpl) must be compiled into python.
+To do this, run <code class="docutils literal notranslate"><span class="pre">make</span></code> in the xmds-3.1.0/ directory.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Developer-only instructions:</dt><dd><p>If you have ‘numpy’, ‘pyparsing’ and ‘h5py’ installed (see above), test XMDS2 by typing <code class="docutils literal notranslate"><span class="pre">./run_tests.py</span></code> in the xmds-3.1.0/ directory.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Developer-only instructions:</dt><dd><p>To build the user documentation, you first need to install Sphinx, either via your package manager or:
+<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">easy_install</span> <span class="pre">Sphinx</span></code></p>
+<p>Then, to build the documentation, in the xmds-3.1.0/admin/userdoc-source/ directory run: <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">html</span></code></p>
+<p>If this results in an error, you may need to run <code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">./setup.py</span> <span class="pre">develop</span></code></p>
+<p>The generated html documentation will then be found at xmds-3.1.0/documentation/index.html</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Configure XMDS2 by typing <code class="docutils literal notranslate"><span class="pre">xmds2</span> <span class="pre">--reconfigure</span></code>.  If XMDS2 is unable to find a library, you can tell XMDS2 where these libraries are located by adding <code class="docutils literal notranslate"><span class="pre">include</span></code> and <code class="docutils literal notranslate"><span class="pre">lib</span></code> search paths using the <code class="docutils literal notranslate"><span class="pre">--include-path</span></code> and <code class="docutils literal notranslate"><span class="pre">--lib-path</span></code> options.  For example, if FFTW3 is installed in <code class="docutils literal notranslate"><span class="pre">/apps/fftw3</span></code> with headers in <code class="docutils literal notranslate"><span class="pre">/apps/fftw3/include/</span></code> and the libraries in <code class="docutils literal notranslate"><span class="pre">/apps/fftw3/lib</span></code>, (re)configure XMDS2 by typing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">xmds2</span> <span class="pre">--reconfigure</span> <span class="pre">--include-path</span> <span class="pre">/apps/fftw3/include</span> <span class="pre">--lib-path</span> <span class="pre">/apps/fftw3/lib</span></code>.</p></li>
+</ul>
+<p>If you need to use additional compiler or link flags for XMDS2 to use certain libraries, set the <code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span></code> or <code class="docutils literal notranslate"><span class="pre">LINKFLAGS</span></code> environment variables before calling <code class="docutils literal notranslate"><span class="pre">xmds2</span> <span class="pre">--reconfigure</span></code>.  For example, to pass the compiler flag <code class="docutils literal notranslate"><span class="pre">-pedantic</span></code> and the link flag <code class="docutils literal notranslate"><span class="pre">-lm</span></code>, use:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CXXFLAGS=&quot;-pedantic&quot;</span> <span class="pre">LINKFLAGS=&quot;-lm&quot;</span> <span class="pre">xmds2</span> <span class="pre">--reconfigure</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+<p><strong>Congratulations!</strong> You should now have a fully operational copy of xmds2 and xsil2graphics2.  You can test your copy using examples from the “xmds-3.1.0/examples” directory, and follow the worked examples in the <a class="reference internal" href="tutorial.html#quickstarttutorial"><span class="std std-ref">Quickstart Tutorial</span></a> and <a class="reference internal" href="worked_examples.html#workedexamples"><span class="std std-ref">Worked Examples</span></a>.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#linux-installation-instructions">Linux installation instructions</a></li>
+<li><a class="reference internal" href="#mac-os-x-installation">Mac OS X installation</a></li>
+<li><a class="reference internal" href="#manual-installation-from-source">Manual installation from source</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quickstart Tutorial"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="introduction.html" title="Introduction"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Installation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

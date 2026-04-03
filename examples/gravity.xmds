@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>gravity</name>
+  <author>Graham Dennis</author>
+  <description>
+    Example system of gravitationally-attracted particles
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <!-- <fftw /> -->
+
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <!-- Dimension for particle number -->
+      <dimension name="j" type="integer" lattice="4" domain="(0, 3)" />
+    </transverse_dimensions>
+  </geometry>
+
+  <noise_vector name="initialMassNoises" kind="poissonian" type="real" mean="4.0" method="posix" seed="157 9348 234">
+        <components>q</components>
+  </noise_vector>
+    
+  <noise_vector name="initialMomentaNoises" kind="gaussian" type="real" method="posix" seed="17 948 2341">
+        <components>p_1 p_2 p_3 p_4</components>
+  </noise_vector>    
+  
+  <vector name="motion" type="real">
+    <components> x y vx vy </components>
+    <initialisation>
+    <dependencies>initialMomentaNoises</dependencies>
+      <![CDATA[
+        x = 2.0*p_1;
+        y = 2.0*p_2;
+        vx = 0.1*p_3;
+        vy = 0.1*p_4;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="mass" type="real">
+    <components> m </components>
+    <initialisation>
+    <dependencies>initialMassNoises</dependencies>
+      <![CDATA[
+      // Set the mass equal to a poissonian noise.
+      // but don't let the mass be zero
+      m = q;
+      if (m < 0.01) m = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" interval="100" steps="1000" tolerance="1e-8">
+      <samples>1000 100</samples>
+      <operators>
+        <integration_vectors>motion</integration_vectors>
+        <dependencies>mass</dependencies>
+        <![CDATA[
+          dx_dt = vx;
+          dy_dt = vy;
+          for (long k = 0; k < j; k++) {
+            real inverseSeparationCubed = pow((x(j => k) - x(j => j))*(x(j => k) - x(j => j)) + (y(j => k) - y(j => j))*(y(j => k) - y(j => j)), -3.0/2.0);
+            // printf("j: %li k: %li    x[j]: %e x[k]: %e  y[j]: %e y[k]: %e\n", j, k, x[j], x[k], y[j], y[k]);
+            // printf("separationSquared: %e inverseSeparationCubed: %e\n", (x[k] - x[j])*(x[k] - x[j]) + (y[k] - y[j])*(y[k] - y[j]), inverseSeparationCubed);
+            dvx_dt(j => j) += m(j => k)*(x(j => k) - x(j => j))*inverseSeparationCubed;
+            dvx_dt(j => k) += m(j => j)*(x(j => j) - x(j => k))*inverseSeparationCubed;
+            dvy_dt(j => j) += m(j => k)*(y(j => k) - y(j => j))*inverseSeparationCubed;
+            dvy_dt(j => k) += m(j => j)*(y(j => j) - y(j => k))*inverseSeparationCubed;
+          }
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="j" initial_sample="yes">
+        <moments>xR yR vxR vyR</moments>
+        <dependencies>motion</dependencies>
+        <![CDATA[
+          xR = x;
+          yR = y;
+          vxR = vx;
+          vyR = vy;
+        ]]>
+      </sampling_group>
+      <sampling_group basis="j(0)" initial_sample="yes">
+        <moments>energy px py</moments>
+        <dependencies>mass motion</dependencies>
+        <![CDATA[
+        // Check conserved quantities
+          energy = 0.5*m*(vx*vx + vy*vy);
+          for (long k = 0; k < j; k++) {
+            energy += -m(j => j)*m(j => k)*pow((x(j => j)-x(j => k))*(x(j => j)-x(j => k)) + (y(j => j)-y(j => k))*(y(j => j)-y(j => k)), -0.5);
+          }
+          px = m*vx;
+          py = m*vy;
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

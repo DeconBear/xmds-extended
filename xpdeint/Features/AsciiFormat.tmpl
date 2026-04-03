@@ -1,0 +1,105 @@
+@shBang #!/usr/bin/env python3
+
+@*
+AsciiFormat.tmpl
+
+Created by Graham Dennis on 2007-09-18.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.OutputFormat
+
+@def description: ascii output format
+@attr $name = 'ascii'
+
+@*
+  Write out the data in ASCII format
+*@
+@def writeOutFunctionImplementationBody($dict)
+  @# The function prototype in which this code is going is:
+  @#  void _mgN_write_out(FILE* _outfile)
+  @# And this code is being automatically indented.
+  @#
+  @set $fp = dict['fp']
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @#
+${writeOutFunctionImplementationBegin(dict)}@slurp
+  
+  @set $dependentVariables = $dict.dependentVariables
+fprintf($fp, "    <Stream><Metalink Format=\"Text\" Delimiter=\" \\n\"/>\n");
+
+  @set $vectors = set([variable['vector'] for variable in dependentVariables])
+$loopOverFieldInBasisWithVectorsAndInnerContent(field, basis, vectors, $insideOutputLoops(dict), $loopingOrder=$LoopingOrder.StrictlyAscendingOrder, vectorsNotNeedingDefines=vectors)@slurp
+
+fprintf($fp, "    </Stream>\n");
+
+${writeOutFunctionImplementationEnd(dict)}@slurp
+  @#
+@end def
+
+@def insideOutputLoops(dict)
+  @#
+  @set $fp = dict['fp']
+  @set $dependentVariables = dict['dependentVariables']
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @#
+  @set $componentCount = 0
+  @for $variable in $dependentVariables
+    @set $componentCount += len($variable.vector.components)
+    @if $variable.vector.type == 'complex'
+      @set $componentCount += len($variable.vector.components)
+    @end if
+  @end for
+  @#
+  @set dict['componentCount'] = componentCount
+  @set $variableCount = len($field.dimensions) + componentCount
+  @set $precisionPrefix = '.12'
+  @if $precision == 'single'
+    @set $precisionPrefix = ''
+  @end if
+// UNVECTORISABLE
+fprintf($fp, "@slurp
+  @# Loop over the variables that we're writing out
+  @for $variableNumber in range($variableCount)
+    @if $variableNumber != 0
+      @# If this isn't the first dimension, include a space at the start
+ %${precisionPrefix}e@slurp
+    @else
+%${precisionPrefix}e@slurp
+    @end if
+  @end for
+\n"@slurp
+  @#
+  @for $dimension in $field.dimensions
+, (real)${dimension.inBasis(basis).name}@slurp
+  @end for
+  @#
+  @# Now loop over the (dependent) variables
+  @for $variable in $dependentVariables
+    @for $componentNumber, $component in enumerate($variable.components)
+      @if $variable.vector.type == 'real'
+, ${variable.arrayName}[_${variable.vector.id}_index_pointer + ${componentNumber}]@slurp
+      @else
+, ${variable.arrayName}[_${variable.vector.id}_index_pointer + ${componentNumber}].Re(), ${variable.arrayName}[_${variable.vector.id}_index_pointer + ${componentNumber}].Im()@slurp
+      @end if
+    @end for
+  @end for
+);
+  @#
+@end def

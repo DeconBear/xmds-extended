@@ -1,0 +1,262 @@
+@shBang #!/usr/bin/env python3
+
+@*
+TransformMultiplexer.tmpl
+
+Created by Graham Dennis on 2008-12-23.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.Transforms._TransformMultiplexer
+@def description: Transform Multiplexer
+
+@def includes
+#include <utility>
+#include <map>
+@end def
+
+@def globals
+  @#
+typedef pair<ptrdiff_t, ptrdiff_t> _basis_pair;
+typedef void (*transform_function)(bool, real, real* const __restrict__, real* const __restrict__, ptrdiff_t, ptrdiff_t);
+
+// Less than operator needed by the C++ map class
+struct _basis_pair_less_than
+{
+  bool operator()(const _basis_pair& _x, const _basis_pair& _y) const {
+    return (_x.first < _y.first) || ((_x.first == _y.first) && (_x.second < _y.second));
+  }
+};
+
+struct _transform_step
+{
+  transform_function _func;
+  bool _forward;
+  bool _out_of_place;
+  ptrdiff_t _prefix_lattice;
+  ptrdiff_t _postfix_lattice;
+};
+
+// Structure to hold the basis change information
+struct _basis_transform_t
+{
+  vector<_transform_step> _transform_steps;
+  real _multiplier;
+  
+  _basis_transform_t(real _multiplier_in = 1.0) : _multiplier(_multiplier_in) {}
+  
+  _basis_transform_t(const _basis_transform_t& _b) : _transform_steps(_b._transform_steps), _multiplier(_b._multiplier) {}
+  
+  void append(transform_function _func, bool _forward, bool _out_of_place, ptrdiff_t _prefix_lattice, ptrdiff_t _postfix_lattice)
+  {
+    _transform_steps.push_back((_transform_step){_func, _forward, _out_of_place, _prefix_lattice, _postfix_lattice});
+  }
+};
+
+// Map type for holding (old_basis, new_basis) -> _basis_transform_t mappings
+typedef map<_basis_pair, _basis_transform_t, _basis_pair_less_than> _basis_map;
+
+  @for vector in self.vectorTransformMap
+_basis_map _${vector.id}_basis_map;
+  @end for
+
+real *_auxiliary_array = NULL;
+
+const char *_basis_identifiers[] = {
+  @for idx, basis in enumerate(self.basesNeeded)
+  /* ${idx} */ "(${', '.join(basis)})",
+  @end for
+};
+  @#
+@end def
+
+@def basisTransformFunctionContentsBegin($dict)
+@*doc:
+Returns the ``basis_transform`` function implementation for vector `vector`.
+
+This writes the function that does the fourier transforming of a specific vector
+to and from arbitrary combinations of fourier-space and normal-space.
+*@
+  @#
+  @set $function = dict['function']
+  @set $vector = dict['caller']
+  @set $transformInfo = self.vectorTransformMap[vector]
+if (_${vector.id}_basis == new_basis)
+  return;
+
+if (_${vector.id}_basis == -1) {
+  _LOG(
+    _ERROR_LOG_LEVEL,
+    "Error: Attempted to transform the vector '${vector.id}' to basis %s, but the vector doesn't have a basis specified yet!\n"
+    "       Please report this error to $bugReportAddress\n",
+    _basis_identifiers[new_basis]
+    );
+}
+
+if (_${vector.id}_basis_map.count(_basis_pair(_${vector.id}_basis, new_basis)) == 0) {
+  _LOG(
+    _ERROR_LOG_LEVEL,
+    "Error: We should have information about how to do every needed transform, but it seems we don't for this transform.\n"
+    "       The transform is for the vector '${vector.id}' from basis %s to basis %s.\n",
+    _basis_identifiers[_${vector.id}_basis], _basis_identifiers[new_basis]
+  );
+}
+_basis_transform_t &_t = _${vector.id}_basis_map[_basis_pair(_${vector.id}_basis, new_basis)];
+if (_t._transform_steps.size() == 0) {
+  _LOG(_ERROR_LOG_LEVEL, "Error: It looks like we tried to create plans for this transform, but failed.\n"
+                         "       The transform was for the vector '${vector.id}' from basis %s to basis %s.\n",
+                         _basis_identifiers[_${vector.id}_basis], _basis_identifiers[new_basis]);
+}
+real *_source_data = reinterpret_cast<real*>(_active_${vector.id});
+real *_dest_data = _auxiliary_array;
+for (vector<_transform_step>::iterator _it = _t._transform_steps.begin(); _it != _t._transform_steps.end(); ++_it) {
+  _it->_func(_it->_forward, _t._multiplier, _source_data, _dest_data, _it->_prefix_lattice, _it->_postfix_lattice);
+  if (_it->_out_of_place) {
+    real *_temp = _source_data;
+    _source_data = _dest_data;
+    _dest_data = _temp;
+  }
+}
+_${vector.id}_basis = new_basis;
+  @#
+@end def
+
+@def oopCopyTransformFunction(transformID, transformDict, function)
+  @#
+memcpy(_data_out, _data_in, _prefix_lattice * _postfix_lattice * sizeof(real));
+  @#
+@end def
+
+@def ipMultiplyTransformFunction(transformID, transformDict, function)
+  @#
+  @set featureOrdering = ['OpenMP']
+  @set featureDict = {
+    'templateString': ''
+  }
+#pragma ivdep
+${insertCodeForFeatures('loopOverVectorsWithInnerContentTemplateBegin', featureOrdering, featureDict)}@slurp
+for (long _i0 = 0; _i0 < _prefix_lattice * _postfix_lattice; _i0++) {
+  _data_in[_i0] *= _multiplier;
+}
+${insertCodeForFeaturesInReverseOrder('loopOverVectorsWithInnerContentTemplateEnd', featureOrdering, featureDict)}@slurp
+  @#
+@end def
+
+@def oopMultiplyTransformFunction(transformID, transformDict, function)
+  @#
+  @set featureOrdering = ['OpenMP']
+  @set featureDict = {
+    'templateString': ''
+  }
+#pragma ivdep
+${insertCodeForFeatures('loopOverVectorsWithInnerContentTemplateBegin', featureOrdering, featureDict)}@slurp
+for (long _i0 = 0; _i0 < _prefix_lattice * _postfix_lattice; _i0++) {
+  _data_out[_i0] = _data_in[_i0] * _multiplier;
+}
+${insertCodeForFeaturesInReverseOrder('loopOverVectorsWithInnerContentTemplateEnd', featureOrdering, featureDict)}@slurp
+  @#
+@end def
+
+
+@def mainBegin($dict)
+  @#
+
+_basis_transform_t *_basis_transform = NULL;
+ptrdiff_t _auxiliary_array_size = 0;
+ptrdiff_t _max_vector_size = 0;
+real* _max_vector_array = NULL;
+
+  @set $boolMap = {True: 'true', False: 'false'}
+  @for vector, vectorTransformInfo in self.vectorTransformMap.items()
+    @set sizePrefix = '2 * ' if vector.type == 'complex' else ''
+if (${sizePrefix}${vector.allocSize} > _max_vector_size) {
+  _max_vector_size = ${sizePrefix}${vector.allocSize};
+  _max_vector_array = reinterpret_cast<real*>(_${vector.id});
+}
+    @set $needsAuxiliaryArray = False
+    @set $bases = vectorTransformInfo['bases']
+    @set $basisPairMap = vectorTransformInfo['basisPairMap']
+    @for basisPairInfo in basisPairMap.values()
+      @set $basisPair = basisPairInfo['basisPair']
+_basis_transform = &_${vector.id}_basis_map[_basis_pair(${', '.join([str(self.basisIndexForBasis(basis)) for basis in basisPair])})];
+      @if basisPairInfo['forwardScale']
+_basis_transform->_multiplier = ${' * '.join(basisPairInfo['forwardScale'])};
+      @end if
+      @for transformStep in basisPairInfo['transformSteps']
+        @set needsAuxiliaryArray = True if transformStep[2] else needsAuxiliaryArray
+_basis_transform->append(
+  /* transform function */ _transform_${transformStep[0]},
+  /* forward? */ ${boolMap[transformStep[1]]},
+  /* out-of-place? */ ${boolMap[transformStep[2]]},
+  /* prefix lattice */ ${transformStep[3]},
+  /* postfix lattice*/ ${transformStep[4]}
+);
+      @end for
+
+_basis_transform = &_${vector.id}_basis_map[_basis_pair(${', '.join([str(self.basisIndexForBasis(basis)) for basis in reversed(basisPair)])})];
+      @if basisPairInfo['backwardScale']
+_basis_transform->_multiplier = ${' * '.join(basisPairInfo['backwardScale'])};
+      @end if
+      @for transformStep in reversed(basisPairInfo['transformSteps'])
+        @set needsAuxiliaryArray = True if transformStep[2] else needsAuxiliaryArray
+_basis_transform->append(
+  /* transform function */ _transform_${transformStep[0]},
+  /* forward? */ ${boolMap[not transformStep[1]]},
+  /* out-of-place? */ ${boolMap[transformStep[2]]},
+  /* prefix lattice */ ${transformStep[3]},
+  /* postfix lattice */ ${transformStep[4]}
+);
+      @end for
+
+    @end for
+    @if needsAuxiliaryArray
+      @set sizePrefix = '2 * ' if vector.type == 'complex' else ''
+_auxiliary_array_size = MAX(_auxiliary_array_size, ${sizePrefix}${vector.allocSize}); // vector '${vector.name}' needs an out-of-place transform
+
+    @end if
+  @end for
+if (_auxiliary_array_size) {
+  _auxiliary_array = (real*) xmds_malloc(sizeof(real) * _auxiliary_array_size);
+}
+
+bool _allocated_temporary_array = false;
+if (!_max_vector_array && _max_vector_size > 0) {
+  _max_vector_array = (real*) xmds_malloc(sizeof(real) * _max_vector_size);
+  _allocated_temporary_array = true;
+}
+
+// Make all geometry-dependent transformations prepare plans, etc.
+  @for tID, transformation in enumerate(self.neededTransformations)
+    @if not transformation.get('geometryDependent', False)
+      @continue
+    @end if
+_transform_${tID}(true, 1.0, _max_vector_array, _auxiliary_array, ${transformation['prefixLatticeString']}, ${transformation['postfixLatticeString']});
+  @end for
+
+if (_allocated_temporary_array) {
+  xmds_free(_max_vector_array);
+}
+  @#
+@end def
+
+@def mainEnd($dict)
+  @#
+if (_auxiliary_array) {
+  xmds_free(_auxiliary_array);
+}
+  @#
+@end def

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <testing>
+    <xsil_file name="vibstring_circle_spectral.xsil" expected="vibstring_circle_spectral_expected.xsil" absolute_tolerance="1e-5" relative_tolerance="1e-5" />
+  </testing>
+  <name>vibstring_circle_spectral</name>
+  <author>Graham Dennis</author>
+  <description>
+    Vibrating string with Dirichlet boundary conditions on a circle.
+    
+    Modification of vibstring_circle to calculate temporal derivatives in fourier (spectral) space.
+    This runs faster than vibstring_circle on the same grid.
+  </description>
+  
+  <features>
+    <benchmark />
+    <!-- <error_check /> -->
+    <chunked_output size="10KB" />
+    <bing />
+    <fftw plan="patient" />
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      const real T_mu = T/mu;
+      
+      const real width = 0.1;
+      const real absorb = 80.0;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="64"  domain="(-1, 1)" />
+      <dimension name="y" lattice="64"  domain="(-1, 1)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x y" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-100.0*((x-0.5)*(x-0.5) + y*y));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="boundary" initial_basis="x y" type="real">
+    <components>
+      bc
+    </components>
+    <initialisation>
+      <![CDATA[
+        real r = sqrt(x*x + y*y);
+        real rright = _max_x-width;
+        real rdamping = r > rright ? absorb*(1-cos(M_PI*(r - rright)/width)) : 0.0;
+
+        bc = exp(-rdamping);
+        if (r > _max_x)
+          bc = 0.0;
+        if ( r > rright)
+          bc = 0.0;
+        else
+          bc = 1.0;
+          
+        
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" tolerance="1e-7" interval="4e-2" steps="1000" home_space="k">
+      <samples>5 5 100</samples>
+      <operators>
+        <operator kind="ex" constant="yes" basis="x y">
+          <operator_names>L</operator_names>
+          <![CDATA[
+          real r2 = x*x + y*y;
+          if (r2 > (_max_x - width)*(_max_x-width))
+            L = 0.0;
+          else
+            L = 1.0;
+          ]]>
+        </operator>
+        <integration_vectors basis="kx ky">main</integration_vectors>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = L[-T_mu*(kx*kx+ky*ky)*u];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output format="binary">
+      <sampling_group basis="x(32) y(32)" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = u.Re();
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx(32) ky(32)" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = u.Re();
+        ]]>
+      </sampling_group>
+      <sampling_group basis="x(0) y(0)" initial_sample="yes">
+        <moments>energy</moments>
+        <dependencies>main</dependencies>
+        <operator kind="ex" constant="no">
+          <operator_names>Lx Ly</operator_names>
+          <![CDATA[
+            Lx = i*kx;
+            Ly = i*ky;
+          ]]>
+        </operator>
+        <![CDATA[
+          energy = mod2(uDot) + T_mu*mod2(Lx[u]) + T_mu*mod2(Ly[u]);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

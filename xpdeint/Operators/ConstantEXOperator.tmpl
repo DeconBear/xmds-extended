@@ -1,0 +1,71 @@
+@shBang #!/usr/bin/env python3
+
+@*
+ConstantEXOperator.tmpl
+
+Explicit-picture transverse derivative operator
+
+Created by Graham Dennis on 2007-10-20.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Operators._EXOperator
+
+@def description: EX transverse derivative operator for field $field.name
+@attr $operatorKind = _EXOperator.OtherOperatorKind
+@attr $calculateOperatorFieldFunctionArguments = []
+
+@def insideCalculateOperatorFieldLoops($codeString)
+  @#
+${insideCalculateOperatorFieldLoopsBegin}@slurp
+  @#
+// ************** Operator code *****************
+${codeString}@slurp
+// **********************************************
+  @#
+@end def
+
+@def evaluateOperatorFunctionContentsWithoutCodeBlock($function)
+  @#
+${optimisedOperatorCopyBegin}@slurp
+  @#
+  @super(function)
+  @#
+${optimisedOperatorCopyEnd}@slurp
+  @#
+@end def
+
+@def evaluateOperatorLoop($setOfVectorsToLoopOver)
+  @#
+${loopOverVectorsInBasisWithInnerContent(setOfVectorsToLoopOver, $operatorBasis, $insideEvaluateOperatorLoops)}@slurp
+  @#
+@end def
+
+@def insideEvaluateOperatorLoops
+  @#
+${insideEvaluateOperatorLoopsBegin}@slurp
+  @#
+  @for operatorComponentNumber, (operatorComponentName, operatorComponentVectors) in enumerate($operatorComponents.items())
+    @for targetVectorComponents in operatorComponentVectors.values()
+      @for targetVectorComponent in targetVectorComponents
+// ${operatorComponentName}[$targetVectorComponent]
+_${operatorComponentName}_${targetVectorComponent} = $operatorComponentName * $targetVectorComponent;
+      @end for
+    @end for
+  @end for
+  @#
+@end def

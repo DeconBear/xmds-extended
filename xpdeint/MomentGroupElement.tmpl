@@ -1,0 +1,177 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MomentGroupElement.tmpl
+
+Created by Graham Dennis on 2007-09-05.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint._MomentGroupElement
+@*
+
+  Description of template
+*@
+@def description: moment group $number
+
+
+@*
+  Implementation of the moment group sample function
+*@
+@def sampleFunctionContents($function)
+  @# Evaluate any computed vectors we have that either we or one
+  @# of our operators depends on
+  @set $featureOrdering = ['ChunkedOutput']
+${insertCodeForFeatures('sampleFunctionBegin', $featureOrdering), autoIndent=True}@slurp
+  @set $computedVectorDependencies = $codeBlocks['sampling'].dependencies.copy()
+  @silent computedVectorDependencies.update($dynamicVectorsNeedingPrecalculationForOperatorContainers($operatorContainers))
+${evaluateComputedVectors(computedVectorDependencies)}@slurp
+  @#
+  @# Execute any operatorContainers
+  @for $operatorContainer in $operatorContainers
+
+${operatorContainer.evaluateOperators(parentFunction=function)}@slurp
+  @end for
+
+  @#
+  @# Now actually begin the loop
+${codeBlocks['sampling'].loop(self.insideSamplingLoops)}@slurp
+  @# That's the end of the loop, magic eh?
+  @#
+  @if $outputField.hasDimensionName($propagationDimension)
+
+${propDimRep.arrayName}[${propDimRep.localOffset} + ${propDimRep.index}++] = $propagationDimension;
+  @end if
+
+_LOG(_SAMPLE_LOG_LEVEL, "Sampled field (for moment group #${number + 1}) at ${propagationDimension} = %e\n", ${propagationDimension});
+
+${insertCodeForFeaturesInReverseOrder('sampleFunctionEnd', $featureOrdering), autoIndent=True}@slurp
+  @#
+@end def
+
+@*
+  This function provides the contents of the moment group sampling loop
+*@
+@def insideSamplingLoops($codeString)
+  @#
+#define _SAMPLE_COMPLEX(variable) \
+          variable ## R = variable.Re(); variable ## I = variable.Im();
+
+// *************** Sampling code ****************
+${codeString}@slurp
+// **********************************************
+
+#undef _SAMPLE_COMPLEX
+  @#
+@end def
+
+@*
+  Process function implementation
+*@
+@def processFunctionContents($function)
+  @# If we don't have any processing code then we don't need to do a complicated loop
+  @if not self.hasattr('processingCode')
+    @# If we didn't allocate a raw vector, then there actually is no processing to do
+    @# at all.
+    @if not $rawVectorNeedsToBeAllocated
+// No post processing needs to be done
+    @else
+      @#
+      @# Although we don't have any processing code, one of our features has
+      @# processing code that needs to run (but it is simple, right?)
+${loopOverVectorsWithInnerContentTemplate([$rawVector], $insideProcessingLoopsNoProcessingCode, basis=$outputBasis)}@slurp
+    @end if
+  @else
+    @assert False, "Post processing of sampled data hasn't been implemented yet!"
+  @end if
+  @#
+@end def
+
+@def insideProcessingLoopsNoProcessingCode
+  @#
+  @# If the export_all_paths option has been used for this moment group,
+  @# for now use the processed_vector (later to be called mean_...) to 
+  @# hold all them moment output for all paths rather than the path
+  @# averaged version. Since the below runs every path, we only want to
+  @# do it on the last path, when we have all the data for all the paths
+  @if self.export_all_paths
+    @if self.MPIMultiPathInUse
+      @# In this case, each process should do the write out when it reaches
+      @# end of the paths it's been assigned.
+if (gPathID == _n_paths - _size + _rank) {
+  _active_${processedVector.id}[\${index}] = _active_\${vector.id}[\${index}];
+}
+    @else
+      @# In this non-MPI case, there's only a single process, and it should
+      @# write out when it reaches final path
+if (gPathID == _n_paths - 1) {
+  _active_${processedVector.id}[\${index}] = _active_\${vector.id}[\${index}];
+}
+    @end if
+  @else
+  @# This is the standard case - we're not using export_all_paths, so add all
+  @# the paths together rather than storing them separately in a transverse
+  @# dimension
+_active_${processedVector.id}[\${index}] += _active_\${vector.id}[\${index}];
+  @end if
+  @set $featureOrdering = ['Driver']
+${insertCodeForFeatures('insideMomentGroupProcessingNoProcessingCodeLoop', $featureOrdering)}
+  @#
+@end def
+
+@*
+  Write output function implementation
+*@
+@def writeOutFunctionContents($function)
+  @#
+  @set $outputFieldVectorComponents = $anyObject($outputField.vectors).components
+  @set $dependentVariables = [{'vector': $processedVector,
+                               'arrayName': c'_active_${processedVector.id}',
+                               'components': $processedVector.components}]
+  @#
+  @# Note that Driver must be last
+  @set $featureOrdering = ['ErrorCheck', 'Driver']
+  @set $dict = {'momentGroup': self, 'dependentVariables': $dependentVariables}
+  @set $result = $insertCodeForFeatures('writeOutFunctionImplementationBegin', $featureOrdering, $dict)
+  @set $dependentVariables = $dict.dependentVariables
+  @set $componentCount = 0
+  @for $variable in $dependentVariables
+    @set $componentCount += len($variable.vector.components)
+    @# Technically, all these variables must be of type real...
+    @if $variable.vector.type == 'complex'
+      @set $componentCount += len($variable.vector.components)
+    @end if
+  @end for
+  @#
+  @# The features can return Cheetah template code suitable for passing to loopOverVectorsWithInnerContentTemplate
+  @# in order to create their data. If any have, then we should actually create that loop and run that code.
+  @if $result
+${loopOverVectorsWithInnerContentTemplate([$processedVector], $result, basis = $outputBasis)}@slurp
+  @end if
+
+  @set $featureOrdering = ['ErrorCheck', 'Output']
+  @set $dict = {'field': $outputField,
+                'basis': $outputBasis,
+                'fp': '_outfile',
+                'dependentVariables': $dependentVariables,
+                'xsilElementName': c'moment_group_${number + 1}',
+                'groupID': $number+1
+                }
+${insertCodeForFeatures('writeOutFunctionImplementationBody', $featureOrdering, $dict)}@slurp
+  @#
+@end def
+

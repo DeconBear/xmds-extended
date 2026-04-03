@@ -1,0 +1,7 @@
+This is makeindex, version 2.15 [TeX Live 2020] (kpathsea + Thai support).
+Scanning style file ./python.ist.......done (7 attributes redefined, 0 ignored).
+Scanning input file xmds2.idx....done (197 entries accepted, 0 rejected).
+Sorting entries.....done (1573 comparisons).
+Generating output file xmds2.ind....done (263 lines written, 0 warnings).
+Output written in xmds2.ind.
+Transcript written in xmds2.ilg.

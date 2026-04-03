@@ -1,0 +1,862 @@
+#!/usr/bin/env python3
+# encoding: utf-8
+"""
+wscript
+
+The waf script to configure compilation of generated simulations.
+
+Created by Graham Dennis on 2009-03-01.
+
+Copyright (c) 2009-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import os, sys, platform, re
+
+from waflib import Task, TaskGen, Errors, Options, Utils
+from waflib.TaskGen import feature
+
+def options(opt):
+    # options provided by modules
+    opt.load('compiler_cxx')
+
+def optionAsList(var):
+    if isinstance(var, str):
+        return [var]
+    elif isinstance(var, list):
+        return var
+    assert False
+
+
+# This doesn't have great performance, but it's a small dataset we'll be working on
+def append_to_unordered_set(dest, value):
+    if value in dest:
+        dest.remove(value)
+    dest.append(value)
+
+def expand_dependencies(dest, uselib, env):
+    append_to_unordered_set(dest, uselib)
+    if not uselib in env.uselib_dependencies: return
+    expand_dependencies_of_list(dest, env.uselib_dependencies[uselib], env)
+
+def expand_dependencies_of_list(dest, uselibs, env):
+    for uselib in uselibs[:]:
+        expand_dependencies(dest, uselib, env)
+
+
+def configure(conf):
+    env = conf.env
+    
+    env.uselib_dependencies = {}
+    
+    def _check_cxx(**KWs):
+        # Don't execute when cross-compiling
+        KWs['execute'] = not conf.env['is_cross_compile']
+        KWs['mandatory'] = False
+        KWs['ENVIRONMENT_NAME'] = conf.env['ENVIRONMENT_NAME']
+        
+        if 'cxxflags' in KWs:
+          cxxflags = optionAsList(KWs['cxxflags'])
+          
+          linkflags = []
+          if 'linkflags' in KWs:
+            linkflags.extend(optionAsList(KWs['linkflags']))
+          KWs['linkflags'] = linkflags
+        
+        original_uselib = []
+
+        if 'uselib' in KWs:
+            current_uselib = optionAsList(KWs['uselib'])
+            original_uselib = current_uselib[:]
+            expand_dependencies_of_list(current_uselib, original_uselib[:], conf.env)
+            KWs['uselib'] = current_uselib
+        
+        result = conf.check_cxx(**KWs) not in [None, False]
+        if result and 'uselib_store' in KWs:
+            conf.env.append_unique('uselib', KWs['uselib_store'])
+            if original_uselib:
+                current_uselib_dep = conf.env.uselib_dependencies.setdefault(KWs['uselib_store'], [])
+                for uselib in original_uselib:
+                    if uselib == KWs['uselib_store']: continue
+                    append_to_unordered_set(current_uselib_dep, uselib)
+        return result
+    
+    def try_options(uselib_store, kwOptions, common = None):
+        common = common or {}
+        for kws in kwOptions:
+            predicate = kws.get('predicate', True)
+            if callable(predicate):
+              predicate = predicate()
+            if not predicate: continue
+            
+            allKWs = common.copy()
+            allKWs.update(kws)
+            if check_cxx(uselib_store=uselib_store, **allKWs):
+                return True
+        return False
+    
+    def check_cxx(**KWs):
+        # Prefer a static library over a dynamic one if available
+        if ('lib' not in KWs) or ('uselib_store' not in KWs) or ('_skip' in KWs):
+            return _check_cxx(**KWs)
+        
+        lib = KWs['lib']
+        del KWs['lib']
+        uselib_store = KWs['uselib_store']
+        KWs['_skip'] = True
+        del KWs['uselib_store']
+        extra_static_kws = KWs.get("static_lib_extra_options", {})
+        extra_shared_kws = KWs.get("shared_lib_extra_options", {})
+        
+        options = [
+            dict(stlib=lib, msg=KWs['msg'] + " (static library)", errmsg="no (will try dynamic library instead)", **extra_static_kws),
+            dict(lib=lib,   msg=KWs['msg'] + " (dynamic library)", **extra_shared_kws),
+        ]
+        if not conf.env['STLIB_MARKER']:
+            options = [
+            # On systems like Mac OS X, it seems we can't force the linker to prefer static libraries over dynamic ones
+            # Except of course by including them by listing the full path.
+                dict(lib=lib, **extra_shared_kws),
+            ]
+        if not 'errmsg' in KWs:
+            KWs['errmsg'] = "no (it's optional anyway)"
+            
+        return try_options(uselib_store, options, KWs)
+    
+    
+    def configure_compiler():
+        is_windows = Utils.unversioned_sys_platform() == 'win32'
+        if Utils.unversioned_sys_platform() == 'win32' and not getattr(Options.options, 'check_cxx_compiler', None):
+            # Prefer MinGW-w64 on Windows because it works from a normal shell
+            # without requiring a pre-initialised Visual Studio environment.
+            Options.options.check_cxx_compiler = 'g++ msvc clang++'
+
+        conf.load('compiler_cxx')
+        
+        conf.check_cxx(
+            msg = "Checking whether the compiler works",
+            errmsg = "The compiler doesn't seem to work",
+            execute = False,
+        )
+        
+        conf.check_cxx(
+            msg = "Checking that we have a C++ compiler",
+            fragment = """
+            #include <iostream>
+            int main() { return 0; }
+            """,
+            errmsg = "Please specify a C++ compiler.",
+            execute = False,
+        )
+
+        if is_windows:
+            # waf's execute-time test task is fragile on modern native Windows
+            # setups, but compile/link probes are sufficient for the checks below.
+            conf.env['is_cross_compile'] = True
+            conf.msg("Checking whether we are cross-compiling", "yes (skipping runtime probes on Windows)")
+        else:
+            conf.env['is_cross_compile'] = not conf.check_cxx(
+                msg = "Checking whether we are cross-compiling",
+                okmsg = "no",
+                errmsg = "maybe, assuming we are",
+                execute = True,
+                mandatory = False,
+            )
+        
+        # If we have a static library marker, try to link the simulation statically for performance.
+        if conf.env['STLIB_MARKER']:
+            conf.env['FINAL_LINK_VAR'] = conf.env['STLIB_MARKER']
+            result = conf.check_cxx(
+                msg = "Checking whether we can link to only static libraries",
+                errmsg = "no (will use dynamic libraries)",
+                mandatory = False,
+                execute = not conf.env['is_cross_compile']
+            )
+            if not result:
+                del conf.env['FINAL_LINK_VAR']
+        
+        
+        if conf.env['CXX_NAME'] == 'gcc' or conf.env['CXX_NAME'] == 'clang':
+
+            machine_optimisations = [
+                {
+                    "msg": "Trying to make compiler optimise for this machine",
+                    "cxxflags": "-march=native",
+                },
+                {
+                    "msg": "Checking for Altivec",
+                    "cxxflags": ['-mpim-altivec', '-maltivec'],
+                },
+                {
+                    "msg": "Checking for AVX",
+                    "cxxflags": ["-mavx", "-msse3", "-msse2", "-msse", "-mfpmath=sse"],
+                },
+                {
+                    "msg": "Checking for SSE3",
+                    "cxxflags": ["-msse3", "-msse2", "-msse", "-mfpmath=sse"],
+                },
+                {
+                    "msg": "Checking for SSE2",
+                    "cxxflags": ["-msse2", "-msse", "-mfpmath=sse"],
+                },
+                {
+                    "msg": "Checking for SSE",
+                    "cxxflags": ["-msse", "-mfpmath=sse"]
+                }
+            ]
+            
+            try_options('optimise', machine_optimisations,
+                { # This is so that the compiler will generate SIMD instructions
+                  # If the linker / assembler doesn't support those instructions,
+                  # Then we'll pick it up this way.
+                    "fragment": "int main() { double __volatile__ a = 1.0; a *= 1.03; return 0; }"
+                }
+            )
+            
+            check_cxx(
+                cxxflags='-mtune=native',
+                uselib_store="optimise",
+                msg = "Trying to make compiler tune for this machine"
+            )
+            
+            if is_windows:
+                optimisation_flags = [
+                    '-O2', '-ffast-math', '-fomit-frame-pointer', '-fstrict-aliasing'
+                ]
+            else:
+                optimisation_flags = [
+                    '-O3', '-ffast-math', '-funroll-all-loops', '-fomit-frame-pointer', '-falign-loops', '-fstrict-aliasing', '-momit-leaf-frame-pointer'
+                ]
+            
+            for optimisation_flag in optimisation_flags:
+                check_cxx(
+                    cxxflags=optimisation_flag,
+                    uselib_store="optimise"
+                )
+            
+            check_cxx(
+                cxxflags=['-fno-unsafe-math-optimizations', '-fno-finite-math-only'],
+                uselib_store="safe_math",
+                msg = "Checking for cautious math flags"
+            )
+            
+            if sys.platform == 'darwin':
+                env.append_unique('CXXFLAGS', ['-mmacosx-version-min=%s' % '.'.join(platform.mac_ver()[0].split('.')[:2])])
+            
+            if not is_windows:
+                check_cxx(
+                    cxxflags='-ftree-vectorize',
+                    uselib_store='vectorise',
+                    uselib="optimise",
+                    msg = "Checking for Autovectorisation"
+                )
+            
+            # Check for openMP on MacOS
+            # Problem is that the default Apple compiler (clang) doesn't support openMP. We can force it to
+            # recognise the OMP pragmas with the Xpreprocessor directive. This won't work with older versions
+            # of OSX (difficult to tell how old because Apple doesn't version their clang the same way as
+            # upstream clang, sigh.
+            # This issue only exists for clang, so if the user is using gcc everything is fine.
+ 
+            if sys.platform == 'darwin' and conf.env['CXX_NAME'] == 'clang':
+                check_cxx(
+                    cxxflags=['-Xpreprocessor', '-fopenmp'],
+                    linkflags=['-Xpreprocessor', '-fopenmp', '-lomp'],
+                    uselib_store='openmp',
+                    msg = "Checking for OpenMP"
+                )
+            else:
+                # Not using clang on MacOs, so just set up OpenMP in a normal sane fashion
+                check_cxx(
+                    cxxflags='-fopenmp',
+                    linkflags="-fopenmp",
+                    uselib_store='openmp',
+                    msg = "Checking for OpenMP"
+                )
+
+            # This code is now superceded by the lines above
+            #check_cxx(
+            #    cxxflags='-fopenmp',
+            #    linkflags="-fopenmp",
+            #    uselib_store='openmp',
+            #    msg = "Checking for OpenMP"
+            #)
+            
+            check_cxx(
+                cxxflags="-pthread",
+                linkflags="-pthread",
+                uselib_store="threads",
+                msg = "Checking for pthreads",
+            )
+        elif conf.env['CXX_NAME'] == 'icc':
+            compiler_optimisations = [
+                {
+                    "msg": "Checking for the 'go fast' compiler option",
+                    "cxxflags": ['-fast', '-ffast-math', '-complex-limited-range', '-fomit-frame-pointer'],
+                    "linkflags": ["-fast"],
+                },
+                {
+                    "msg": "Checking for fallback optimisation flags",
+                    "cxxflags": ['-O3', '-ipo', '-ffast-math', '-complex-limited-range', '-fomit-frame-pointer'],
+                    "linkflags": ['-O3'],
+                },
+                {
+                    "msg": "Checking safe optimisation flags",
+                    "cxxflags": "-O3",
+                    "linkflags": "-O3"
+                }
+            ]
+            
+            try_options('optimise', compiler_optimisations)
+            
+            machine_optimisations = [
+                {
+                    "msg": "Trying to optimise for SSE4",
+                    "cxxflags": "-xS",
+                },
+                {
+                    "msg": "Trying to optimise for SSSE3",
+                    "cxxflags": "-xT",
+                },
+                {
+                    "msg": "Trying to optimise for SSE3",
+                    "cxxflags": "-xP",
+                },
+                {
+                    "msg": "Trying to optimise for SSE2",
+                    "cxxflags": "-xN",
+                },
+            ]
+            
+            try_options('optimise', machine_optimisations)
+            
+            check_cxx(
+                cxxflags="-fma",
+                uselib_store="optimise",
+                msg = "Trying to fuse multiply and add instructions"
+            )
+            
+            check_cxx(
+                cxxflags = ["-fp-model", "precise"],
+                uselib_store="safe_math",
+                uselib="optimise",
+                msg = "Checking for cautious math flags"
+            )
+            
+            check_cxx(
+                cxxflags = "-vec",
+                uselib_store="vectorise",
+                uselib="optimise",
+                msg = "Checking for Autovectorisation"
+            )
+            
+            check_cxx(
+                cxxflags='-openmp',
+                linkflags="-openmp",
+                uselib_store="openmp",
+                msg = "Checking for OpenMP"
+            )
+            
+            check_cxx(
+                cxxflags="-pthread",
+                linkflags="-pthread",
+                uselib_store="threads",
+                msg = "Checking for pthreads"
+            )
+        
+        
+        check_cxx(
+            cxxflags="-g",
+            uselib_store="debug",
+            msg = "Checking for compiler debug flags"
+        )
+        
+        # Check for srandomdev, used for runtime initialisation of random number generators
+        check_cxx(
+            header_name='stdlib.h',
+            uselib_store = 'randomisation_seeding',
+            defines = 'HAVE_SRANDOMDEV',
+            msg = "Checking for srandomdev",
+            fragment='''
+                #include <stdlib.h>
+
+                int main() {
+                    void *p=(void*)(srandom);
+                    return 0;
+                } 
+            '''
+        )
+
+        
+        # Check for the availability of /dev/urandom
+        if not is_windows:
+            check_cxx(
+                defines = 'HAVE_DEV_URANDOM',
+                uselib_store = 'randomisation_seeding',
+                fragment= '''
+                    extern "C" {
+                    #include <stdio.h>
+                    	int main() {
+                            FILE *fp = fopen("/dev/urandom", "r");
+                            return fp == NULL;
+                        }
+                    }
+                ''',
+                msg = "Checking for /dev/urandom",
+            )
+        
+        # Check for hdf5
+        if conf.find_program('h5cc', var='H5CC', mandatory = False):
+            h5cc_shared_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-shlib'])
+            h5cc_static_flags = conf.cmd_and_log([conf.env['H5CC'][0], '-show', '-noshlib'])
+            
+            hdf5_libpath = re.search(r'(\S*)/libhdf5\.a', h5cc_static_flags).group(1)
+            
+            conf.env.append_unique("LIBPATH_hdf5", hdf5_libpath)
+            
+            # h5cc uses absolute paths to the static libraries.  This interferes with how waf likes to link
+            # against static libraries.  Let's remove the absolute paths to the libraries, and add the static libraries
+            # again later.
+            h5cc_static_flags = re.sub(re.escape(hdf5_libpath) + r"/libhdf5\S*\.a", "", h5cc_static_flags)
+            
+            conf.parse_flags(h5cc_shared_flags, 'hdf5_shared')
+            conf.parse_flags(h5cc_static_flags, 'hdf5_static')
+            
+            conf.env['uselib'].extend(['hdf5_shared', 'hdf5_static'])
+            
+            check_cxx(
+                lib='hdf5',
+                header_name='hdf5.h',
+                #function_name='H5check_version',
+                fragment='''
+                    #include <hdf5.h>
+                    #include <hdf5_hl.h>
+                        
+                    int main() {
+                        void *p=(void*)(H5check_version);
+                        return 0;
+                    } ''',
+                static_lib_extra_options = dict(uselib = 'hdf5_static'),
+                shared_lib_extra_options = dict(uselib = 'hdf5_shared'),
+                uselib_store='hdf5',
+                msg = "Checking for HDF5",
+            )
+            
+
+            if 'hdf5' in conf.env['uselib']:
+
+                check_cxx(
+                    lib='hdf5_hl',
+                    defines='HAVE_HDF5_HL',
+                    header_name=['hdf5.h', 'hdf5_hl.h'],
+                    fragment='''
+                        #include <hdf5.h>
+                        #include <hdf5_hl.h>
+                        
+                        int main() {
+                            void *p=(void*)(H5DSset_scale);
+                            return 0;
+                        } ''',
+                    uselib_store='hdf5',
+                    uselib='hdf5',
+                    msg = "Checking for HDF5 High-level library"
+                )
+
+                #check_cxx(
+                #    lib='hdf5_hl',
+                #    defines='HAVE_HDF5_HL',
+                #    header_name=['hdf5.h', 'hdf5_hl.h'],
+                #    function_name='H5DSset_scale',
+                #    uselib_store='hdf5',
+                #    uselib='hdf5',
+                #    msg = "Checking for HDF5 High-level library",
+                #)
+
+                # We need to ensure hdf5_hl appears *before* hdf5 for static compile order
+                if conf.env['STLIB_hdf5']:
+                    hdf5_stlib = conf.env._get_list_value_for_modification('STLIB_hdf5')
+                    if 'hdf5_hl' in hdf5_stlib:
+                        hdf5_stlib.remove('hdf5_hl')
+                        hdf5_stlib.insert(0, 'hdf5_hl')
+                
+
+                check_cxx(
+                    header_name='hdf5.h',
+                    defines='HAVE_H5LEXISTS',
+                    uselib = 'hdf5',
+                    uselib_store = 'hdf5',
+                    fragment='''
+                        #include <hdf5.h>
+                        #include <hdf5_hl.h>
+                        
+                        int main() {
+                            void *p=(void*)(H5Lexists);
+                            return 0;
+                        } '''
+                )
+                
+        else:
+            check_cxx(
+                lib='hdf5',
+                header_name='hdf5.h',
+                fragment='''
+                    #include <hdf5.h>
+                    int main() {
+                        void *p=(void*)(H5check_version);
+                        return 0;
+                    } ''',
+                uselib_store='hdf5',
+                msg = "Checking for HDF5",
+            )
+
+            if 'hdf5' in conf.env['uselib']:
+                check_cxx(
+                    lib='hdf5_hl',
+                    defines='HAVE_HDF5_HL',
+                    header_name=['hdf5.h', 'hdf5_hl.h'],
+                    fragment='''
+                        #include <hdf5.h>
+                        #include <hdf5_hl.h>
+                        int main() {
+                            void *p=(void*)(H5DSset_scale);
+                            return 0;
+                        } ''',
+                    uselib_store='hdf5',
+                    uselib='hdf5',
+                    msg = "Checking for HDF5 High-level library"
+                )
+
+                check_cxx(
+                    header_name='hdf5.h',
+                    defines='HAVE_H5LEXISTS',
+                    uselib = 'hdf5',
+                    uselib_store = 'hdf5',
+                    fragment='''
+                        #include <hdf5.h>
+                        int main() {
+                            void *p=(void*)(H5Lexists);
+                            return 0;
+                        } '''
+                )
+
+        check_cxx(
+            lib='xmds',
+            uselib_store='xmds',
+            msg = "Checking for libxmds"
+        )
+        
+        # Check for system-specific features
+        if sys.platform == 'darwin':
+            check_cxx(
+                framework="CoreFoundation",
+                uselib_store="system",
+                msg = "Checking for Apple CoreFoundation framework",
+            )
+            check_cxx(
+                framework="IOKit",
+                uselib_store="system",
+                uselib="system",
+                msg = "Checking for Apple IOKit framework",
+            )
+        
+        #check_cxx(
+        #    lib=["iomp", "vml"],
+        #    header_name='mkl_vsl.h',
+        #    function_name='vslNewStream',
+        #    uselib_store='mkl_vsl',
+        #    msg = "Checking for Intel's Vector Math Library"
+        #)
+
+        check_cxx(
+            lib=["iomp", "vml"],
+            header_name='mkl.h',
+            uselib_store='mkl_vsl',
+            msg = "Checking for Intel's Vector Math Library",
+            fragment='''
+                #include "mkl.h"
+                int main() {
+                    VSLStreamStatePtr stream;
+                    vslNewStream(&stream,VSL_BRNG_MCG31,2);
+                    return 0;
+                } '''
+        )
+
+        
+        dsfmt_optimisations = [
+          {
+              "cxxflags": ["-finline-functions"],
+              "msg": "Checking safer dSFMT compile flags",
+          },
+          {
+              "cxxflags": [],
+              "msg": "Checking dSFMT compile flags",
+          },
+        ];
+        
+        try_options('dsfmt', dsfmt_optimisations)
+        
+        # Find CBLAS
+        cblas_options = [
+            {# Intel MKL
+                'defines': 'CBLAS_MKL',
+                'lib': ['mkl_intel_lp64', 'mkl_intel_thread', 'mkl_core'],
+                'fragment': '''
+                    extern "C" {
+                    #include <mkl_cblas.h>
+                    	int main() {
+                    	    void *p=(void*)(cblas_dgemm);
+                    	    return 0;
+                        }
+                    }
+                ''',
+                'uselib': 'openmp',
+                'header_name': 'mkl.h',
+                'msg': "Checking for Intel's Math Kernel Library",
+            },
+            {# Apple Accelerate
+                'defines': 'CBLAS_VECLIB',
+                'framework_name': 'Accelerate',
+                'msg': "Checking for Apple's Accelerate framework",
+                'predicate': sys.platform == 'darwin',
+                'fragment': '''
+                    //extern "C" {
+                    //#include <cblas.h>
+                    //#include <vblas.h>
+                    #include <Accelerate/Accelerate.h>
+                    	int main() {
+                    	    void *p=(void*)(cblas_dgemm);
+                    	    return 0;
+                        }
+                    //}
+                '''
+            },
+            {# ATLAS CBLAS
+                'defines': 'CBLAS_ATLAS',
+                'lib': 'cblas',
+                'fragment': '''
+                    extern "C" {
+                    #include <cblas.h>
+                    	int main() {
+                    	    void *p=(void*)(cblas_dgemm);
+                    	    return 0;
+                        }
+                    }
+                ''',
+                'msg': "Checking for ATLAS's CBLAS."
+            },
+            {# GSL CBLAS
+                'defines': 'CBLAS_GSL',
+                'lib': 'gslcblas',
+                'header_name': 'gsl/gsl_cblas.h',
+                'fragment': '''
+                    extern "C" {
+                    #include <gsl_cblas.h>
+                    	int main() {
+                    	    void *p=(void*)(cblas_dgemm);
+                    	    return 0;
+                        }
+                    }
+                ''',
+                'msg': "Checking for GSL's CBLAS",
+            }
+        ]
+
+        #cblas_common = {
+        #    'function_name': 'cblas_dgemm',
+        #}
+        
+        #try_options('cblas', cblas_options, cblas_common)
+        try_options('cblas', cblas_options)
+        
+        check_cxx(
+            lib='gsl',
+            uselib='cblas',
+            uselib_store='gsl',
+            header_name='gsl/gsl_sf.h',
+            msg="Checking for GSL",
+            fragment='''
+                #include <gsl/gsl_sf.h>
+
+                int main() {
+                    gsl_sf_bessel_jl(1, 1.0);
+                    return 0;
+                } '''
+        )
+
+        
+
+        check_cxx(
+            lib='fftw3',
+            header_name='fftw3.h',
+            uselib_store='fftw3',
+            fragment='''
+                #include <fftw3.h>
+                int main() {
+                    void *p=(void*)(fftw_execute);
+                    return 0;
+                } ''',
+            msg = "Checking for FFTW3",
+            errmsg = "Couldn't find FFTW3.  Please install."
+        )
+
+        #check_cxx(
+        #    lib='fftw3',
+        #    header_name='fftw3.h',
+        #    function_name='fftw_execute',
+        #    uselib_store='fftw3',
+        #    msg = "Checking for FFTW3",
+        #    errmsg = "Couldn't find FFTW3.  Please install."
+        #)
+        
+        check_cxx(
+            lib='fftw3f',
+            header_name='fftw3.h',
+            uselib_store='fftw3f',
+            fragment='''
+                #include <fftw3.h>
+                int main() {
+                    void *p=(void*)(fftwf_execute);
+                    return 0;
+                } ''',
+            msg = "Checking for single-precision FFTW3"
+        )
+
+        #check_cxx(
+        #    lib='fftw3f',
+        #    header_name='fftw3.h',
+        #    function_name='fftwf_execute',
+        #    uselib_store='fftw3f',
+        #    msg = "Checking for single-precision FFTW3"
+        #)
+        
+        if 'fftw3' in conf.env['uselib']:
+            check_cxx(
+                lib='fftw3_threads',
+                header_name='fftw3.h',
+                #function_name='fftw_init_threads',
+                fragment='''
+                    #include <fftw3.h>
+                    int main() {
+                        void *p=(void*)(fftw_init_threads);
+                        return 0;
+                    } ''',
+                uselib_store='fftw3_threads',
+                uselib=['fftw3', 'threads'],
+                msg = "Checking for threading support in FFTW3",
+            )
+            check_cxx(
+                lib='fftw3_omp',
+                header_name='fftw3.h',
+                #function_name='fftw_init_threads',
+                uselib_store='fftw3_omp',
+                uselib=['fftw3', 'openmp'],
+                fragment='''
+                    #include <fftw3.h>
+                    int main() {
+                        void *p=(void*)(fftw_init_threads);
+                        return 0;
+                    } ''',
+                msg = "Checking for OpenMP support in FFTW3",
+            )
+        if 'fftw3f' in conf.env['uselib']:
+            check_cxx(
+                lib='fftw3f_threads',
+                header_name='fftw3.h',
+                #function_name='fftwf_init_threads',
+                uselib_store='fftw3f_threads',
+                uselib=['fftw3f', 'threads'],
+                fragment='''
+                    #include <fftw3.h>
+                    int main() {
+                        void *p=(void*)(fftwf_init_threads);
+                        return 0;
+                    } ''',
+                msg = "Checking for threading support in single-precision FFTW3",
+            )
+            check_cxx(
+                lib='fftw3f_omp',
+                header_name='fftw3.h',
+                #function_name='fftwf_init_threads',
+                uselib_store='fftw3f_omp',
+                uselib=['fftw3f', 'openmp'],
+                fragment='''
+                    #include <fftw3.h>
+                    int main() {
+                        void *p=(void*)(fftwf_init_threads);
+                        return 0;
+                    } ''',
+                msg = "Checking for OpenMP support in single-precision FFTW3",
+            )
+        
+        # Destroy all those unnecessary #define's generated by waf.
+        # Any we actually want will be attached to a uselib var.
+        del conf.env["DEFINES"]
+    
+    print()
+    print("Configuring for single-process scripts...")
+    conf.setenv('default', env)
+    conf.env['ENVIRONMENT_NAME'] = 'default'
+    configure_compiler()
+    
+    # Stuff for MPI variant
+    print()
+    print("Configuring for MPI scripts...")
+    conf.setenv('mpi', env)
+    conf.env['ENVIRONMENT_NAME'] = 'mpi'
+    if conf.find_program('mpic++', var='MPICXX', mandatory = False) or conf.find_program('mpiicpc', var='MPICXX', mandatory = False):
+        
+        conf.env['CXX'] = conf.env['MPICXX']
+        conf.env['LINK_CXX'] = conf.env['MPICXX']
+        
+        configure_compiler()
+        
+        if 'fftw3' in conf.env['uselib']:
+            check_cxx(
+                lib='fftw3_mpi',
+                header_name='fftw3.h fftw3-mpi.h',
+                #function_name='fftw_mpi_init',
+                fragment='''
+                    #include <fftw3.h>
+                    #include <fftw3-mpi.h>
+                    int main() {
+                        void *p=(void*)(fftw_mpi_init);
+                        return 0;
+                    } ''',
+                uselib_store='fftw3_mpi',
+                uselib='fftw3',
+                msg = "Checking for FFTW3 with MPI"
+            )
+        if 'fftw3f' in conf.env['uselib']:
+            check_cxx(
+                lib='fftw3f_mpi',
+                header_name='fftw3.h fftw3-mpi.h',
+                #function_name='fftwf_mpi_init',
+                fragment='''
+                    #include <fftw3.h>
+                    #include <fftw3-mpi.h>
+                    int main() {
+                        void *p=(void*)(fftwf_mpi_init);
+                        return 0;
+                    } ''',
+                uselib_store='fftw3f_mpi',
+                uselib='fftw3f',
+                msg = "Checking for single-precision FFTW3 with MPI"
+            )
+        
+        del conf.env["DEFINES"]
+    else:
+        print("MPI not found. No scripts using MPI can be compiled on this system.")
+        conf.setenv('default')
+        del conf.all_envs['mpi']

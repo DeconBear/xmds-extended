@@ -1,0 +1,79 @@
+@shBang #!/usr/bin/env python3
+
+@*
+GaussianRandomVariable.tmpl
+
+Created by Joe Hope on 2009-08-20.
+
+Copyright (c) 2009-2012, Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.ScriptElement
+
+@def splitNoise($function)
+@*doc:
+Return the code to generate a new smaller gaussian noise from a previous noise.
+
+The previous noise had a time step of ``old_smallest_step`` a variable available in the C
+code, not in the template itself.
+*@
+  @#
+  @set $noiseVector = $parent
+  @#
+// Split a gaussian noise
+  @# Generate a new noise of the appropriate variance
+${noiseVector.functions['evaluate'].call(_step = '(_new_step * _old_step)/(_old_step - _new_step)')}
+
+  @# Then add the old noise.
+  @# When adding the old noise, the first step is to get a pointer to the old noise itself.
+  @# This pointer is called _old_${noiseVector.id}
+// Now complete creation of the new noise.
+
+  @# Now do the actual adding. This code creates a loop over the noiseVector
+  @# adding the old vector at each point.
+${loopOverVectorsWithInnerContentTemplate([$noiseVector], 
+"""_active_${vector.id}[$index] += _old_array[$index];
+""", basis = noiseVector.initialBasis), autoIndent=True}@slurp
+
+  @#
+@end def
+
+@def makeNoises
+@* Subclasses can implement makeFixedVarianceNoises and the parent will fix up the noises.
+   Alternatively, subclasses may implement makeNoises if they can do the entire thing correctly.
+*@
+  @set noiseVector = $parent
+  @#
+const real _var = ${{'complex': 0.5, 'real': 1.0}[noiseVector.type]} / (${noiseVector.spatiallyIndependentVolumeElement}@slurp
+  @if not noiseVector.static:
+* _step@slurp
+  @end if
+);
+
+${makeFixedVarianceNoises}@slurp
+  @#
+  @set nonUniformDimReps = noiseVector.nonUniformDimReps
+  @if nonUniformDimReps
+    @capture loopString
+      @set fixupString = ' * '.join(c'${dimRep.stepSizeArrayName}_invsqrt[${dimRep.index} + ${dimRep.localOffset}]' for dimRep in nonUniformDimReps)
+      @for component in noiseVector.components
+${component} *= ${fixupString};
+      @end for
+    @end capture
+${loopOverFieldInBasisWithVectorsAndInnerContent(noiseVector.field, noiseVector.initialBasis, [noiseVector], loopString)}@slurp
+  @end if
+  @#
+@end def

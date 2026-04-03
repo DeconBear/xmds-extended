@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>vibstring2</name>
+  <author>Graham Dennis</author>
+  <description>
+    Vibrating string
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <fftw />
+
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="q" type="integer" lattice="2"  domain="(0, 1)" />
+      <dimension name="x" lattice="100"  domain="(0, 1)" />
+      <dimension name="y" lattice="100"  domain="(0, 1)" />
+      <dimension name="z" lattice="100"  domain="(0, 1)" />
+      <dimension name="w" type="integer" domain="(-3, 3)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" dimensions="x y" initial_basis="x y" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-100.0*(x-0.5)*(x-0.5));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="integrated_u" dimensions="" type="complex">
+    <components>
+      mom
+    </components>
+  </vector>
+  
+  <computed_vector name="filter1" dimensions="" type="complex">
+    <components>moment</components>
+    <evaluation>
+      <dependencies>integrated_u main</dependencies>
+      <![CDATA[
+        moment = mod2(u);
+      ]]>
+    </evaluation>
+  </computed_vector>
+  
+  <sequence cycles="10">
+    <integrate algorithm="RK9" interval="2e-3" steps="100">
+      <samples>10 10</samples>
+      <operators> <!-- For the x y dimensions -->
+        <operator kind="functions">
+          <![CDATA[
+            // print one '.' per integration step.
+            printf(".");
+          ]]>
+        </operator>
+        <operator kind="ex">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -T*kx*kx/mu;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = L[u /**/];
+        ]]>
+      </operators>
+      <operators> <!-- For the zero-dimensional field -->
+        <integration_vectors>integrated_u</integration_vectors>
+        <dependencies>filter1</dependencies>
+        <![CDATA[
+          dmom_dt = moment;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x y(1)" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = Re(u);
+        ]]>
+      </sampling_group>
+      <sampling_group initial_sample="no">
+        <moments>momR momentR</moments>
+        <dependencies>integrated_u filter1</dependencies>
+        <![CDATA[
+          momR = mom.Re();
+          momentR = moment.Re();
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

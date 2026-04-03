@@ -1,0 +1,97 @@
+@shBang #!/usr/bin/env python3
+
+@*
+DeltaAOperator.tmpl
+
+delta-a operator, i.e. dstuff_dt = otherStuff;
+
+Created by Graham Dennis on 2007-10-13.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Operators._DeltaAOperator
+
+@def description: Delta A propagation operator for field $field.name
+
+@def copyDeltaAFunctionContents($function)
+  @set $loopingField = $primaryCodeBlock.field
+  @set $dimensionsWithIndexOverrides = [dim for dim in loopingField.dimensions if not $deltaAField.hasDimension(dim)]
+  @set $setOfVectorsToLoopOver = set($deltaAField.vectors)
+  @silent setOfVectorsToLoopOver.update($vectorsForcingReordering)
+  @set $indexOverrides = dict([(dim.name, {loopingField: c'_${dim.inBasis($operatorBasis).name}_index'}) for dim in dimensionsWithIndexOverrides])
+${loopOverFieldInBasisWithVectorsAndInnerContent(loopingField, $operatorBasis, $setOfVectorsToLoopOver, $insideCopyDeltaALoops, $indexOverrides)}@slurp
+  @#
+@end def
+
+@def insideCopyDeltaALoops
+  @#
+
+  @# I'm making this code unvectorisable since it causes problems on the Mac
+  @# in some cases (testsuite/openmp/eigenvalues.xmds) when using OpenMP and
+  @# nonlocal vector access. Unfortunately this also stops vectorisation on Linux,
+  @# but realistically the performance hit is minute in almost all cases, and
+  @# the number of cases where people use OpenMP and nonlocal accesses is... small.
+  @# I can't figure out if the bug is in Apple's version of Clang, or in the Mac's
+  @# OS-level threading primitives (unlikely) but if eignvalues.xmds ever starts
+  @# working with this bit of code being vectorised, we can remove the UNVECTORISABLE
+  @# tag.
+// UNVECTORISABLE
+// This code copies the increments for the components back into the vectors themselves.
+  @for $vector in $vectorsForcingReordering
+    @for $componentName in $vector.components
+      @#
+${componentName} = d${componentName}_d${propagationDimension} * _step;
+      @#
+      @if $deltaAVectorMap[$vector].needsInitialisation
+        @# If the delta a vector needs initialisation, then we need to
+        @# reset it now that we have copied what we need out of it.
+        @#
+d${componentName}_d${propagationDimension} = 0.0;
+      @end if
+    @end for
+  @end for
+  @#
+@end def
+
+@def insideEvaluateOperatorLoops($codeString)
+  @#
+${insideEvaluateOperatorLoopsBegin}@slurp
+  @#
+  @# The Operator class will have defined for us all of the dVariableName_dPropagationDimension variables.
+  @# Note that we assume that all of the integration vectors have an operotor component defined for them.
+#define d${propagationDimension} _step
+
+// ************* Propagation code ***************
+${codeString}@slurp
+// **********************************************
+
+#undef d${propagationDimension}
+
+
+  @# Loop over the components of the integration vectors
+  @for $operatorComponentName in $operatorComponents.keys()
+    @assert len($operatorComponents[$operatorComponentName]) == 1
+    @for $integrationVector, $integrationVectorComponentList in $operatorComponents[$operatorComponentName].items()
+      @set $integrationVectorComponentName = $integrationVectorComponentList[0]
+      @assert $integrationVectorComponentName in $integrationVector.components
+_active_${integrationVector.id}[_${integrationVector.id}_index_pointer + ${integrationVector.components.index($integrationVectorComponentName)}] = @slurp
+$operatorComponentName * _step;
+    @end for
+  @end for
+  @#
+@end def
+

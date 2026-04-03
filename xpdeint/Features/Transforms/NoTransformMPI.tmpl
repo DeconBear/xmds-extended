@@ -1,0 +1,64 @@
+@shBang #!/usr/bin/env python3
+
+@*
+NoTransformMPI.tmpl
+
+Created by Graham Dennis on 2008-08-24.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.Transforms._NoTransformMPI
+@def description: MPI-distributed dimension control
+
+@def setLocalLatticeAndOffsetVariables
+  @#
+// First work out the local lattice and offset for the geometry
+  @set $mpiDimRep = $mpiDimension.representations[0]
+// Set the block size for most ranks to lattice/processors rounded up
+ptrdiff_t _block_size = (${mpiDimRep.globalLattice}-1)/_size + 1;
+${mpiDimRep.localOffset} = _rank * _block_size;
+if (_rank != _size - 1)
+  ${mpiDimRep.localLattice} = _block_size;
+else {
+  // The last rank takes up everything else
+  // this should be less than or equal to _block_size
+  // And if there's nothing left, we don't have a local lattice.
+  ${mpiDimRep.localLattice} = MAX(${mpiDimRep.globalLattice} - _block_size * (_size - 1), 0);
+}
+
+  @for $field in $fields
+    @if field.name == 'geometry' or not $isFieldDistributed(field)
+      @continue
+    @end if
+    @# Set the local_lattice and local_offset variables based on the
+    @# values for the geometry's version of these variables
+    @set fieldMPIDimRep = field.dimensionWithName($mpiDimension.name).representations[0]
+// Set the local_lattice and local_offset variables for the '${field.name}' field.
+ptrdiff_t _${field.name}_skip_size = ${mpiDimRep.globalLattice}/${fieldMPIDimRep.globalLattice};
+if (_rank == 0) {
+  ${fieldMPIDimRep.localOffset} = 0;
+  ${fieldMPIDimRep.localLattice} = (${mpiDimRep.localLattice}-1)/_${field.name}_skip_size + 1;
+} else {
+  ${fieldMPIDimRep.localOffset} = (${mpiDimRep.localOffset}-1)/_${field.name}_skip_size + 1;
+  ${fieldMPIDimRep.localLattice} = MIN((${mpiDimRep.localOffset} + ${mpiDimRep.localLattice} - 1)/_${field.name}_skip_size
+                                         + 1 - ${fieldMPIDimRep.localOffset}, MAX(${fieldMPIDimRep.globalLattice} - ${fieldMPIDimRep.localOffset}, 0));
+}
+
+  @end for
+  @#
+@end def
+

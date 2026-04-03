@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>vibstring_dirichlet_boundary</name>
+  <author>Graham Dennis</author>
+  <description>
+    Vibrating string with Dirichlet boundary conditions.
+	
+	This script is the first of two scripts that demonstrate how to refine or coarsen a grid between simulations.
+	This simulation saves the final state as part of the output moment groups in Fourier space, and the next
+	simulation (vibstring_dirichlet_boundary2.xmds) initialises from the results of this simulation in Fourier space,
+	but with a higher (spatial) resolution.  Because the spatial grid widths are the same, the step size in Fourier space
+	is the same, and so the higher resolution simulation simply initialises the lower kx values from the results of the lower
+	resolution simulation and all higher fourier components are set to zero.
+	
+	Note that when saving the state of the simulation for later loading by another simulation, it is better to use a breakpoint
+	element rather than a moment_group as used below.  A moment group is used in this case to demonstrate how to load from a
+	specific moment group rather than a breakpoint, which is demonstrated elsewhere.
+  </description>
+  
+  <features>
+    <benchmark />
+    <bing />
+    <error_check />
+    <fftw plan="patient" />
+
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      
+      const real xmax = _max_x;
+      const real width = 0.1;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="256"  domain="(-1, 1)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-100.0*(x-0.5)*(x-0.5));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  <vector name="boundary" initial_basis="x" type="real">
+    <components>
+      bc
+    </components>
+    <initialisation>
+      <![CDATA[
+        real r = abs(x);
+        real rright = xmax-width;
+
+        if ( r > rright)
+          bc = 0.0;
+        else
+          bc = 1.0;
+          
+        
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" tolerance="1e-8" interval="2e-2" steps="1000">
+      <samples>500 1</samples>
+      <operators>
+        <operator kind="ex">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -T*kx*kx/mu;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <dependencies>boundary</dependencies>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = bc*L[u];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group basis="x" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = u.Re();
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx" initial_sample="no">
+        <moments>uR uI uDotR uDotI</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          uR = u.Re();
+          uI = u.Im();
+          uDotR = uDot.Re();
+          uDotI = uDot.Im();
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

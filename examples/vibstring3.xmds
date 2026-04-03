@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>vibstring3</name>
+  <author>Joe Hope</author>
+  <description>
+    Vibrating string
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <fftw />
+
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="q" type="integer" lattice="2"  domain="(0, 1)" />
+      <dimension name="x" lattice="100"  domain="(0, 1)" />
+      <dimension name="y" lattice="100"  domain="(0, 1)" />
+      <dimension name="z" lattice="100"  domain="(0, 1)" />
+      <dimension name="w" type="integer" domain="(-3, 3)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" dimensions="x y" initial_basis="x y" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-100.0*(x-0.5)*(x-0.5));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="integrated_u" dimensions="" type="complex">
+    <components>
+      mom
+    </components>
+  </vector>
+  <computed_vector name="filter1" dimensions="" type="complex">
+    <components>moment</components>
+    <!-- If the moments are of type 'real', then all dimensions that aren't integrated
+         must be evaluated in 'x' space. -->
+    <evaluation>
+      <dependencies basis="kx ky">integrated_u main</dependencies>
+      <![CDATA[
+        moment = mod2(u);
+      ]]>
+    </evaluation>
+  </computed_vector>
+  
+  <sequence>
+    <integrate algorithm="RK9" interval="2e-3" steps="100">
+      <samples>50 50</samples>
+      
+      <computed_vector name="filter2" dimensions="" type="complex">
+        <components>sparemoment</components>
+        <!-- If the moments are of type 'real', then all dimensions that aren't integrated
+             must be evaluated in 'x' space. -->
+        <evaluation>
+          <dependencies basis="kx ky">integrated_u main</dependencies>
+          <![CDATA[
+            sparemoment = mod2(u);
+          ]]>
+        </evaluation>
+      </computed_vector>
+      
+      <operators>  <!-- For the x y dimensions -->
+        <operator kind="ex">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -T*kx*kx/mu;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = L[u /**/];
+        ]]>
+      </operators>
+      
+      <operators>  <!-- For the zero-dimensional field -->
+        <integration_vectors>integrated_u</integration_vectors>
+        <dependencies>filter1</dependencies>
+        <![CDATA[
+          dmom_dt = moment;
+        ]]>
+      </operators>
+      
+      <filters>
+        <filter>
+          <dependencies>filter1 main</dependencies>
+          <![CDATA[
+            u = 1.0 * u;
+          ]]>
+        </filter>
+      </filters>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x y" initial_sample="yes">
+        <computed_vector name="filter3" dimensions="" type="complex">
+          <components>sparemomentagain</components>
+          <!-- If the moments are of type 'real', then all dimensions that aren't integrated
+               must be evaluated in 'x' space. -->
+          <evaluation>
+            <dependencies basis="kx ky">integrated_u main</dependencies>
+            <![CDATA[
+              sparemomentagain = mod2(u);
+            ]]>
+          </evaluation>
+        </computed_vector>
+        <operator kind="ex">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -T*kx*kx/mu;
+          ]]>
+        </operator>
+        <moments>amp ke</moments>
+        <dependencies>main filter1</dependencies>
+        <![CDATA[
+          amp = mod2(u + moment);
+          ke = mod2(L[u]);
+        ]]>
+      </sampling_group>
+      <sampling_group initial_sample="no">
+        <moments>momR momentR</moments>
+        <dependencies>integrated_u filter1</dependencies>
+        <![CDATA[
+          momR = mom.Re();
+          momentR = moment.Re();
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

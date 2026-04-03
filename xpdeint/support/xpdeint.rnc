@@ -1,0 +1,285 @@
+start = Simulation
+Simulation = element simulation {
+    attribute xmds-version { "2" },
+    (   
+        element name { text }
+        | element author { text }
+        | element description { text }
+        | Testing
+        | Features
+        | Geometry
+        | Driver
+        | Vector
+        | Filter
+        | ComputedVector
+        | NoiseVector
+        | Sequence
+        | Output
+    )+
+}
+
+Testing = element testing {
+    ( 
+        element command_line { text }
+        | Arguments
+        | XSILFile
+        | InputXSILFile
+    )+
+}
+
+XSILFile = element xsil_file {
+    attribute name { text }
+    , attribute expected { text }
+    , attribute absolute_tolerance { text }?
+    , attribute relative_tolerance { text }?
+    , element moment_group {
+        attribute number { text },
+        attribute relative_tolerance { text }?,
+        attribute absolute_tolerance { text }?
+    }*
+}
+
+InputXSILFile = element input_xsil_file {
+    attribute name { text }
+}
+
+# Features
+Features = element features {
+    (
+        element auto_vectorise    { Bool | empty }
+        | element benchmark       { Bool | empty }
+        | element bing            { Bool | empty }
+        | element cflags          { text }
+        | element chunked_output  { attribute size  {text} }
+        | element diagnostics     { Bool | empty }
+        | element error_check     { Bool | empty }
+        | element halt_non_finite { Bool | empty }
+        | element openmp          { attribute threads {text}?, (Bool | empty) }
+        | Arguments
+        | element globals { text }
+        | element validation { 
+              attribute kind { text }
+              , empty
+          }
+        | FFTW
+        | element precision { text }
+    )+
+}
+
+Bool = "yes" | "no"
+
+Arguments = element arguments {
+    attribute append_args_to_output_filename { Bool }?
+    , Argument*
+    , text?
+}
+
+Argument = element argument {
+    attribute name { text }
+    , attribute type { text }
+    , attribute default_value { text }
+    , empty
+}
+
+FFTW = element fftw {
+    attribute plan { text }?
+    , attribute threads { text }?
+    , empty
+}
+
+# Geometry
+Geometry = element geometry {
+    element propagation_dimension { text }
+    , element transverse_dimensions { Dimension+ }?
+}
+
+Dimension = element dimension {
+    attribute name { text }
+    , attribute type { text }?
+    , attribute lattice { text }?
+    , attribute spectral_lattice { text}?
+    , ( attribute domain { text } | attribute length_scale { text } )
+    , attribute transform { text }?
+    , attribute order { text }?
+    , attribute aliases { text }?
+    , attribute volume_prefactor { text }?
+    , empty
+}
+
+# Driver
+Driver = element driver {
+    attribute name { text }
+    , attribute kind { text }?
+    , attribute paths { text }?
+    , empty
+}
+
+# Vector stuff
+VectorCommon = 
+    attribute name { text }
+    , attribute dimensions { text }?
+    , attribute initial_space { text }?
+	, attribute initial_basis { text }?
+    , attribute type { text }?
+    , element components { text }
+
+
+Dependencies = element dependencies {
+    attribute basis { text }?
+    , text
+}
+
+Vector = element vector {
+    VectorCommon
+    , element initialisation {
+        attribute kind { text }?
+        , attribute geometry_matching_mode { text }?
+        , element filename { 
+            attribute group { text }?
+            , text
+            }?
+        , ( text
+        & Dependencies? )
+    }?
+}
+
+ComputedVector = element computed_vector {
+    VectorCommon
+    , element evaluation {
+        Dependencies?
+        & text
+    }
+}
+
+NoiseVector = element noise_vector {
+    VectorCommon
+    , attribute kind { text },
+    attribute mean { text }?,
+    attribute mean-rate { text }?,
+    attribute mean-density { text }?,
+    attribute method { text }?,
+    attribute seed { text }?
+}
+
+# Sequence
+Sequence = element sequence {
+    attribute cycles { text }?
+    , (   Integrate 
+        | Filter
+        | Breakpoint
+        | Sequence
+      )*
+}
+
+Integrate = element integrate {
+    attribute algorithm { text }
+    , attribute interval { text }
+    , attribute steps { text }?
+    , attribute tolerance { text }?
+    , attribute iterations { text }?
+    , attribute cutoff { text }?
+    , attribute home_space { text }?
+    , attribute extrapolations { text }?
+    , (
+        element samples { text }
+        | Filters
+        | ComputedVector
+        | Operators
+      )+
+}
+
+Filters = element filters {
+    attribute where { text }?
+    , Filter+
+}
+
+Operators = element operators {
+    attribute dimensions { text }?
+    , (
+        Operator
+        | element integration_vectors {
+            attribute basis { text }?
+            , text
+          }
+        | Dependencies
+        | text
+      )+
+}
+
+Operator = element operator {
+    IPEXOperatorContents
+    | FunctionsOperatorContents
+    | CrossPropagationOperatorContents
+}
+
+IPEXOperatorContents = 
+    attribute kind { "ip" | "ex" | "IP" | "EX" }
+    , attribute constant { Bool }?
+    , attribute basis { text }?
+    , attribute type { text }?
+    , attribute dimensions { text }?
+    , ( element operator_names { text }
+    & Dependencies?
+    & text )
+
+FunctionsOperatorContents = 
+    attribute kind { "functions" }
+    , text
+
+CrossPropagationOperatorContents = 
+    attribute kind { "cross_propagation" }
+    , attribute algorithm { text }
+    , attribute propagation_dimension { text }
+    , attribute iterations { text}?
+    , ( 
+        element integration_vectors { text }
+        | Dependencies
+        | element boundary_condition {
+            attribute kind { text }
+            , Dependencies?
+            , text
+        }
+        | Operator
+        | text
+      )+
+
+Filter = element filter {
+    attribute name { text }?, 
+    attribute only_when_called { Bool }?
+    , Dependencies?
+    , text
+}
+
+Breakpoint = element breakpoint {
+    attribute filename { text }?
+    , attribute format { text }?
+    , Dependencies
+}
+
+SamplingContents = 
+  attribute initial_sample { Bool } ?
+  , attribute basis { text }?
+  , attribute export_all_paths { Bool }?
+  , (
+      ComputedVector
+      | Operator
+      | element moments { text }
+      | Dependencies
+      | text
+  )+
+
+
+Output = element output {
+    attribute format { text }?
+    , attribute filename { text }?
+    , (
+        element group {
+          element sampling {
+            SamplingContents
+          }
+        }
+        | element sampling_group {
+            SamplingContents
+          }
+      )*
+}

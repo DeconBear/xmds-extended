@@ -1,0 +1,107 @@
+@shBang #!/usr/bin/env python3
+
+@*
+TopLevelSequenceElement.tmpl
+
+Created by Graham Dennis on 2007-08-27.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.SequenceSegment
+
+@assert $segmentNumber == 0
+@attr $globalNameSpaceName = "topLevelSequence"
+
+@*
+  Description of template
+*@
+@def description: segment $segmentNumber (Top level sequence)
+
+@def functionImplementations
+  @#
+  @# Make this empty as the content of the top-level sequence will be written by
+  @# a simulation driver
+  @#
+@end def
+
+@def topLevelSequenceInnerContent
+  @#
+$propagationDimension = 0.0;
+  @#
+
+  @set $fieldsNotToInitialise = set()
+  @for $momentGroup in $momentGroups
+    @# Initialise the raw vector
+    @# There's an exception to this initialisation: If we're using the export_all_paths
+    @# option with the multipath driver on this moment group we only want to initialise this moment group
+    @# for the first path, as we're using an extra dimension to store the results for
+    @# for every single path. We don't want the previous path's information be overwritten.
+    @# Furthermore, since the extra dimension will be initialised on the first path, 
+    @# that means that single initialisation has initialised all the paths.
+    @# Finally, note that there an extra intialisation we have to take care of in this
+    @# case in MultiPathDriver.tmpl.
+    @if momentGroup.export_all_paths
+if (gPathID == 0) {
+  ${momentGroup.rawVector.functions['initialise'].call()}
+}
+    @else
+${momentGroup.rawVector.functions['initialise'].call()}
+    @end if
+    @# Don't call the initialise method as that will cause
+    @# its aliases to be initialised, which is bad.
+    @silent fieldsNotToInitialise.add(momentGroup.outputField)
+  @end for
+  @#
+  @set $vectorsToInitialise = set()
+  @for field in [f for f in $fields if f not in fieldsNotToInitialise]
+    @silent vectorsToInitialise.update([v for v in field.managedVectors if not (v.isComputed or v.isNoise)])
+  @end for
+  @#
+  @for vector in self.evaluationOrderForVectors(vectorsToInitialise, static = True)
+    @if vector.isComputed
+      @# Computed vectors were explicitly removed from the set of vectors that need
+      @# initialisation. The only way we can get one now is if one of the other vectors depends on this
+      @# vector. In this case, we must provide the information the other vector is requiring. To do this,
+      @# we must evaluate the vector, not initialise it.
+${vector.functions['evaluate'].call()}
+    @else
+${vector.initialise}@slurp
+    @end if
+  @end for
+  @#
+  @for $momentGroup in $momentGroups
+    @# We only need to set the sample index for the propagation dimension
+    @# and only if this moment group has the propagation dimension as one
+    @# of its dimensions
+    @if not $momentGroup.outputField.hasDimensionName($propagationDimension)
+      @continue
+    @end if
+_${momentGroup.outputField.id}_index_${propagationDimension} = 0;
+  @end for
+  @#
+  @for $momentGroup in filter(lambda x: x.requiresInitialSample, $momentGroups)
+_mg${momentGroup.number}_sample();
+  @end for
+  @#
+${segmentFunctionBody(function=None)}@slurp
+  @#
+
+  @for $momentGroup in $momentGroups
+_mg${momentGroup.number}_process();
+  @end for  
+  @#
+@end def

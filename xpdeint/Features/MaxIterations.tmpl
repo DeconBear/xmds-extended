@@ -1,0 +1,48 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MaxIterations.tmpl
+
+Created by Graham Dennis on 2008-05-04.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+@extends xpdeint.Features._Feature
+
+@def description: Restrict the maximum number of iterations for an adaptive integrator
+@attr featureName = 'MaxIterations'
+
+@def integrateAdaptiveStepOuterLoopEnd($dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @# If we don't have a maximum number of iterations for this integrator
+  @# then we don't have any code to insert
+  @if not integrator in $maxIterationsDict
+    @return
+  @end if
+  @#
+
+if (_attempted_steps >= ${maxIterationsDict[integrator]}) {
+  _LOG(_WARNING_LOG_LEVEL, "Reached ${maxIterationsDict[integrator]} iterations, exiting at ${integrator.propagationDimension} = %e\n"
+                           "Last error: %e\n"
+                           "Last planned timestep: %e\n\n", ${integrator.propagationDimension}, _error, _step);
+  
+  ${integrator.earlyTerminationCode, autoIndent=True}@slurp
+}
+  @#
+@end def
+

@@ -1,0 +1,144 @@
+@shBang #!/usr/bin/env python3
+
+@*
+SICDeltaAOperator.tmpl
+
+delta-a operator for the left/right propagation in the SIC integrator.
+
+Created by Graham Dennis on 2008-08-07.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Operators._SICDeltaAOperator
+
+@def description: Left/Right Delta A propagation operator for field $field.name
+
+@def callEvaluateLoop
+  @#
+  @for crossIntegrationVector in $crossIntegrationVectors
+    @for componentName in crossIntegrationVector.components
+${crossIntegrationVector.type} _old_d${componentName}_d${crossPropagationDimension};
+    @end for
+  @end for
+  @#
+  @set $loopingOrder = {
+                        '+': SICDeltaAOperator.LoopingOrder.StrictlyAscendingOrder,
+                        '-': SICDeltaAOperator.LoopingOrder.StrictlyDescendingOrder
+                       }[self.crossPropagationDirection]
+${codeBlocks['operatorDefinition'].loop(self.insideEvaluateOperatorLoops, loopingOrder = loopingOrder)}@slurp
+@end def
+
+@def insideEvaluateOperatorLoops($codeString)
+  @#
+${insideEvaluateOperatorLoopsBegin}@slurp
+  @#
+  @# The Operator class will have defined for us all of the dVariableName_dPropagationDimension variables.
+  @# Note that we assume that all of the integration vectors have an operotor component defined for them.
+  
+// UNVECTORISABLE
+  @for crossIntegrationVector in $crossIntegrationVectors
+    @for componentName in crossIntegrationVector.components
+d${componentName}_d${crossPropagationDimension} = _old_d${componentName}_d${crossPropagationDimension};
+    @end for
+  @end for
+
+  @set $crossDimRep = $loopingField.dimensionWithName($crossPropagationDimension).inBasis($operatorBasis)
+  @if $crossPropagationDirection == '+'
+if (${crossDimRep.loopIndex} == 0) {
+  @else
+if (${crossDimRep.loopIndex} == ${crossDimRep.globalLattice} - 1) {
+  @end if
+  // ********** Boundary condition code ***********
+  ${codeBlocks['boundaryCondition'].loopCodeString, autoIndent=True}@slurp
+  // **********************************************
+  
+  @for crossIntegrationVector in $crossIntegrationVectors
+  for (long _cmp = 0; _cmp < _${crossIntegrationVector.id}_ncomponents; _cmp++)
+    _old_${crossIntegrationVector.id}[_cmp] = _active_${crossIntegrationVector.id}[_${crossIntegrationVector.id}_index_pointer + _cmp];
+  @end for
+  
+  @# This is where one (half-step) cross-IP step would go
+} else {
+  // Update the next guess for iteration.
+  @for crossIntegrationVector in $crossIntegrationVectors
+    @for componentNumber, componentName, in enumerate(crossIntegrationVector.components)
+  ${componentName} = _old_${crossIntegrationVector.id}[${componentNumber}] + d${componentName}_d${crossPropagationDimension} * (${crossPropagationDirection}0.5*d${crossPropagationDimension});
+    @end for
+  @end for
+}
+
+for (long _iter = 0; _iter < ${iterations}; _iter++) {
+  
+  #define d${propagationDimension} _step
+  {
+    // ************* Propagation code ***************
+    ${codeString, autoIndent=True}@slurp
+    // **********************************************
+  }
+  #undef d${propagationDimension}
+  
+  {
+    // *********** Cross-propagation code ***********
+    ${codeBlocks['crossPropagation'].loopCodeString, autoIndent=True}@slurp
+    // **********************************************
+  }
+  
+  // Update propagation vectors (note that _step is actually half a step)
+  @for integrationVector in $integrationVectors
+    @for componentNumber, componentName in enumerate(integrationVector.components)
+  ${componentName} = _${integrator.name}_oldcopy_${integrationVector.id}[_${integrationVector.id}_index_pointer + ${componentNumber}] + d${componentName}_d${propagationDimension} * _step;
+    @end for
+  @end for
+  
+  // Update cross-propagation vectors
+  @for crossIntegrationVector in $crossIntegrationVectors
+    @for componentNumber, componentName in enumerate($crossIntegrationVector.components)
+  ${componentName} = _old_${crossIntegrationVector.id}[${componentNumber}] + d${componentName}_d${crossPropagationDimension} * (${crossPropagationDirection}0.5*d${crossPropagationDimension});
+    @end for
+  @end for
+}
+
+// Update the 'old' copy for the next half-step
+@for crossIntegrationVector in $crossIntegrationVectors
+  @for componentNumber, componentName in enumerate(crossIntegrationVector.components)
+_old_${crossIntegrationVector.id}[${componentNumber}] += d${componentName}_d${crossPropagationDimension} * (${crossPropagationDirection}d${crossPropagationDimension});
+  @end for
+@end for
+
+@# This is where one (full step) cross-IP step would go
+
+  @for crossIntegrationVector in $crossIntegrationVectors
+    @for componentName in crossIntegrationVector.components
+_old_d${componentName}_d${crossPropagationDimension} = d${componentName}_d${crossPropagationDimension};
+    @end for
+  @end for
+
+  @#
+@end def
+
+@def evaluateOperatorFunctionContentsWithCodeBlock($function)
+  @#
+  @# We shouldn't have a deltaAField. It doesn't work with cross-propagation.
+  @assert not $deltaAField
+  @#
+  @for $crossIntegrationVector in $crossIntegrationVectors
+${crossIntegrationVector.type} _old_${crossIntegrationVector.id}[_${crossIntegrationVector.id}_ncomponents];
+  @end for
+  @#
+  @super(function)
+  @#
+@end def

@@ -1,0 +1,150 @@
+@shBang #!/usr/bin/env python3
+
+@*
+VectorElement.tmpl
+
+Created by Graham Dennis on 2007-08-28.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors._VectorElement
+
+@*
+  Description of template
+*@
+@def description: vector $name
+
+@*
+  Defines needed at the start of the simulation
+*@
+@def defines
+  @#
+  @super
+  @#
+// vector $name defines
+#define _${id}_ncomponents $nComponents
+  @#
+@end def
+
+@*
+  Globals needed at the start of the simulation
+*@
+@def globals
+  @#
+  @super
+  @#
+// vector $name globals
+size_t ${allocSize} = 0;
+$type* _${id} = NULL;
+$type* _active_${id} = NULL;
+  @for aliasName in $aliases
+$type* ${aliasName} = NULL;
+  @end for
+  @#
+  @if $needsTransforms
+
+ptrdiff_t _${id}_basis = -1;
+  @end if
+  @#
+@end def
+
+@*
+  Write the vector initialisation routine
+*@
+@def initialiseFunctionContents($function)
+  @#
+  @if $integratingComponents
+// Because we're integrating over dimensions, we need to set the vector to zero.
+bzero(_active_${id}, sizeof(${type}) * ${allocSize});
+  @end if
+  @if $initialiser
+
+${initialiser.initialiseVector}@slurp
+  @end if
+  @if $needsTransforms
+
+_${id}_basis = $basisIndexForBasis(self.initialBasis);
+  @end if
+  @#
+@end def
+
+@def basisTransformFunctionContents($function)
+  @#
+  @set $featureOrdering = ['TransformMultiplexer']
+  @set $dict = {'function': function}
+${insertCodeForFeatures('basisTransformFunctionContentsBegin', featureOrdering, dict)}@slurp
+  @#
+@end def
+
+@*
+  Initialise vector (called from segment 0)
+*@
+@def initialise
+  @#
+  @if $needsInitialisation
+    @for aliasName in $aliases
+_active_${id} = $aliasName;
+${functions['initialise'].call()}
+    @end for
+_active_${id} = _${id};
+${functions['initialise'].call()}
+  @end if
+  @#
+@end def
+
+@*
+  Allocate (and initialise active pointers) (called from main)
+*@
+@def allocate
+
+_${id} = ($type*) xmds_malloc(sizeof(${type}) * MAX(${allocSize},1));
+_active_${id} = _${id};
+  @for aliasName in $aliases
+$aliasName = ($type*) xmds_malloc(sizeof(${type}) * MAX(${allocSize},1)); // alias for _${id}
+  @end for
+@end def
+
+@def free
+
+xmds_free(_${id});
+_active_${id} = _${id} = NULL;
+  @for aliasName in $aliases
+xmds_free($aliasName); // alias for _${id}
+${aliasName} = NULL;
+  @end for
+@end def
+
+@def findMaximum($variableName, $basis = None)
+real ${variableName} = 0.0;
+
+  @if $type == 'real'
+    @set $modFunction = 'abs'
+  @else
+    @set $modFunction = 'mod2'
+  @end if
+  @capture loopContents
+real _current_size = ${modFunction}(_active_\${vector.id}[\${index}]);
+if (_current_size > $variableName) // UNVECTORISABLE
+  ${variableName} = _current_size;
+  @end capture
+${loopOverVectorsWithInnerContentTemplate([self], loopContents, basis = basis)}@slurp
+  @if $type == 'complex'
+${variableName} = sqrt(${variableName}); // Take the square root to find the modulus.
+  @end if
+${insertCodeForFeatures('findMax', ['Driver'], {'variable': c'&${variableName}', 'count': '1'})}@slurp
+  @#
+@end def

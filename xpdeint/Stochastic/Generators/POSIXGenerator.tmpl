@@ -1,0 +1,66 @@
+@shBang #!/usr/bin/env python3
+
+@*
+POSIXGenerator.tmpl
+
+Created by Joe Hope on 2009-08-20.
+
+Copyright (c) 2009-2012, Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Stochastic.Generators.Generator
+
+@import random
+
+@def description: Generic POSIX noise
+@def generatorType: unsigned short*
+
+@*
+  Globals
+*@
+@def globals
+  @#
+  @super
+  @#
+unsigned short ${generatorName}[3];
+  @#
+@end def
+
+@def minusOneToOneRandomNumber: 2.0*erand48($generatorName) - 1.0
+
+@def zeroToOneRandomNumber(): erand48(${generatorName})
+
+@def constructArrayUniformRandomNumbers
+  @set noiseVector = $parent.parent
+for (long _i0 = 0; _i0 < _vector_size; _i0++) {
+  _active_${noiseVector.id}[_i0] = erand48(${generatorName});
+}
+@end def
+
+@*
+  Initialise seeds
+*@
+@def initialiseLocalSeeds
+  @#
+  @super
+  @#
+bzero(${generatorName}, sizeof(${generatorName}));
+for (unsigned long _i0=0; _i0<MIN(3, ${seedCount}); _i0++)
+  ${generatorName}[_i0] = (unsigned short)${generatorName}_local_seeds[_i0];
+
+erand48(${generatorName});
+  @#
+@end def

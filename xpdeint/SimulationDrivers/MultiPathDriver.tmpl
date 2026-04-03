@@ -1,0 +1,217 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MultiPathDriver.tmpl
+
+Created by Graham Dennis on 2008-02-01.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.SimulationDrivers._MultiPathDriver
+
+@def description: Multipath Simulation Driver
+
+@attr $pathLoopStart = '0'
+@attr $pathLoopStep = '1'
+@attr $pathLoopEnd = '_n_paths'
+
+@def segment0_loop
+  @#
+for (long _i0 = ${pathLoopStart}; _i0 < ${pathLoopEnd}; _i0+=${pathLoopStep}) {
+  _LOG(_PATH_LOG_LEVEL, "Starting path %li\n", _i0 + 1);
+
+  @if self.simulation.export_all_paths_in_use
+  // export_all_paths is being used, so we need to set the current path number
+  // as a global variable allowing other parts of the code to have access to it
+  gPathID = _i0;
+  @end if
+
+  @#
+@end def
+
+@def defines
+  @#
+  @super
+  @#
+#define _n_paths ${pathCount}
+  @#
+@end def
+
+@def topLevelSegmentFunctionImplementation
+  @#
+void _segment0()
+{
+  @# And now insert the code for the features that apply in the top level sequence
+  @set $featureOrdering = ['ErrorCheck', 'Stochastic']
+  @set $dict = {'extraIndent': 0}
+  ${insertCodeForFeatures('topLevelSequenceBegin', featureOrdering, dict), autoIndent=True}@slurp
+  @set $extraIndent = dict['extraIndent']
+
+  ${topLevelSegmentPathLoop, autoIndent=True, extraIndent=extraIndent}@slurp
+
+  ${insertCodeForFeaturesInReverseOrder('topLevelSequenceEnd', featureOrdering, dict), autoIndent=True}@slurp
+}
+  @#
+@end def
+
+@def topLevelSegmentPathLoop
+  @#
+  @# Now loop over anything that can be initalised early and initialise them
+  @# so they don't allocate and free stuff for each path. This is done now
+  @# and not before the ErrorCheck and Stochastic Features because the
+  @# initialisation of IP operators will depend on the step size. It would be
+  @# possible to split this up into two stages of initialisation, but that
+  @# seems to me like it would be ugly.
+  @# 
+${topLevelSequence.allocate}@slurp
+
+  @set $objectsNeedingInitialisation = [o for o in $templates if o.hasattr('canBeInitialisedEarly') and o.canBeInitialisedEarly]
+  @for o in $objectsNeedingInitialisation
+${o.initialise}@slurp
+  @end for
+  @#
+  @# We must capture the finalisation of all the objects we initialised
+  @# to make sure they don't get finalised early. As that could lead to
+  @# NULL pointer dereferences, and that is bad.
+  @#
+  @capture finalisationCode
+    @for o in $objectsNeedingInitialisation
+${o.finalise}@slurp
+    @end for
+
+${topLevelSequence.free}@slurp
+  @end capture
+
+${segment0_loop}
+
+  @# Note there's an exception to the moment group initialisation below:
+  @# If we're using the export_all_paths options on a moment group
+  @# we only want to initialise this moment group
+  @# for the first path, as we're using an extra dimension to store the results for
+  @# for every single path. We don't want the previous path's information be overwritten.
+  @# Furthermore, since the extra dimension will be initialised on the first path, 
+  @# that means that single initialisation has initialised all the paths.
+  @# Finally, note that there an extra intialisation we have to take care of in this
+  @# case in TopLevelSequenceElement.tmpl.
+  @for $mg in $momentGroups
+    @if mg.export_all_paths
+  if (gPathID == 0) {
+    ${mg.rawVector.functions['initialise'].call(), autoIndent=True}
+  }
+    @else
+  ${mg.rawVector.functions['initialise'].call(), autoIndent=True}@slurp
+    @end if
+  @end for
+
+  ${topLevelSequence.topLevelSequenceInnerContent, autoIndent=True}@slurp
+}
+
+  @# Now clean up after all of the objects that we initialised early.
+${finalisationCode}@slurp
+  @#
+@end def
+
+@def insideMomentGroupProcessingNoProcessingCodeLoop(dict)
+@*doc:
+This function is called by the moment group so that we can add to the template
+string that will be used to create a loop to perform the processing. The code
+that this function adds calculates the variance of the sampled variable.
+
+The passed dictionary `dict` has the following key:
+  - ``caller``: The moment group which is letting us modify the template string
+
+The return value is the template string that will be added to the processing loop template.
+*@
+  @#
+  @set $momentGroup = dict['caller']
+  @if not momentGroup.export_all_paths
+    @# If we're exporting all the paths, there's no _sd vector to update since we're
+    @# not calculating the means or standard errors 
+_${momentGroup.outputField.name}_sd[\${index}] += _active_\${vector.id}[\${index}] * _active_\${vector.id}[\${index}];@slurp
+  @end if
+  @#
+@end def
+
+
+@def writeOutFunctionImplementationBegin(dict)
+@*doc:
+This function is called by the moment group at the start of the write out function
+so that we can do any processing necessary before the sampled (and perhaps processed)
+data is written out. The code that this function adds takes account for the fact that
+the processed vectors have been adding the results for all of the paths, and now need
+to be divided by the total number of paths. And something similar needs to be done for
+the standard-error variables.
+
+The passed dictionary `dict` has the following keys:
+  - ``caller``: The moment group calling us.
+  - ``dependentVariables``: A list of dictionaries describing the variables that are to be written out.
+    This list can be modified or added to by this function.
+    
+    Each of these dictionaries has the following keys:
+    
+    - ``vector``: The vector describing the type, field and number of components
+    - ``arrayName``: The name of the array that this variable is in. e.g. ``_mg0_processed``
+    - ``components``: The actual name of the components being written.
+
+The return value is the template string that will be 
+*@
+  @#
+  @set $momentGroup = dict['caller']
+  @set $dependentVariables = dict['dependentVariables']
+  @set $fieldName = $momentGroup.outputField.name
+  @# 
+  @# First we need to modify the variable names that will be written, and add our own.
+  @# We need to change all processed vector components from 'someName' to 'mean_someName'
+  @# and add a variable called 'stderr_someName'
+  @#
+  @set $processedVector = $momentGroup.processedVector
+  @set $otherArrayNames = set([variable['arrayName'] for variable in $dependentVariables[1:]])
+  @#
+  @# Modify the original variable names to have a 'mean_' prefix, unless this moment
+  @# group is using "export_all_paths" in which case we're not writing the mean
+  @# but rather all the paths. In this case the stderr variable is also irrelevant
+  @if not momentGroup.export_all_paths
+    @set $processedVectorVariable = dependentVariables[0]
+    @set processedVectorVariable['components'] = ['mean_' + componentName for componentName in processedVectorVariable['components']]
+    @#
+    @set $newVariableDict = {'vector': processedVector,
+                           'arrayName': c'_${fieldName}_sd',
+                           'components': ['stderr_' + componentName for componentName in processedVector.components]
+                          }
+    @silent dependentVariables.append(newVariableDict)
+
+// Calculate the mean
+_active_\${vector.id}[\${index}] /= (real) _n_paths;
+
+// Calculate the standard error
+_${fieldName}_sd[\${index}] /= (real) _n_paths;
+_${fieldName}_sd[\${index}] -= _active_\${vector.id}[\${index}] * _active_\${vector.id}[\${index}];
+if (_${fieldName}_sd[\${index}] > 0.0) // UNVECTORISABLE
+  _${fieldName}_sd[\${index}] = sqrt(_${fieldName}_sd[\${index}] / _n_paths);
+else
+  _${fieldName}_sd[\${index}] = 0.0;
+    @#
+    @if len(otherArrayNames)
+
+// Calculate other means
+      @for arrayName in $otherArrayNames
+${arrayName}[\${index}] /= (real) _n_paths;
+      @end for
+    @end if
+  @end if
+  @#
+@end def

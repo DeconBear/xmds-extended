@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>van_der_pol</name>
+  <author>Graham Dennis</author>
+  <description>
+    Van der Pol oscillator. An example of a stiff equation.
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <!-- That's right, this script breaks the shackles with FFTW! -->
+    <arguments>
+      <argument name="lambda" type="real" default_value="100.0" />
+      <![CDATA[
+        _LOG(_SIMULATION_LOG_LEVEL, "lambda is %e\n", lambda);
+      ]]>
+    </arguments>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+  </geometry>
+  
+  <vector name="main" type="real">
+    <components>
+      y yDot
+    </components>
+    <initialisation>
+      <![CDATA[
+      y = 1.0;
+      yDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" interval="100.0" steps="25000" tolerance="1e-7">
+      <samples>5000</samples>
+      <operators>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+        dy_dt = yDot;
+        dyDot_dt = lambda*(1.0 - y*y)*yDot - y;
+        
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group initial_sample="yes">
+        <moments>yR yDotR</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          yR = y;
+          yDotR = yDot;
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

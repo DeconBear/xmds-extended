@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Frequently Asked Questions &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML,http://www.xmds.org/_static/mathjax-use-tex-fonts.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Upgrading From XMDS 1.X" href="upgrade.html" />
+    <link rel="prev" title="Advanced Topics" href="advanced_topics.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="upgrade.html" title="Upgrading From XMDS 1.X"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="advanced_topics.html" title="Advanced Topics"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Frequently Asked Questions</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="frequently-asked-questions">
+<span id="faq"></span><span id="index-0"></span><h1>Frequently Asked Questions<a class="headerlink" href="#frequently-asked-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="xmds-scripts-look-complicated-how-do-i-start">
+<h2>XMDS scripts look complicated! How do I start?<a class="headerlink" href="#xmds-scripts-look-complicated-how-do-i-start" title="Permalink to this headline">¶</a></h2>
+<p>If you’re unfamiliar with XMDS2, writing a script from scratch might seem difficult. In most cases, however, the best approach is to take an existing script and modify it for your needs. At the most basic level, you can simply take a script from the /examples directory that is similar to what you want to do, change the name of the integration variable(s) and replace the line describing the differential equation to use your DE instead. That’s all you need to do, and will ensure all the syntax is correct and all the required XML blocks are present.</p>
+<p>You can then incrementally change things such as the number of output points, what quantities get output, number of grid points, and so on. Many XMDS2 users have never written a script from scratch, and just use their previous scripts and example scripts as a scaffold when they create a script for a new problem.</p>
+</div>
+<div class="section" id="where-can-i-get-help">
+<h2>Where can I get help?<a class="headerlink" href="#where-can-i-get-help" title="Permalink to this headline">¶</a></h2>
+<p>The documentation on this website is currently incomplete, but it still covers a fair bit and is worth reading. Similarly, the example scripts in the /examples directory cover most of the functionality of XMDS2, so it’s worth looking looking through them to see if any of them do something similar to what you’re trying to do.</p>
+<p>You should also feel free to email questions to the XMDS users’ mailing list at <a class="reference external" href="mailto:xmds-user&#37;&#52;&#48;lists&#46;sourceforge&#46;net">xmds-user<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a>, where the developers and other users can assist you. You can join the mailing list by going to <a class="reference external" href="http://sourceforge.net/projects/xmds/">http://sourceforge.net/projects/xmds/</a> and clicking on “mailing lists.” Also, if you look through the mailing list archives, your particular problem may already have been discussed.</p>
+</div>
+<div class="section" id="how-should-i-cite-xmds2">
+<span id="index-1"></span><h2>How should I cite XMDS2?<a class="headerlink" href="#how-should-i-cite-xmds2" title="Permalink to this headline">¶</a></h2>
+<p>If you publish work that has involved XMDS2, please cite it as: <a class="reference external" href="http://dx.doi.org/10.1016/j.cpc.2012.08.016">Comput. Phys. Commun. 184, 201-208 (2013)</a>.</p>
+</div>
+<div class="section" id="i-think-i-found-a-bug-where-should-i-report-it">
+<span id="index-2"></span><h2>I think I found a bug! Where should I report it?<a class="headerlink" href="#i-think-i-found-a-bug-where-should-i-report-it" title="Permalink to this headline">¶</a></h2>
+<p>Please report bugs to the developer mailing list at <a class="reference external" href="mailto:xmds-devel&#37;&#52;&#48;lists&#46;sourceforge&#46;net">xmds-devel<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a>. In your email, please include a description of the problem and attach the XMDS2 script that triggers the bug.</p>
+</div>
+<div class="section" id="how-do-i-put-time-dependence-into-my-vectors">
+<span id="index-3"></span><h2>How do I put time dependence into my vectors?<a class="headerlink" href="#how-do-i-put-time-dependence-into-my-vectors" title="Permalink to this headline">¶</a></h2>
+<p>Standard vectors can’t have time dependence (or, more accurately, depend on the <code class="docutils literal notranslate"><span class="pre">propagation_dimension</span></code> variable), but computed vectors can. So, for example, if you have set your <code class="docutils literal notranslate"><span class="pre">propagation_dimension</span></code> as “t”, you can simply use the variable “t” in your computed vector and it will work.</p>
+<p>Alternatively, you can explicitly use the <code class="docutils literal notranslate"><span class="pre">propagation_dimension</span></code> variable in your differential equation inside the <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> block.</p>
+</div>
+<div class="section" id="can-i-specify-the-range-of-my-domain-and-number-of-grid-points-at-run-time">
+<span id="index-4"></span><h2>Can I specify the range of my domain and number of grid points at run-time?<a class="headerlink" href="#can-i-specify-the-range-of-my-domain-and-number-of-grid-points-at-run-time" title="Permalink to this headline">¶</a></h2>
+<p>Yes, you can. In your script, specify the domain and number of grid points as arguments to be passed in at run-time, use those variables in your <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> block rather than explicitly specifying them, and use the <code class="docutils literal notranslate"><span class="pre">&lt;validation</span> <span class="pre">kind=&quot;run-time&quot;</span> <span class="pre">/&gt;</span></code> feature. See the <a class="reference internal" href="reference_elements.html#validation"><span class="std std-ref">Validation</span></a> entry in the Reference section for an example.</p>
+<p>While the domain can always be specified in this way, specifying the lattice size at run-time is currently only allowed with the following transforms: ‘dct’, ‘dst’, ‘dft’ and ‘none’ (see <a class="reference internal" href="reference_elements.html#validation"><span class="std std-ref">Transforms</span></a> in the Reference section).</p>
+<p>Also note that for some multi-dimensional spaces using different transforms, XMDS2 will sometimes optimise the code it generates based on the relative sizes of the dimensions. If one or more of the lattices are specified at run-time it is unable to do this and will have to make guesses. In some situations this may result in slightly slower code.</p>
+</div>
+<div class="section" id="when-can-i-use-ip-operators-and-why-should-i-and-when-must-i-use-ex-operators">
+<span id="index-5"></span><h2>When can I use IP operators (and why should I) and when must I use EX operators?<a class="headerlink" href="#when-can-i-use-ip-operators-and-why-should-i-and-when-must-i-use-ex-operators" title="Permalink to this headline">¶</a></h2>
+<p>An <a class="reference internal" href="reference_elements.html#operatornameselement"><span class="std std-ref">&lt;operator&gt;</span></a> that specifies named operators to be used in integration equations can have the <code class="docutils literal notranslate"><span class="pre">kind=&quot;IP&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">kind=&quot;EX&quot;</span></code> attribute, standing for ‘interaction picture’ and ‘explicit’ operators respectively.  Explicit operators can be used in all situations, and simply construct and calculate a new vector of the form in the square brackets.  IP operators use less memory and can improve speed by allowing larger timesteps, but have two important restrictions.  <strong>Use of IP operators without understanding these restrictions can lead to incorrect code</strong>.</p>
+<p>Some explanation is in order.  The IP algorithm applies the operator separately to the rest of the evolution.  The reason this can be so effective is that the separate evolution can be performed exactly.  The solution of the equation <span class="math notranslate nohighlight">\(\frac{d \psi}{dt} = L \psi\)</span> is <span class="math notranslate nohighlight">\(\psi(t+\Delta t) = exp(L \Delta t) \psi(t)\)</span> for arbitrarily large timestep <span class="math notranslate nohighlight">\(\Delta t\)</span>.  For a diagonal linear <code class="docutils literal notranslate"><span class="pre">L</span></code>, the matrix exponential is straightforward.  Also, when it is constant, then the exponential can be computed and stored prior to the integration, which makes the implementation of this operator very cheap.  Thus, when IP operators are defined, XMDS2 reads the equations as written by the user, and determines which operators to apply to which fields.  It then implements these operators separately, and the text describing the operator inside the equations (in this example, the <code class="docutils literal notranslate"><span class="pre">L[psi]</span></code> term) is replaced by the numeral zero.</p>
+<p>Therefore, the limitations of IP operators themselves means that they can only be applied to to named components of one of the integration vectors, and not functions of those components.  Furthermore, an IP operator acting on a component must only be used in the derivative for that particular component.  Secondly, due to the implementation of IP operators in XMDS2, it is not safe to use them in comments, or in conjunction with declared variables.  It is also not safe to multiply or divide them by any factors, functions or vectors.  They must turn up in a purely additive way when defining the derivative of a component of an integration vector.  The XMDS2 parser attempts to catch possible violations of these rules, and will produce warnings in some cases.</p>
+</div>
+<div class="section" id="visual-editors">
+<h2>Visual Editors<a class="headerlink" href="#visual-editors" title="Permalink to this headline">¶</a></h2>
+<p>In this section goes stuff about how to set up TextMate (or other editors to highlight xpdeint scripts).</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Frequently Asked Questions</a><ul>
+<li><a class="reference internal" href="#xmds-scripts-look-complicated-how-do-i-start">XMDS scripts look complicated! How do I start?</a></li>
+<li><a class="reference internal" href="#where-can-i-get-help">Where can I get help?</a></li>
+<li><a class="reference internal" href="#how-should-i-cite-xmds2">How should I cite XMDS2?</a></li>
+<li><a class="reference internal" href="#i-think-i-found-a-bug-where-should-i-report-it">I think I found a bug! Where should I report it?</a></li>
+<li><a class="reference internal" href="#how-do-i-put-time-dependence-into-my-vectors">How do I put time dependence into my vectors?</a></li>
+<li><a class="reference internal" href="#can-i-specify-the-range-of-my-domain-and-number-of-grid-points-at-run-time">Can I specify the range of my domain and number of grid points at run-time?</a></li>
+<li><a class="reference internal" href="#when-can-i-use-ip-operators-and-why-should-i-and-when-must-i-use-ex-operators">When can I use IP operators (and why should I) and when must I use EX operators?</a></li>
+<li><a class="reference internal" href="#visual-editors">Visual Editors</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="upgrade.html" title="Upgrading From XMDS 1.X"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="advanced_topics.html" title="Advanced Topics"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Frequently Asked Questions</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,258 @@
+<?xml version="1.0" ?><simulation xmds-version="2">
+  <testing>
+    <xsil_file absolute_tolerance="1e-6" expected="export_all_paths_1_expected.xsil" name="export_all_paths_1.xsil" relative_tolerance="1e-6"/>
+  </testing>
+
+  <name> export_all_paths_1 </name>
+
+  <description>
+    Throw in lots of weird output sampling to properly test that the dimensions don't
+    get mangled
+  </description>
+
+  
+  <features>
+    <benchmark/>
+    <auto_vectorise/>
+    <globals>
+      <![CDATA[
+        real N = 10.0; // number of atoms
+        real g = 1.0;  // nonlinear coupling
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension domain="(-7, 7)" lattice="20" name="x"/>
+          <dimension domain="(-7, 7)" lattice="20" name="y"/>    
+          <dimension domain="(0, 1)" lattice="2" name="j" type="integer"/>     
+    <dimension domain="(0, 7)" name="path_index" type="long"/></transverse_dimensions>
+  </geometry>
+
+  <driver name="multi-path" paths="8"/>
+
+  <vector name="potential" type="real">
+    <components> V </components>
+    <initialisation>
+      <![CDATA[
+        V = 0.5*(x*x + y*y);
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="wavefunction" type="complex">
+    <components> psi </components>
+    <initialisation>
+      <![CDATA[
+        psi = sqrt(N) * pow(M_PI, -0.25) * exp(-(x*x + y*y)/2);
+      ]]>
+    </initialisation>
+  </vector>
+
+  <sequence>
+    <integrate algorithm="ARK45" interval="0.628" tolerance="1e-5">
+      <samples> 2 2 2 2  </samples>
+      <operators>
+
+        <operator constant="yes" dimensions="x" kind="ip">
+          <operator_names> Tx </operator_names>
+          <![CDATA[
+            Tx = -i * 0.5 * (kx * kx);
+          ]]>
+        </operator>
+
+        <operator constant="yes" dimensions="y" kind="ip">
+          <operator_names> Ty </operator_names>
+          <![CDATA[
+            Ty = -i * 0.5 * (ky * ky);
+          ]]>
+        </operator>
+        <operator constant="yes" dimensions="" kind="ip">
+          <operator_names> T </operator_names>
+          <![CDATA[
+            T = -0.2;
+          ]]>
+        </operator>
+
+        <operator constant="yes" dimensions="j" kind="ip">
+          <operator_names> Tj </operator_names>
+          <![CDATA[
+            Tj = -0.2*j;
+          ]]>
+        </operator>
+
+        <integration_vectors>
+          wavefunction
+        </integration_vectors> 
+        <dependencies> potential </dependencies>
+        <![CDATA[
+          dpsi_dt = Tx[psi] + Ty[psi] + T[psi] + Tj[psi] - i * (V + g * mod2(psi)) * psi;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+
+  <output format="hdf5">
+    <sampling_group basis="x y j path_index" export_all_paths="yes" initial_sample="yes">
+      <dependencies>mg0_ComputedVectorExport</dependencies>
+      <computed_vector dimensions=" x y j path_index" name="mg0_ComputedVectorExport" type="complex">
+          <components> psireal_CVComponent_mg0</components>
+          <evaluation>
+            <dependencies basis=" x y j path_index"> wavefunction </dependencies>
+            <![CDATA[
+        if (gPathID == _index_path_index) {
+        psireal_CVComponent_mg0 = Re(psi);
+      }
+            ]]>
+          </evaluation>
+        </computed_vector>
+        <moments> psireal </moments>
+      <![CDATA[
+          if (gPathID == _index_path_index) {
+            psireal = ((complex)psireal_CVComponent_mg0).Re();
+          }
+        ]]>
+    </sampling_group>
+
+
+    <sampling_group basis="kx(10) y(10) j path_index" export_all_paths="yes" initial_sample="yes">
+      <dependencies>mg1_ComputedVectorExport</dependencies>
+      <computed_vector dimensions=" x y j path_index" name="mg1_ComputedVectorExport" type="complex">
+          <components> psiimag_CVComponent_mg1</components>
+          <evaluation>
+            <dependencies basis=" kx y j path_index"> wavefunction </dependencies>
+            <![CDATA[
+        if (gPathID == _index_path_index) {
+        psiimag_CVComponent_mg1 = Im(psi);
+      }
+            ]]>
+          </evaluation>
+        </computed_vector>
+        <moments> psiimag </moments>
+      <![CDATA[
+          if (gPathID == _index_path_index) {
+            psiimag = ((complex)psiimag_CVComponent_mg1).Re();
+          }
+        ]]>
+    </sampling_group>
+
+
+    <sampling_group basis="kx(0) y(0) j(0) path_index" export_all_paths="yes" initial_sample="yes">
+      <dependencies>mg2_ComputedVectorExport</dependencies>
+      <computed_vector dimensions=" x y j path_index" name="mg2_ComputedVectorExport" type="complex">
+          <components> psireal_CVComponent_mg2 psiimag_CVComponent_mg2</components>
+          <evaluation>
+            <dependencies basis=" kx y j path_index"> wavefunction </dependencies>
+            <![CDATA[
+        if (gPathID == _index_path_index) {
+        psireal_CVComponent_mg2 = Re(psi);
+        psiimag_CVComponent_mg2 = Im(psi);
+      }
+            ]]>
+          </evaluation>
+        </computed_vector>
+        <moments> psireal psiimag </moments>
+      <![CDATA[
+          if (gPathID == _index_path_index) {
+            psireal = ((complex)psireal_CVComponent_mg2).Re();
+            psiimag = ((complex)psiimag_CVComponent_mg2).Re();
+          }
+        ]]>
+    </sampling_group>
+
+    <sampling_group basis="kx(0) y(0) j(0)" initial_sample="yes">
+      <dependencies> wavefunction </dependencies>
+      <moments> psireal psiimag </moments>
+      <![CDATA[
+        psireal = Re(psi);
+      ]]>
+    </sampling_group>
+
+
+  </output>
+
+
+<info>
+Script compiled with XMDS2 version VERSION_PLACEHOLDER (SUBVERSION_REVISION_PLACEHOLDER)
+See http://www.xmds.org for more information.
+</info>
+
+<XSIL Name="moment_group_1">
+  <Param Name="n_independent">5</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>6</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+t x y j path_index psireal 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>3</Dim>
+    <Dim>20</Dim>
+    <Dim>20</Dim>
+    <Dim>2</Dim>
+    <Dim>8</Dim>
+    <Dim>6</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/1"/>
+export_all_paths_1_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+
+<XSIL Name="moment_group_2">
+  <Param Name="n_independent">5</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>6</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+t kx y j path_index psiimag 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>3</Dim>
+    <Dim>10</Dim>
+    <Dim>10</Dim>
+    <Dim>2</Dim>
+    <Dim>8</Dim>
+    <Dim>6</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/2"/>
+export_all_paths_1_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+
+<XSIL Name="moment_group_3">
+  <Param Name="n_independent">2</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>4</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+t path_index psireal psiimag 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>3</Dim>
+    <Dim>8</Dim>
+    <Dim>4</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/3"/>
+export_all_paths_1_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+
+<XSIL Name="moment_group_4">
+  <Param Name="n_independent">1</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>5</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+t mean_psireal mean_psiimag stderr_psireal stderr_psiimag 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>3</Dim>
+    <Dim>5</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/4"/>
+export_all_paths_1_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+</simulation>

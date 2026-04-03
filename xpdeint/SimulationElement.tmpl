@@ -1,0 +1,84 @@
+@shBang #!/usr/bin/env python3
+
+@*
+SimulationElement.tmpl
+
+Created by Graham Dennis on 2007-08-23.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.ScriptElement
+
+@*
+  Description of template
+*@
+@def description: Simulation
+
+@def defines
+  @#
+  @super
+  @#
+#define _EPSILON 1e-6
+#ifndef INFINITY
+#define INFINITY HUGE_VAL
+#endif
+
+#ifndef MAX
+#define MAX(a, b) \
+  ({ typeof(a) _a = (a); \
+     typeof(b) _b = (b); \
+     _a > _b ? _a : _b; })
+#endif
+
+#ifndef MIN
+#define MIN(a, b) \
+   ({ typeof(a) _a = (a); \
+      typeof(b) _b = (b); \
+      _a < _b ? _a : _b; })
+#endif
+
+  @#
+@end def
+
+@*
+  Globals needed at the start of the simulation
+*@
+@def globals
+  @#
+  @super
+  @#
+
+@# If the simulation uses <Arguments append_args_to_output_filename="yes" >	
+@# we'll need to store the args and their values in a global string for
+@# use when we construct output filenames.
+@# The arguments and values are assigned to this string in the Arguments.tmpl code.
+string gsArgsAndValues = "";
+
+
+@# Create a variable to hold the path number. This is used with the export_all_paths option.
+@# This counter is per rank, so when running the mpi-multi-path driver this runs from 0 to 
+@# _n_paths / _size - 1.
+// gPathID is used to keep track of the current path number when doing multipath simulations.
+// It's needed for the export_all_paths option. Note his counter is per rank, so when
+// running the mpi-multi-path driver it runs from 0 to _n_paths / _size - 1.
+long gPathID = 0;    
+
+  
+real ${propagationDimension};
+  @#
+@end def
+

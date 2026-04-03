@@ -1,0 +1,318 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickstart Tutorial &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML,http://www.xmds.org/_static/mathjax-use-tex-fonts.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Worked Examples" href="worked_examples.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="worked_examples.html" title="Worked Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quickstart Tutorial</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quickstart-tutorial">
+<span id="quickstarttutorial"></span><span id="index-0"></span><h1>Quickstart Tutorial<a class="headerlink" href="#quickstart-tutorial" title="Permalink to this headline">¶</a></h1>
+<p>In this tutorial, we will create an XMDS2 script to solve the Lorenz Attractor, an example of a dynamical system that exhibits chaos. The equations describing this problem are</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{dx}{dt} &amp;= \sigma (y - x)\\
+\frac{dy}{dt} &amp;= x (\rho - z) - y\\
+\frac{dz}{dt} &amp;= xy - \beta z\end{split}\]</div>
+<p>where we will solve with the parameters <span class="math notranslate nohighlight">\(\sigma=10\)</span>, <span class="math notranslate nohighlight">\(\rho=28\)</span>, <span class="math notranslate nohighlight">\(\beta = \frac{8}{3}\)</span> and the initial condition <span class="math notranslate nohighlight">\(x(0) = y(0) = z(0) = 1\)</span>.</p>
+<p>Below is a script that solves this problem (it’s also saved as examples/lorenz.xmds in your XMDS2 directory). Don’t worry if it doesn’t make sense yet, soon we’ll break it down into easily digestible parts.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>lorenz<span class="nt">&lt;/name&gt;</span>
+
+  <span class="c">&lt;!-- While not strictly necessary, the following two tags are handy. --&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    The Lorenz Attractor, an example of chaos.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">  This element defines some constants.  It can be used for other</span>
+<span class="c">  features as well, but we will go into that in more detail later.</span>
+<span class="c">  --&gt;</span>
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;globals&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="nf">real</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">;</span>
+        <span class="nf">real</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">8.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">;</span>
+        <span class="nf">real</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">28.0</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+     <span class="nt">&lt;/globals&gt;</span>
+   <span class="nt">&lt;/features&gt;</span>
+
+  <span class="c">&lt;!--</span>
+<span class="c">  This part defines all of the dimensions used in the problem,</span>
+<span class="c">  in this case, only the dimension of &#39;time&#39; is needed.</span>
+<span class="c">  --&gt;</span>
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="c">&lt;!-- A &#39;vector&#39; describes the variables that we will be evolving. --&gt;</span>
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;position&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>
+      x y z
+    <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">=</span> <span class="n">z</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="c">&lt;!--</span>
+<span class="c">    Here we define what differential equations need to be solved</span>
+<span class="c">    and what algorithm we want to use.</span>
+<span class="c">    --&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK89&quot;</span> <span class="na">interval=</span><span class="s">&quot;20.0&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>5000<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>position<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="n">dx_dt</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">*</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">x</span><span class="p">);</span>
+        <span class="n">dy_dt</span> <span class="o">=</span> <span class="n">r</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span> <span class="o">-</span> <span class="n">x</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+        <span class="n">dz_dt</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">-</span> <span class="n">b</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="c">&lt;!-- This part defines what data will be saved in the output file --&gt;</span>
+  <span class="nt">&lt;output</span> <span class="na">format=</span><span class="s">&quot;hdf5&quot;</span> <span class="na">filename=</span><span class="s">&quot;lorenz.xsil&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>xR yR zR<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>position<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">xR</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="n">yR</span> <span class="o">=</span> <span class="n">y</span><span class="p">;</span>
+        <span class="n">zR</span> <span class="o">=</span> <span class="n">z</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>You can compile and run this script with <strong>XMDS2</strong>. To compile the script, just pass the name of the script as an argument to <strong>XMDS2</strong>.</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ xmds2 lorenz.xmds
+xmds2 version 2.1 &quot;Happy Mollusc&quot; (r2680)
+Copyright 2000-2012 Graham Dennis, Joseph Hope, Mattias Johnsson
+                    and the xmds team
+Generating source code...
+... done
+Compiling simulation...
+... done. Type &#39;./lorenz&#39; to run.
+</pre></div>
+</div>
+</div></blockquote>
+<p>Now we can execute the generated program ‘lorenz’.</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./lorenz
+Sampled field (for moment group #1) at t = 0.000000e+00
+Sampled field (for moment group #1) at t = 4.000000e-03
+Current timestep: 4.000000e-03
+Sampled field (for moment group #1) at t = 8.000000e-03
+Current timestep: 4.000000e-03
+
+... many lines omitted ...
+
+Current timestep: 4.000000e-03
+Sampled field (for moment group #1) at t = 1.999600e+01
+Current timestep: 4.000000e-03
+Sampled field (for moment group #1) at t = 2.000000e+01
+Current timestep: 4.000000e-03
+Segment 1: minimum timestep: 9.997900e-06 maximum timestep: 4.000000e-03
+  Attempted 7386 steps, 0.00% steps failed.
+Generating output for lorenz
+</pre></div>
+</div>
+</div></blockquote>
+<p id="index-1">The program generated by <strong>XMDS2</strong> has now integrated your equations and produced two files.  The first is the XML file “lorenz.xsil”, which contains the all the information used to generate the simulation (including the XMDS2 code) and the metadata description of the output.  The second file is named “lorenz.h5”, which is a <a class="reference external" href="http://www.hdfgroup.org/HDF5">HDF5</a> file containing all of the output data.   You can analysing these files yourself, or import them into your favourite visualisation/postprocessing tool.  Here we will use the example of importing it into Mathematica.  We run the included utility ‘xsil2graphics2’.</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ xsil2graphics2 -e lorenz.xsil
+xsil2graphics2 from xmds2 version 2.1 &quot;Happy Mollusc&quot; (r2680)
+Generating output for Mathematica 6+.
+Writing import script for &#39;lorenz.xsil&#39; to &#39;lorenz.nb&#39;.
+</pre></div>
+</div>
+</div></blockquote>
+<p>This has now generated the file ‘lorenz.nb’, which is a Mathematica notebook that loads the output data of the simulation.  Loading it into Mathematica allows us to plot the points {xR1, yR1, zR1}:</p>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ll = Transpose[{xR1, yR1, zR1}];
+ListPointPlot3D[ll]
+</pre></div>
+</div>
+</div></blockquote>
+<img alt="_images/lorenz.png" class="align-center" src="_images/lorenz.png" />
+<p>…and we see the lobes of the strange attractor.  Now let us examine the code that produced this simulation.</p>
+<p>First, we have the top level description of the code.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span>
+<span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>lorenz<span class="nt">&lt;/name&gt;</span>
+
+  <span class="c">&lt;!-- While not strictly necessary, the following two tags are handy. --&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    The Lorenz Attractor, an example of chaos.
+  <span class="nt">&lt;/description&gt;</span>
+</pre></div>
+</div>
+<p>One of the advantages of an XML format is that these tags are almost entirely self-explanatory.  XMDS2 files follow full XML syntax, so elements can be commented out using the <code class="docutils literal notranslate"><span class="pre">&lt;!--</span></code> and <code class="docutils literal notranslate"><span class="pre">--&gt;</span></code> brackets, and we have an example of that here.</p>
+<p>The first line, <code class="docutils literal notranslate"><span class="pre">&lt;?xml</span> <span class="pre">...&gt;</span></code>, just specifies the encoding and XML version. It is optional, but its presence helps some text editors perform the correct syntax highlighting.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;simulation&gt;</span></code> element is mandatory, and encloses the entire simulation script.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;</span></code> element is optional, but recommended. It defines the name of the executable program that will be generated, as well as the default name of the output data files (although this can be over-ridden in the <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element if desired). If <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;</span></code> is not present, it will default to the filename of the script.</p>
+<p>The next element we have used can be skipped entirely if you wish to use the default set of features and you don’t want to define any global constants for your simulation.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;features&gt;</span>
+  <span class="nt">&lt;globals&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="nf">real</span> <span class="n">sigma</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">;</span>
+      <span class="nf">real</span> <span class="n">b</span> <span class="o">=</span> <span class="mf">8.0</span><span class="o">/</span><span class="mf">3.0</span><span class="p">;</span>
+      <span class="nf">real</span> <span class="n">r</span> <span class="o">=</span> <span class="mf">28.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+   <span class="nt">&lt;/globals&gt;</span>
+ <span class="nt">&lt;/features&gt;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;features&gt;</span></code> element can be used to choose a large number of features that will be discussed later, but here we have only used it to define a <code class="docutils literal notranslate"><span class="pre">&lt;globals&gt;</span></code> element.  This element contains a block of text with <code class="docutils literal notranslate"><span class="pre">&lt;![CDATA[</span></code> at the start and <code class="docutils literal notranslate"><span class="pre">]]&gt;</span></code> at the end.  These ‘CDATA’ blocks  are used in several places in an XMDS script, and define a block of text that will be pasted directly into the generated C-code.  They must therefore be formatted in legal C-syntax, and any legal C-syntax can be used.  The <code class="docutils literal notranslate"><span class="pre">&lt;globals&gt;</span></code> element is placed at the top of the generated code, and can therefore be used to define any variables used in any other part of the simulation.   Here we have defined our three real parameters.  It is also possible to define variables that can be passed into the program at run-time, an example of which is given in the <a class="reference internal" href="worked_examples.html#wignerarguments"><span class="std std-ref">Wigner Function</span></a> worked example.</p>
+<p>The next element is the essential <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;geometry&gt;</span>
+  <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+<span class="nt">&lt;/geometry&gt;</span>
+</pre></div>
+</div>
+<p>This element is used to define all the dimensions in the problem.  We only require the time dimension, which we are labelling ‘t’, so this is a trivial example.  We will discuss transverse dimensions in more detail in the next worked example (<a class="reference internal" href="worked_examples.html#nonlinearschrodingerequation"><span class="std std-ref">The nonlinear Schrödinger equation</span></a>), where we deal with the integration of a partial differential equation rather than ordinary differential equations.</p>
+<p>Next, we have the <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;position&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span>
+    x y z
+  <span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;initialisation&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">y</span> <span class="o">=</span> <span class="n">z</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/initialisation&gt;</span>
+<span class="nt">&lt;/vector&gt;</span>
+</pre></div>
+</div>
+<p>We can define multiple vectors, but here we only need the variables that we wish to integrate.  We named this vector “position”, as it defines the position in phase space.  These variables are real-valued (as opposed to, say, complex numbers), so we define <code class="docutils literal notranslate"><span class="pre">type=&quot;real&quot;</span></code>.  The <code class="docutils literal notranslate"><span class="pre">&lt;components&gt;</span></code> element defines the names of the elements of this vector, which we have called ‘x’, ‘y’ and ‘z’.  Finally, we provide the initial values of the variables in a CDATA block within the <code class="docutils literal notranslate"><span class="pre">&lt;initialisation&gt;</span></code> element.</p>
+<p>Now we come to the heart of the simulation, where we define the evolution of our vector.  This evolution is held in the <code class="docutils literal notranslate"><span class="pre">&lt;sequence&gt;</span></code> element, which contains an ordered sequence of actions upon any defined vectors.  Vectors can be altered with a <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element, or integrated in the propagation dimension with an <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sequence&gt;</span>
+  <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK89&quot;</span> <span class="na">interval=</span><span class="s">&quot;20.0&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;samples&gt;</span>5000<span class="nt">&lt;/samples&gt;</span>
+    <span class="nt">&lt;operators&gt;</span>
+      <span class="nt">&lt;integration_vectors&gt;</span>position<span class="nt">&lt;/integration_vectors&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">dx_dt</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">*</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">x</span><span class="p">);</span>
+      <span class="n">dy_dt</span> <span class="o">=</span> <span class="n">r</span><span class="o">*</span><span class="n">x</span> <span class="o">-</span> <span class="n">y</span> <span class="o">-</span> <span class="n">x</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+      <span class="n">dz_dt</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">y</span> <span class="o">-</span> <span class="n">b</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/operators&gt;</span>
+  <span class="nt">&lt;/integrate&gt;</span>
+<span class="nt">&lt;/sequence&gt;</span>
+</pre></div>
+</div>
+<p>Here our sequence consists of a single <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element.  It contains several important pieces of information.  At the heart, the <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> element contains the equations of motion as described above, written in a very human-readable fashion.  It also contains an <code class="docutils literal notranslate"><span class="pre">&lt;integration_vectors&gt;</span></code> element, which defines which vectors are used in this integrate block.  We have only one vector defined in this simulation, so it is a trivial choice here.</p>
+<p>All integrate blocks must define which algorithm is to be used - in this case the 8th (embedded 9th) order adaptive Runge-Kutta method, called “ARK89”.  The details of different algorithms will be described later (FIXME: Link!), but for now all we need to know is that this algorithm requires a tolerance, and that smaller means more accurate, so we’ll make it <span class="math notranslate nohighlight">\(10^{-7}\)</span> by setting <code class="docutils literal notranslate"><span class="pre">tolerance=&quot;1.0e-7&quot;</span></code>.  Finally, any integration will proceed a certain length in the propagation dimension, which is defined by the “interval” variable.  This integrate block will therefore integrate the equations it contains with respect to the propagation dimension (‘t’) for 20.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;samples&gt;</span></code> element says that the values of the output groups will be sampled 5000 times during this interval.  The nature of the output is defined in the last element in the simulation: the <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;output</span> <span class="na">format=</span><span class="s">&quot;hdf5&quot;</span> <span class="na">filename=</span><span class="s">&quot;lorenz.xsil&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;sampling_group</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;moments&gt;</span>xR yR zR<span class="nt">&lt;/moments&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>position<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="n">xR</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+      <span class="n">yR</span> <span class="o">=</span> <span class="n">y</span><span class="p">;</span>
+      <span class="n">zR</span> <span class="o">=</span> <span class="n">z</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/sampling_group&gt;</span>
+<span class="nt">&lt;/output&gt;</span>
+</pre></div>
+</div>
+<p>The two top-level arguments in the <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element are “format” and “filename”.  Here we define the output filename, although it would have defaulted to this value.  We also choose the format to be HDF5, which is why the simulation resulted in the binary file “lorenz.h5” as well as “lorenz.xsil”.  If we had instead said <code class="docutils literal notranslate"><span class="pre">format=&quot;ascii&quot;</span></code>, then all of the output data would have been written in text form in “lorenz.xsil”.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element can contain any non-zero number of <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> elements, which specify the entire output of the program.  They allow for subsampling, integration of some or all of the transverse dimensions, and/or conversion of some dimensions into Fourier space, but these will be described in more detail in the following examples.  We have a <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element that specifies which vectors are needed for this output.  We specify the list of output variables with a <code class="docutils literal notranslate"><span class="pre">&lt;moments&gt;</span></code> element, and then define them in CDATA block.  In this case, we are simply defining the three variables that define our phase space.</p>
+<p>And that’s it.  This is quite a large framework to integrate three coupled ordinary differential equations, but the advantage of using XMDS2 is that vastly more complicated simulations can be performed without increasing the length or complexity of the XMDS2 script significantly.  The <a class="reference internal" href="worked_examples.html#workedexamples"><span class="std std-ref">Worked Examples</span></a> section will provide more complicated examples with stochastic equations and partial differential equations.  If you are moved to solve your own problem using XMDS2, then perhaps the most efficient method will be to take one of the worked examples and adapt it to your needs.  All of the examples in the documentation can be found in the “/examples” folder included with the installation.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="worked_examples.html" title="Worked Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Quickstart Tutorial</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

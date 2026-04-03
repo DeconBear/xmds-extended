@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>kubo_integer_dimensions_mpi</name>
+  <author>Graham Dennis</author>
+  <description>
+    Example Kubo oscillator simulation
+  </description>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="j" type="integer" lattice="10240" domain="(1, 10240)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <driver name="distributed-mpi" />
+  
+  <features>
+    <benchmark />
+    <!-- <error_check /> -->
+    <bing />
+  </features>
+
+  <noise_vector name="noises" kind="wiener" type="real" method="posix" seed="157 9348 234">
+        <components>n_1</components>
+  </noise_vector>
+    
+  <vector name="main" type="complex">
+    <components>
+      z
+    </components>
+    <initialisation>
+      <![CDATA[
+        if (_index_j == 1)
+          _LOG(_WARNING_LOG_LEVEL, "_local_lattice_j: %li, _local_offset_j: %li\n", _local_lattice_j, _local_offset_j);
+        z = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="SI" interval="10" steps="1000">
+      <samples>500 10</samples>
+      <operators>
+        <integration_vectors>main</integration_vectors>
+        <dependencies>noises</dependencies>
+        <![CDATA[
+          dz_dt(j => j) = i*z*n_1;
+        ]]>
+      </operators>
+    </integrate>
+    <breakpoint filename="kubo_integer_dimensions_mpi_break.xsil">
+      <dependencies>main</dependencies>
+    </breakpoint>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="j(0)" initial_sample="yes">
+        <moments>zR zI</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          zR = z.Re()/_lattice_j;
+          zI = z.Im()/_lattice_j;
+        ]]>
+      </sampling_group>
+      <sampling_group basis="j" initial_sample="yes">
+        <moments>zR zI</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          zR = z.Re();
+          zI = z.Im();
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

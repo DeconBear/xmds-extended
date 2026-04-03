@@ -1,0 +1,283 @@
+@shBang #!/usr/bin/env python3
+
+@*
+FixedStep.tmpl
+
+Created by Graham Dennis on 2007-10-20.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators._FixedStep
+
+@def description: segment $segmentNumber ($stepper.name fixed-step integrator)
+
+
+@def functionPrototypes
+  @#
+  @super
+  @#
+  @if $cross
+void _${name}_initialise_cross_propagation();
+  @end if
+  @#
+@end def
+
+@def functionImplementations
+  @#
+  @super
+  @#
+  @if $cross
+
+${initialiseCrossPropagationFunctionImplementation}@slurp
+
+  @end if
+  @#
+@end def
+
+@def localInitialise
+@*doc:
+  This function returns the local initialisation code for the integrator.
+*@
+  @#
+  @super
+  @#
+  @if $cross
+
+_${name}_initialise_cross_propagation();
+
+    @set $integrationDimRep = $parent.field.dimensionWithName($propagationDimension).inBasis($parent.operatorBasis)
+    @if $propagationDirection == '+'
+      @set $initialValue = integrationDimRep.minimum
+    @else
+      @set $initialValue = integrationDimRep.maximum
+    @end if
+${integrationDimRep.type} ${integrationDimRep.name} = ${initialValue};
+  @end if
+  @#
+@end def
+
+
+@def createStepVariable
+@*doc:
+This function returns the code that will create a _step variable,
+including any modifications necessary due to the ErrorCheck feature.
+*@
+  @#
+real _step = ${step};
+real _noiseStep = ${step};
+  @#
+  @set $featureOrdering = ['ErrorCheck']
+  @#
+${insertCodeForFeatures('createFixedStepVariable', featureOrdering)}@slurp
+  @#
+@end def
+
+
+@def segmentFunctionBody($function)
+  @#
+${createStepVariable}@slurp
+  @#
+  @set $featureOrderingOuter = ['Stochastic']
+${insertCodeForFeatures('integrateFixedStepBegin', featureOrderingOuter)}@slurp
+
+${allocate}@slurp
+${initialise}@slurp
+${localInitialise}@slurp
+
+for (long _istep = 0; _istep < ${stepCount}; _istep++) {
+  @# Insert code for features
+  @set $featureOrderingInner = ['Output', 'ErrorCheck', 'Stochastic']
+  @#
+  @set $dict = {'extraIndent': 0}
+  ${insertCodeForFeatures('integrateFixedStepInnerLoopBegin', featureOrderingInner, dict), autoIndent=True}@slurp
+  @set $extraIndent = $dict.extraIndent
+  
+  ${preSingleStep, autoIndent=True, extraIndent=extraIndent}@slurp
+  ${stepper.singleIntegrationStep(function), autoIndent=True, extraIndent=extraIndent}@slurp
+  ${postSingleStep, autoIndent=True, extraIndent=extraIndent}@slurp
+  
+  @if $cross
+    @# If we are cross-integrating, then we now need to copy our result back
+    @# into the original arrays for the integration vectors
+  ${copyResultIntoIntegrationArrays, autoIndent=True, extraIndent=extraIndent}@slurp
+  
+  @end if
+  @#
+  ${insertCodeForFeaturesInReverseOrder('integrateFixedStepInnerLoopEnd', featureOrderingInner, dict), autoIndent=True}@slurp
+}
+
+${localFinalise}@slurp
+${finalise}@slurp
+${free}@slurp
+
+${insertCodeForFeaturesInReverseOrder('integrateFixedStepEnd', featureOrderingOuter)}@slurp
+  @#
+@end def
+
+
+@# ---- Cross-propagation methods ----
+
+@def reducedFieldCopy($vectorMap, $templateString, $positiveIndexOverride = None, $negativeIndexOverride = None)
+  @#
+  @if $propagationDirection == '+'
+    @if $positiveIndexOverride
+      @set $indexOverrideValue = $positiveIndexOverride
+    @else
+      @set $indexOverrideValue = '_istep'
+    @end if
+  @else
+    @if $negativeIndexOverride
+      @set $indexOverrideValue = $negativeIndexOverride
+    @else
+      @set $propDimRep = $parent.field.dimensionWithName($propagationDimension).inBasis($parent.operatorBasis)
+      @set $indexOverrideValue = c'(${propDimRep.globalLattice} - _istep - 1)'
+    @end if
+  @end if
+  @#
+  @# Create the index overrides dictionary. We only need to override the propagation dimension
+  @set $indexOverrides = {$propagationDimension: dict([(v.field, indexOverrideValue) for v in vectorMap.values()])}
+  @#
+  @set $setOfVectorsToLoopOver = set(vectorMap.keys())
+  @silent setOfVectorsToLoopOver.update(vectorMap.values())
+  @#
+  @set $innerLoopTemplate = $templateObjectFromStringWithTemplateVariables($templateString, {'componentIndex': '_icomp'})
+  @#
+  @capture loopContents
+    @for $reducedVector, $vector in $vectorMap.items()
+      @if vector.field.hasDimensionName($propagationDimension)
+        @set $propagationDimensionObject = vector.field.dimensionWithName($propagationDimension)
+        @silent innerLoopTemplate.skipSize = $propagationDirection + \
+                                             $vector.field.localPointsInDimensionsAfterDimRepInBasis(propagationDimensionObject.inBasis($homeBasis), $homeBasis)
+      @end if
+      @silent innerLoopTemplate.reducedVector = reducedVector
+      @silent innerLoopTemplate.vector = vector
+for (long _icomp = 0; _icomp < _${vector.id}_ncomponents; _icomp++) {
+  ${innerLoopTemplate, autoIndent=True}@slurp
+}
+      @del innerLoopTemplate.skipSize
+    @end for
+  @end capture
+  @#
+${loopOverFieldInBasisWithVectorsAndInnerContent($parent.reducedField, $homeBasis, $setOfVectorsToLoopOver,
+                                                 $loopContents, indexOverrides = $indexOverrides,
+                                                 vectorsNotNeedingDefines = $setOfVectorsToLoopOver)}@slurp
+  @#
+@end def
+
+
+@def initialiseCrossPropagationFunctionImplementation
+@*doc:
+  Return code for initialising the boundary conditions of a cross-propagation integrator.
+
+  This code both sets the boundary conditions and copies in the first values for the
+  dependencies into the local dependency arrays.
+*@
+  @#
+void _${name}_initialise_cross_propagation()
+{
+  @set $positiveIndexOverride = '0'
+  @set $basis = $parent.operatorBasis
+  @set $propDimRep = $parent.field.dimensionWithName($propagationDimension).inBasis(basis)
+  @set $negativeIndexOverride = c'(${propDimRep.globalLattice} - 1)'
+  @#
+  @set $combinedLoopVectorMap = $integrationVectorMap.copy()
+  @silent combinedLoopVectorMap.update($dependencyMap)
+  @#
+  @set $vectorsNeedingTransforms = set(combinedLoopVectorMap.values())
+  @set $boundaryConditionDependencies = $parent.codeBlocks['boundaryCondition'].dependencies
+  @silent vectorsNeedingTransforms.update(boundaryConditionDependencies)
+  ${transformVectorsToBasis(vectorsNeedingTransforms, basis), autoIndent=True}@slurp
+  
+  @if $propagationDirection == '+'
+    @set $index = $positiveIndexOverride
+  @else
+    @set $index = $negativeIndexOverride
+  @end if
+  real $propagationDimension = ${propDimRep.arrayName}[$index];
+  
+  // Copy the initial value of the cross-propagation integration vectors and dependencies into our local arrays
+  {
+    ${reducedFieldCopy(combinedLoopVectorMap,
+"""_active_${reducedVector.id}[_${reducedVector.id}_index_pointer + ${componentIndex}] = _active_${vector.id}[_${vector.id}_index_pointer + ${componentIndex}];
+""", positiveIndexOverride = $positiveIndexOverride, negativeIndexOverride = $negativeIndexOverride), autoIndent=True}@slurp
+    @for $reducedVector in $combinedLoopVectorMap.keys()
+      @if $reducedVector.needsTransforms
+      _${reducedVector.id}_basis = $basisIndexForBasis($reducedVector.field.basisForBasis($basis)); 
+      @end if
+    @end for
+  }
+  
+  @#
+  // Set the boundary condition
+  {
+    ${parent.codeBlocks['boundaryCondition'].loop(self.boundaryConditionCode), autoIndent=True}@slurp
+  }
+
+  // Copy the initial value of the integration vectors back into their main arrays
+  {
+    ${reducedFieldCopy($integrationVectorMap,
+"""_active_${reducedVector.id}[_${reducedVector.id}_index_pointer + ${componentIndex}] = _active_${vector.id}[_${vector.id}_index_pointer + ${componentIndex}];
+""", positiveIndexOverride = $positiveIndexOverride, negativeIndexOverride = $negativeIndexOverride), autoIndent=True}@slurp
+  }
+  
+}
+  @#
+@end def
+
+@def boundaryConditionCode($codeString)
+  @#
+// ********** Boundary condition code ***********
+${codeString}@slurp
+// **********************************************
+  @#
+@end def
+
+
+@def copyResultIntoIntegrationArrays
+@*doc:
+  Returns code to copy the result of our cross-propagation step back into the original arrays
+  for the integation vectors.
+*@
+  @#
+// Copy the result back into the original array.
+{
+  ${reducedFieldCopy($integrationVectorMap, 
+"""
+_active_${vector.id}[_${vector.id}_index_pointer + ${componentIndex} + ${skipSize} * _${vector.id}_ncomponents] = \
+  _active_${reducedVector.id}[_${reducedVector.id}_index_pointer + ${componentIndex}];
+"""), autoIndent=True}@slurp
+}
+  @#
+@end def
+
+
+@def updateDependenciesForNextStep
+@*doc:
+  Return code to update our dependencies vectors from the originals for the next step.
+*@
+  @#
+// Update the dependencies for the next step
+{
+  ${reducedFieldCopy($dependencyMap,
+"""
+_active_${reducedVector.id}[_${reducedVector.id}_index_pointer + ${componentIndex}] = \
+  _active_${vector.id}[_${vector.id}_index_pointer + ${componentIndex} + ${skipSize} * _${vector.id}_ncomponents];
+"""), autoIndent=True}@slurp
+}
+  @#
+@end def
+

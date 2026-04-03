@@ -1,0 +1,231 @@
+@shBang #!/usr/bin/env python3
+
+@*
+BinaryFormat.tmpl
+
+Created by Graham Dennis on 2007-09-20.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.OutputFormat
+@from xpdeint.Geometry.NonUniformDimensionRepresentation import NonUniformDimensionRepresentation
+@from xpdeint.CallOnceGuards import callOncePerInstanceGuard
+
+@def description: binary output format
+@attr $name = 'binary'
+@attr $mpiSafe = True
+
+@def writeOutFunctionImplementationBody($dict)
+  @#
+${writeOutFunctionImplementationBegin(dict)}@slurp
+
+  @#
+  @set $featureOrdering = ['Driver']
+  @set $featureDict = dict.copy()
+  @set $featureDict['extraIndent'] = 0
+${insertCodeForFeatures('binaryWriteOutBegin', featureOrdering, featureDict)}@slurp
+  @set $extraIndent = featureDict['extraIndent']
+
+${writeOutFunctionContents(dict), extraIndent=extraIndent}@slurp
+
+${insertCodeForFeaturesInReverseOrder('binaryWriteOutEnd', featureOrdering, featureDict)}@slurp
+
+${writeOutFunctionImplementationEnd(dict)}@slurp
+  @#
+@end def
+
+@def truncateOutputFiles($baseFilename)
+char _dataFilename[200];
+for (int _i = 0; _i < ${parent.outputGroups}; _i++) {
+	@# FIXME: This is a dodgy, dodgy hack. chunked_output should either be removed or rethought.
+	@if hasattr(self.parent, 'featureName') and self.parent.featureName == 'Output'
+  snprintf(_dataFilename, 200, "%s_mg%i.dat", ${baseFilename}, _i);
+	@else
+  snprintf(_dataFilename, 200, "%s.dat", ${baseFilename});
+	@end if
+  fclose(fopen(_dataFilename, "wb"));  // truncate the file
+}
+@end def
+
+@def writeOutFunctionContents($dict)
+  @#
+  @set $fp = dict['fp']
+  @set $baseFilename = dict['baseFilename']
+  @set $outputGroupFilenameSuffix = dict['outputGroupFilenameSuffix']
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @set $dependentVariables = dict['dependentVariables']
+  @set $componentCount = 0
+  @for $variable in $dependentVariables
+    @set $componentCount += len($variable.vector.components)
+    @if $variable.vector.type == 'complex'
+      @set $componentCount += len($variable.vector.components)
+    @end if
+  @end for
+  @set dict['componentCount'] = componentCount
+  @#
+const char *encoding = NULL;
+#if CFG_ENDIAN == CFG_ENDIAN_BIG
+  encoding = "BigEndian";
+#else
+  encoding = "LittleEndian";
+#endif
+
+char _datFilename[200];
+snprintf(_datFilename, 200, "%s${outputGroupFilenameSuffix}.dat", ${baseFilename});
+
+if ($fp) {
+  const char *unsignedLongType = NULL;
+  if (sizeof(unsigned long) == 4)
+    unsignedLongType = "uint32";
+  else if (sizeof(unsigned long) == 8)
+    unsignedLongType = "uint64";
+  else
+    unsignedLongType = "ulong";
+
+  fprintf($fp, "    <Stream><Metalink Format=\"Binary\" UnsignedLong=\"%s\" precision=\"${precision}\" Type=\"Remote\" Encoding=\"%s\"/>\n",
+          unsignedLongType, encoding);
+  fprintf($fp, "%s\n", _datFilename);
+}
+
+FILE* fpBinary;
+if ((fpBinary = fopen(_datFilename, "r+b")) == NULL)
+  // _LOG will cause the simulation to exit
+  _LOG(_ERROR_LOG_LEVEL, "Unable to open output file %s\n"
+                         "Chucking a spack...\n", _datFilename);
+
+unsigned long dataSize;
+off_t fieldOffset = 0;
+real coordinate;
+
+  @for $dim in $field.dimensions
+    @set $dimRep = $dim.inBasis(basis)
+dataSize = ${dimRep.globalLattice};
+if (fwrite(&dataSize, sizeof(unsigned long), 1, fpBinary) != 1) {
+  _LOG(_ERROR_LOG_LEVEL, "Error writing size of dimension '${dimRep.name}' to binary data file '%s'.\n", _datFilename);
+}
+    @if isinstance(dimRep, NonUniformDimensionRepresentation)
+if (fwrite(${dimRep.arrayName}, sizeof(real), dataSize, fpBinary) != dataSize) {
+  _LOG(_ERROR_LOG_LEVEL, "Error writing coordinate values for dimension '${dimRep.name}' to binary data file '%s'.\n", _datFilename);
+}
+    @else
+coordinate = ${dimRep.minimum};
+for (long _i0 = 0; _i0 < dataSize; _i0++, coordinate += ${dimRep.stepSize}) {
+  if (fwrite(&coordinate, sizeof(real), 1, fpBinary) != 1) {
+    _LOG(_ERROR_LOG_LEVEL, "Error writing coordinate values for dimension '${dimRep.name}' to binary data file '%s'.\n", _datFilename);
+  }
+}
+    @end if
+fieldOffset += sizeof(unsigned long) + sizeof(real) * dataSize;
+
+  @end for
+  @#
+  @if field.dimensions
+dataSize = ${' * '.join([dim.inBasis(basis).globalLattice for dim in field.dimensions])};
+  @else
+dataSize = 1;
+  @end if
+off_t vectorFieldSize = dataSize * sizeof(real) + sizeof(unsigned long);
+
+for (int _i = 0; _i < ${componentCount}; _i++) {
+  fseeko(fpBinary, fieldOffset + _i * vectorFieldSize, SEEK_SET);
+  if (fwrite(&dataSize, sizeof(unsigned long), 1, fpBinary) != 1) {
+    _LOG(_ERROR_LOG_LEVEL, "Error writing vector size to binary data file '%s'.\n", _datFilename);
+  }
+}
+
+  @# This is where all of the magic MPI code goes
+  @set $featureOrdering = ['Driver']
+  @set $featureDict = dict.copy()
+  @set $featureDict['extraIndent'] = 0
+${insertCodeForFeatures('binaryWriteOutWriteDataBegin', $featureOrdering, featureDict)}@slurp
+  @set $extraIndent = featureDict['extraIndent']
+
+${writeData(dict), extraIndent=extraIndent}@slurp
+
+  @# This is where the rest of the magic MPI code goes
+${insertCodeForFeaturesInReverseOrder('binaryWriteOutWriteDataEnd', $featureOrdering, featureDict)}@slurp
+
+fclose(fpBinary);
+if ($fp)
+  fprintf($fp, "    </Stream>\n");
+  @#
+@end def
+
+
+@def writeData($dict)
+  @#
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @set $dependentVariables = dict['dependentVariables']
+  @#
+  @set variablesInEarlierVectors = 0
+  @for $variable in $dependentVariables
+    @set $componentNameSizePrefix = ''
+    @if $variable.vector.type == 'complex'
+      @set $componentNameSizePrefix = '2 * '
+    @end if
+// loop over components of vector '${variable.vector.id}' (array '${variable.arrayName}')
+for (unsigned int _component = 0; _component < ${componentNameSizePrefix}_${variable.vector.id}_ncomponents; _component++) {
+  off_t _outputfield_index_pointer, _outputfield_old_index_pointer;
+  _outputfield_index_pointer = -42; // Just so that we always seek the first time
+
+    @set $innerContent = $innerLoopsForVariable($variable, variablesInEarlierVectors, dict)
+    @set $vectors = [$variable.vector]
+  ${loopOverFieldInBasisWithVectorsAndInnerContent($field, $basis, $vectors, $innerContent, vectorsNotNeedingDefines=vectors), autoIndent=True}@slurp
+} // end loop over components of vector '${variable.vector.id}' (array '${variable.arrayName}')
+    @set $variablesInEarlierVectors += $variable.vector.nComponents
+    @if $variable.vector.type == 'complex'
+      @set $variablesInEarlierVectors += $variable.vector.nComponents
+    @end if
+  @end for
+
+  @#
+@end def
+
+@def innerLoopsForVariable($variable, $variablesInEarlierVectors, $dict)
+  @#
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @#
+// UNVECTORISABLE
+_outputfield_old_index_pointer = _outputfield_index_pointer;
+_outputfield_index_pointer = 0;
+
+// Calculate the output field index pointer
+  @for idx, dim in enumerate(field.dimensions)
+_outputfield_index_pointer += ($dim.inBasis(basis).strictlyAscendingGlobalIndex)@slurp
+${''.join([' * ' + dim.inBasis(basis).globalLattice for dim in field.dimensions[idx+1:]])};
+  @end for
+
+if (_outputfield_index_pointer != _outputfield_old_index_pointer + 1)
+  fseeko(fpBinary, fieldOffset + _outputfield_index_pointer * sizeof(real) + (${variablesInEarlierVectors} + _component) * vectorFieldSize + sizeof(unsigned long), SEEK_SET);
+
+  @if $variable.vector.type == 'real'
+if (fwrite(&${variable.arrayName}[_${variable.vector.id}_index_pointer + _component], sizeof(real), 1, fpBinary) != 1) {
+  _LOG(_ERROR_LOG_LEVEL, "Error writing output data.\n");
+}
+  @else
+if (fwrite(&(reinterpret_cast<real*>(${variable.arrayName})[2*_${variable.vector.id}_index_pointer + _component]), sizeof(real), 1, fpBinary) != 1) {
+  _LOG(_ERROR_LOG_LEVEL, "Error writing output data.\n");
+}
+  @end if
+  @#
+@end def
+
+
+

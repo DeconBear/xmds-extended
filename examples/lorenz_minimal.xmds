@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>lorenz_minimal</name>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+  </geometry>
+  
+  <vector name="position" type="real">
+    <components>
+      x y z
+    </components>
+    <initialisation>
+      <![CDATA[
+      x = y = z = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" interval="10.0" tolerance="1e-7">
+      <samples>100</samples>
+      <operators>
+        <integration_vectors>position</integration_vectors>
+        <![CDATA[
+        dx_dt = 10.0*(y-x);
+        dy_dt = 28.0*x - y - x*z;
+        dz_dt = x*y - 8.0/3.0*z;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+    <sampling_group>
+      <moments>xR yR zR</moments>
+      <dependencies>position</dependencies>
+      <![CDATA[
+        xR = x;
+        yR = y;
+        zR = z;
+      ]]>
+    </sampling_group>
+  </output>
+</simulation>

@@ -1,0 +1,112 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MPIMultiPathDriver.tmpl
+
+Created by Graham Dennis on 2008-02-25
+Modified by Liam Madge on 2013-09-11
+Modified by Gregory Bogomiagkov on 2013-09-12
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.SimulationDrivers._MPIMultiPathDriver
+
+@def description: MPI Multipath Simulation Driver
+
+@attr $pathLoopStart = '_rank'
+@attr $pathLoopStep = '_size'
+
+@def mainRoutine
+  @#
+int main(int argc, char **argv)
+{
+  MPI_Init(&argc, &argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
+
+  @if self.simulation.export_all_paths_in_use == True
+if (_n_paths % _size != 0) {
+  printf("\n\nWhen using export_all_paths and MPI, number of paths must be a multiple\nof number of processors requested.\n");
+  printf("\nAborting!\n\n");
+  exit(1);
+}
+  @end if
+  
+  ${mainRoutineInnerContent, autoIndent=True}@slurp
+  
+  MPI_Finalize();
+  
+  return 0;
+}
+  @#
+@end def
+
+
+
+@def segment0End
+  @#
+${segment0ReduceBlock}@slurp
+  @#
+@end def
+
+@def topLevelSegmentFunctionImplementation
+  @#
+void _segment0()
+{
+  @# And now insert the code for the features that apply in the top level sequence
+  @set $featureOrdering = ['ErrorCheck', 'Stochastic']
+  @set $dict = {'extraIndent': 0}
+  ${insertCodeForFeatures('topLevelSequenceBegin', featureOrdering, dict), autoIndent=True}@slurp
+  @set $extraIndent = dict['extraIndent']
+  
+  ${topLevelSegmentPathLoop, autoIndent=True, extraIndent=extraIndent}@slurp
+  
+  ${insertCodeForFeaturesInReverseOrder('topLevelSequenceEnd', featureOrdering, dict), autoIndent=True}@slurp
+  
+  ${segment0End, autoIndent=True}@slurp
+}
+  @#
+@end def
+
+@def segment0ReduceBlock
+  @#
+  @for mg in $momentGroups
+    @for vector in mg.outputField.managedVectors
+      @set $arrayNames = [c'_${vector.id}']
+      @silent $arrayNames.extend($vector.aliases)
+      @for arrayName in arrayNames
+  
+if (_rank == 0)
+  MPI_Reduce(MPI_IN_PLACE, $arrayName, ${vector.sizeInBasisInReals(mg.outputBasis)},
+             MPI_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+else
+  MPI_Reduce($arrayName, NULL, ${vector.sizeInBasisInReals(mg.outputBasis)},
+             MPI_REAL, MPI_SUM, 0, MPI_COMM_WORLD);
+      @end for
+    @end for
+  @end for
+  @#
+@end def
+
+
+@def writeOutBegin($dict)
+  @#
+// If we aren't rank 0, then we don't want to write anything.
+if (_rank != 0)
+  return;
+  @#
+@end def

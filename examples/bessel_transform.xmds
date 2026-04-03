@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>bessel_transform</name>
+  <author>Graham Dennis</author>
+  <description>
+    Solve the wave equation on a sphere of radius 1 utilising spherical symmetry
+    by using the Spherical Bessel function transform.
+  </description>
+  
+  <features>
+    <benchmark />
+    <!-- <error_check /> -->
+    <bing />
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <!-- Volume prefactor = 4\pi is to cover the suppressed integration over \theta and \phi -->
+      <dimension name="x" lattice="100" spectral_lattice="50" domain="(0, 1)" transform="spherical-bessel" volume_prefactor="4.0*M_PI"/>
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-100.0*(x-0.25)*(x-0.25));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK45" tolerance="1e-6" interval="4e-3" steps="400">
+      <samples>100 100</samples>
+      <operators>
+        <operator kind="ex" basis="kx" type="real">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -T*kx*kx/mu;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = L[u];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group basis="x" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = u.Re();
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx" initial_sample="no">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = u.Re();   
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

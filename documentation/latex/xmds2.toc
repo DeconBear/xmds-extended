@@ -1,0 +1,149 @@
+\babel@toc {english}{}
+\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {chapter}{\numberline {2}Installation}{3}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Overview}{3}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Linux installation instructions}{4}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Mac OS X installation}{4}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Manual installation from source}{5}{section.2.4}%
+\contentsline {chapter}{\numberline {3}Quickstart Tutorial}{9}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Worked Examples}{15}{chapter.4}%
+\contentsline {section}{\numberline {4.1}The nonlinear Schrödinger equation}{15}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Kubo Oscillator}{20}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Fibre Noise}{24}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Integer Dimensions}{26}{section.4.4}%
+\contentsline {section}{\numberline {4.5}Wigner Function}{30}{section.4.5}%
+\contentsline {section}{\numberline {4.6}Finding the Ground State of a BEC (continuous renormalisation)}{34}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Finding the Ground State of a BEC again}{40}{section.4.7}%
+\contentsline {section}{\numberline {4.8}Multi\sphinxhyphen {}component Schrödinger equation}{42}{section.4.8}%
+\contentsline {chapter}{\numberline {5}Reference section}{47}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Configuration, installation and runtime options}{47}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Useful XML Syntax}{48}{section.5.2}%
+\contentsline {section}{\numberline {5.3}XMDS2 XML Schema}{48}{section.5.3}%
+\contentsline {section}{\numberline {5.4}XMDS2 script elements}{51}{section.5.4}%
+\contentsline {subsection}{\numberline {5.4.1}Simulation element}{51}{subsection.5.4.1}%
+\contentsline {subsection}{\numberline {5.4.2}Name element}{52}{subsection.5.4.2}%
+\contentsline {subsection}{\numberline {5.4.3}Author element}{52}{subsection.5.4.3}%
+\contentsline {subsection}{\numberline {5.4.4}Description element}{52}{subsection.5.4.4}%
+\contentsline {subsection}{\numberline {5.4.5}Features Elements}{52}{subsection.5.4.5}%
+\contentsline {subsubsection}{Arguments Element}{53}{subsubsection*.5}%
+\contentsline {paragraph}{Argument element}{54}{paragraph*.6}%
+\contentsline {subsubsection}{Auto\_vectorise element}{54}{subsubsection*.7}%
+\contentsline {subsubsection}{Benchmark}{54}{subsubsection*.8}%
+\contentsline {subsubsection}{Bing}{54}{subsubsection*.9}%
+\contentsline {subsubsection}{C Flags}{55}{subsubsection*.10}%
+\contentsline {subsubsection}{Chunked Output}{55}{subsubsection*.11}%
+\contentsline {subsubsection}{Diagnostics}{55}{subsubsection*.12}%
+\contentsline {subsubsection}{Error Check}{56}{subsubsection*.13}%
+\contentsline {subsubsection}{Halt\_Non\_Finite}{56}{subsubsection*.14}%
+\contentsline {subsubsection}{fftw element}{56}{subsubsection*.15}%
+\contentsline {subsubsection}{Globals}{56}{subsubsection*.16}%
+\contentsline {subsubsection}{OpenMP}{57}{subsubsection*.17}%
+\contentsline {subsubsection}{Precision}{57}{subsubsection*.18}%
+\contentsline {subsubsection}{Validation}{58}{subsubsection*.19}%
+\contentsline {subsection}{\numberline {5.4.6}Driver Element}{58}{subsection.5.4.6}%
+\contentsline {subsection}{\numberline {5.4.7}Geometry Element}{59}{subsection.5.4.7}%
+\contentsline {subsubsection}{The “dft” transform}{60}{subsubsection*.24}%
+\contentsline {subsubsection}{The “dct” transform}{61}{subsubsection*.25}%
+\contentsline {subsubsection}{The “dst” transform}{62}{subsubsection*.26}%
+\contentsline {subsubsection}{The “bessel” and “bessel\sphinxhyphen {}neumann” transforms}{63}{subsubsection*.27}%
+\contentsline {subsubsection}{The “spherical\sphinxhyphen {}bessel” transform}{64}{subsubsection*.28}%
+\contentsline {subsubsection}{The “hermite\sphinxhyphen {}gauss” transform}{65}{subsubsection*.29}%
+\contentsline {subsection}{\numberline {5.4.8}Vector Element}{65}{subsection.5.4.8}%
+\contentsline {subsubsection}{The dependencies element}{67}{subsubsection*.34}%
+\contentsline {subsection}{\numberline {5.4.9}Computed Vector Element}{68}{subsection.5.4.9}%
+\contentsline {subsection}{\numberline {5.4.10}Noise Vector Element}{69}{subsection.5.4.10}%
+\contentsline {subsubsection}{Uniform noise}{70}{subsubsection*.36}%
+\contentsline {subsubsection}{Gaussian noise}{70}{subsubsection*.37}%
+\contentsline {subsubsection}{Wiener noise}{71}{subsubsection*.38}%
+\contentsline {subsubsection}{Poissonian noise}{71}{subsubsection*.39}%
+\contentsline {subsubsection}{Jump noise}{72}{subsubsection*.40}%
+\contentsline {subsection}{\numberline {5.4.11}Sequence Element}{72}{subsection.5.4.11}%
+\contentsline {subsection}{\numberline {5.4.12}Filter element}{73}{subsection.5.4.12}%
+\contentsline {subsection}{\numberline {5.4.13}Integrate element}{73}{subsection.5.4.13}%
+\contentsline {subsubsection}{Operators and operator elements}{74}{subsubsection*.42}%
+\contentsline {subsubsection}{Algorithms}{76}{subsubsection*.47}%
+\contentsline {paragraph}{SI and SIC algorithms}{77}{paragraph*.48}%
+\contentsline {paragraph}{Runge\sphinxhyphen {}Kutta algorithms}{77}{paragraph*.49}%
+\contentsline {paragraph}{Adaptive Runge\sphinxhyphen {}Kutta algorithms}{77}{paragraph*.50}%
+\contentsline {paragraph}{Richardson Extrapolation Algorithms and the Bulirsch\sphinxhyphen {}Stoer Method}{78}{paragraph*.51}%
+\contentsline {subsubsection}{Filters element}{78}{subsubsection*.52}%
+\contentsline {subsection}{\numberline {5.4.14}Breakpoint element}{79}{subsection.5.4.14}%
+\contentsline {subsection}{\numberline {5.4.15}Output element}{79}{subsection.5.4.15}%
+\contentsline {subsubsection}{Sampling Group Element}{80}{subsubsection*.53}%
+\contentsline {subsection}{\numberline {5.4.16}XMDS\sphinxhyphen {}specific C syntax}{81}{subsection.5.4.16}%
+\contentsline {section}{\numberline {5.5}Modified Midpoint Method}{81}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Bulirsch\sphinxhyphen {}Stoer Algorithm}{82}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Error Scaling Behaviour}{83}{section.5.7}%
+\contentsline {chapter}{\numberline {6}Advanced Topics}{85}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Importing data}{85}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Convolutions and Fourier transforms}{88}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Example 1}{89}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Example 2}{89}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Example 3}{90}{subsection.6.2.3}%
+\contentsline {section}{\numberline {6.3}‘Loose’ \sphinxstyleliteralintitle {\sphinxupquote {geometry\_matching\_mode}}}{90}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Dimension aliases}{90}{section.6.4}%
+\contentsline {chapter}{\numberline {7}Frequently Asked Questions}{93}{chapter.7}%
+\contentsline {section}{\numberline {7.1}XMDS scripts look complicated! How do I start?}{93}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Where can I get help?}{93}{section.7.2}%
+\contentsline {section}{\numberline {7.3}How should I cite XMDS2?}{93}{section.7.3}%
+\contentsline {section}{\numberline {7.4}I think I found a bug! Where should I report it?}{93}{section.7.4}%
+\contentsline {section}{\numberline {7.5}How do I put time dependence into my vectors?}{94}{section.7.5}%
+\contentsline {section}{\numberline {7.6}Can I specify the range of my domain and number of grid points at run\sphinxhyphen {}time?}{94}{section.7.6}%
+\contentsline {section}{\numberline {7.7}When can I use IP operators (and why should I) and when must I use EX operators?}{94}{section.7.7}%
+\contentsline {section}{\numberline {7.8}Visual Editors}{95}{section.7.8}%
+\contentsline {chapter}{\numberline {8}Upgrading From XMDS 1.X}{97}{chapter.8}%
+\contentsline {chapter}{\numberline {9}Optimisation Hints}{99}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Geometry and transform\sphinxhyphen {}based tricks}{99}{section.9.1}%
+\contentsline {subsection}{\numberline {9.1.1}Simpler simulation geometries}{99}{subsection.9.1.1}%
+\contentsline {subsection}{\numberline {9.1.2}Tricks for Bessel and Hermite\sphinxhyphen {}Gauss transforms}{99}{subsection.9.1.2}%
+\contentsline {section}{\numberline {9.2}Reduce code complexity}{99}{section.9.2}%
+\contentsline {subsection}{\numberline {9.2.1}Optimising with the Interaction Picture (IP) operator}{99}{subsection.9.2.1}%
+\contentsline {subsection}{\numberline {9.2.2}Consider writing the evolution in spectral basis}{100}{subsection.9.2.2}%
+\contentsline {subsection}{\numberline {9.2.3}Don’t recalculate things you don’t have to}{102}{subsection.9.2.3}%
+\contentsline {section}{\numberline {9.3}Compiler and library tricks}{102}{section.9.3}%
+\contentsline {subsection}{\numberline {9.3.1}Faster compiler}{102}{subsection.9.3.1}%
+\contentsline {subsection}{\numberline {9.3.2}Faster libraries}{102}{subsection.9.3.2}%
+\contentsline {subsection}{\numberline {9.3.3}Auto\sphinxhyphen {}vectorisation}{103}{subsection.9.3.3}%
+\contentsline {subsection}{\numberline {9.3.4}OpenMP}{103}{subsection.9.3.4}%
+\contentsline {subsection}{\numberline {9.3.5}Parallelisation with MPI}{103}{subsection.9.3.5}%
+\contentsline {section}{\numberline {9.4}Atom\sphinxhyphen {}optics\sphinxhyphen {}specific hints}{103}{section.9.4}%
+\contentsline {subsection}{\numberline {9.4.1}Separate out imaginary\sphinxhyphen {}time calculation code}{103}{subsection.9.4.1}%
+\contentsline {subsection}{\numberline {9.4.2}Use an energy or momentum offset}{104}{subsection.9.4.2}%
+\contentsline {chapter}{\numberline {10}xsil2graphics2}{105}{chapter.10}%
+\contentsline {chapter}{\numberline {11}Developer Documentation}{107}{chapter.11}%
+\contentsline {section}{\numberline {11.1}Generating reproducible C++ code}{107}{section.11.1}%
+\contentsline {section}{\numberline {11.2}Test scripts}{107}{section.11.2}%
+\contentsline {subsection}{\numberline {11.2.1}\textless {}testing\textgreater {} element}{108}{subsection.11.2.1}%
+\contentsline {subsection}{\numberline {11.2.2}\textless {}command\_line\textgreater {} element}{108}{subsection.11.2.2}%
+\contentsline {subsection}{\numberline {11.2.3}\textless {}arguments\textgreater {} element}{109}{subsection.11.2.3}%
+\contentsline {subsection}{\numberline {11.2.4}\textless {}input\_xsil\_file\textgreater {} element}{109}{subsection.11.2.4}%
+\contentsline {subsection}{\numberline {11.2.5}\textless {}xsil\_file\textgreater {} element}{109}{subsection.11.2.5}%
+\contentsline {subsection}{\numberline {11.2.6}\textless {}moment\_group\textgreater {} element}{110}{subsection.11.2.6}%
+\contentsline {section}{\numberline {11.3}XMDS Documentation}{110}{section.11.3}%
+\contentsline {section}{\numberline {11.4}How to update \sphinxstyleliteralintitle {\sphinxupquote {XMDS2}} script validator (XML schema)}{112}{section.11.4}%
+\contentsline {section}{\numberline {11.5}How to introduce a new integrator Stepper into the XMDS2 environment}{115}{section.11.5}%
+\contentsline {section}{\numberline {11.6}Logical breakdown of XMDS2 Parsing Process}{116}{section.11.6}%
+\contentsline {subsection}{\numberline {11.6.1}Overall process for parsing XML file in XMDS2}{118}{subsection.11.6.1}%
+\contentsline {subsection}{\numberline {11.6.2}parser2.py parses XML file (Sub process 3)}{121}{subsection.11.6.2}%
+\contentsline {subsection}{\numberline {11.6.3}Pass file to XMDS2Parser to parse xmlDocument with parseXMLDocument() (Sub process 3.4)}{124}{subsection.11.6.3}%
+\contentsline {subsection}{\numberline {11.6.4}Parse Top Level Sequence elements (Sub process 3.4.11)}{125}{subsection.11.6.4}%
+\contentsline {subsection}{\numberline {11.6.5}Parse Integrate Element (Sub process 3.4.11.2)}{127}{subsection.11.6.5}%
+\contentsline {section}{\numberline {11.7}Directory layout}{128}{section.11.7}%
+\contentsline {subsection}{\numberline {11.7.1}XMDS2’s code and templates}{128}{subsection.11.7.1}%
+\contentsline {subsection}{\numberline {11.7.2}Support files}{129}{subsection.11.7.2}%
+\contentsline {chapter}{\numberline {12}Licensing}{131}{chapter.12}%
+\contentsline {section}{\numberline {12.1}GNU General Public License}{131}{section.12.1}%
+\contentsline {section}{\numberline {12.2}GNU Free Documentation License}{135}{section.12.2}%
+\contentsline {chapter}{\numberline {13}News}{141}{chapter.13}%
+\contentsline {section}{\numberline {13.1}XMDS 3.1.0 “My kingdom for a tentacle” (October 24, 2021)}{141}{section.13.1}%
+\contentsline {section}{\numberline {13.2}XMDS 3.0.0 “Release the Kraken” (May 17, 2019)}{141}{section.13.2}%
+\contentsline {section}{\numberline {13.3}XMDS 2.2.3 “It came from the deep” (January 20, 2017)}{142}{section.13.3}%
+\contentsline {section}{\numberline {13.4}XMDS 2.2.2 “XMDS2 is a game of two halves” (October 13, 2014)}{142}{section.13.4}%
+\contentsline {section}{\numberline {13.5}XMDS 2.2.1 “XMDS2 is a game of two halves” (September 30, 2014)}{142}{section.13.5}%
+\contentsline {section}{\numberline {13.6}XMDS 2.2.0 “Out of cheese error” (January 13, 2014)}{142}{section.13.6}%
+\contentsline {section}{\numberline {13.7}XMDS 2.1.4 “Well if this isn’t nice, I don’t know what is” (September 27, 2013)}{143}{section.13.7}%
+\contentsline {section}{\numberline {13.8}XMDS 2.1.3 “Happy Mollusc” (June 7, 2013)}{143}{section.13.8}%
+\contentsline {section}{\numberline {13.9}XMDS 2.1.2 “Happy Mollusc” (October 15, 2012)}{143}{section.13.9}%
+\contentsline {section}{\numberline {13.10}XMDS 2.1 “Happy Mollusc” (June 14, 2012)}{144}{section.13.10}%
+\contentsline {section}{\numberline {13.11}XMDS 2.0 “Shiny!” (September 13, 2010)}{145}{section.13.11}%
+\contentsline {chapter}{Index}{147}{section*.55}%

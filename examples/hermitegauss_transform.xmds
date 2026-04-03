@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>hermitegauss_transform</name>
+  <author>Graham Dennis</author>
+  <description>
+    Solve the Schroedinger equation using the hermite-Gauss basis.
+  </description>
+  
+  <features>
+    <benchmark />
+    <!-- <error_check /> -->
+    <bing />
+    <globals>
+      <![CDATA[
+        const real offset = 1.0;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="30" spectral_lattice="20" length_scale="1.0" transform="hermite-gauss" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x" type="complex">
+    <components>
+      psi
+    </components>
+    <initialisation>
+      <![CDATA[
+        psi = pow(M_PI, -0.25) * exp(-0.25*(x - offset)*(x - offset));
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="RK4" tolerance="1e-6" interval="10." steps="100">
+      <samples>100 100 100</samples>
+      <operators>
+        <operator kind="ip" basis="nx">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -i*(nx + 0.5);
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          dpsi_dt = L[psi];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group basis="x" initial_sample="no">
+        <moments>dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          dens = mod2(psi);
+        ]]>
+      </sampling_group>
+      <sampling_group basis="nx" initial_sample="no">
+        <moments>dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          dens = mod2(psi);
+        
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx" initial_sample="no">
+        <moments>dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          dens = mod2(psi);
+        
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

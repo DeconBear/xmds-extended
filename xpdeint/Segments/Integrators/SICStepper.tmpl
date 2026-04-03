@@ -1,0 +1,78 @@
+@shBang #!/usr/bin/env python3
+
+@*
+SICStepper.tmpl
+
+Created by Graham Dennis on 2008-08-06.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators._Stepper
+
+@def name: SIC
+@attr $ipPropagationStepFractions = ['0.5']
+@attr $extraIntegrationArrayNames = ['oldcopy']
+@attr $isCrossCapable = False
+@attr $iterations = 3
+
+@*
+  Single integration step (SIC)
+*@
+@def singleIntegrationStep($function)
+  @#
+  @set $arguments = {'_step': '_step', $propagationDimension: $propagationDimension}
+${callFunction('nonconstantIPFields', arguments, _exponent = 1, parentFunction=function)}
+
+${callFunction('ipEvolve', arguments, _exponent = +1, parentFunction=function)}
+
+${propagationDimension} += 0.5*_step;
+
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+${copyVectors($integrationVectors, '_oldcopy')}@slurp
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _${vector.id};
+  @end for
+
+for (int _iteration = 0; _iteration < ${iterations}; _iteration++) {
+  if (_iteration < ${iterations} - 1) {
+  @if $integrator.leftOperatorContainer
+    ${callFunction('leftDeltaA', arguments, _step = '0.5*_step', parentFunction=function), autoIndent=True}@slurp
+  @end if
+  @if $integrator.rightOperatorContainer
+    ${callFunction('rightDeltaA', arguments, _step = '0.5*_step', parentFunction=function), autoIndent=True}@slurp
+  @end if
+  } else {
+    ${callFunction('deltaA', arguments, parentFunction=function), autoIndent=True}@slurp
+    
+    ${transformVectorsToBasis($integrationVectors, $homeBasis), autoIndent=True}@slurp
+    
+    ${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// a = oldcopy + a
+_${vector.id}[$index] += _oldcopy_${vector.id}[$index];
+""", basis=$homeBasis), autoIndent=True}@slurp
+  }
+  
+}
+
+${callFunction('ipEvolve', arguments, _exponent = +1, parentFunction=function)}
+
+${propagationDimension} += 0.5*_step;
+
+  @#
+@end def

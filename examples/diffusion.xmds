@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>diffusion</name>
+  <author>Graham Dennis</author>
+  <description>
+    Simple one-dimensional diffusion with a pointless second dimension thrown in for fun
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <fftw plan="exhaustive" />
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="32"  domain="(-10.0, 10.0)" />
+      <dimension name="y" lattice="128" domain="(-1.0, 1.0)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x y" type="complex">
+    <components>
+      phi
+    </components>
+    <initialisation>
+      <![CDATA[
+        phi = exp(-y*y);
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK45" interval="10.0" steps="2400" tolerance="1e-5">
+      <samples>24</samples>
+      <operators>
+        <operator kind="ip" basis="x ky" type="real">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -0.02*ky*ky;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          dphi_dt = L[phi];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x(4) y(8)" initial_sample="yes">
+        <moments>dens empty</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          dens = mod2(phi);
+          empty = x+100*y;
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

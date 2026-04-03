@@ -1,0 +1,185 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Integrator.tmpl
+
+Created by Graham Dennis on 2007-10-20.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators._Integrator
+@from xpdeint.CallOnceGuards import callOncePerInstanceGuard
+
+@def description: segment $segmentNumber ($stepper.name Integrator)
+
+@def globals
+  @#
+  @super
+  @#
+  @for $vector in $integrationVectors
+    @# Loop over the variables that need to be created
+    @for $arrayName in $extraIntegrationArrayNames
+${vector.type}* _${name}_${arrayName}_${vector.id};
+    @end for
+  @end for
+  @#
+@end def
+
+@def deltaAFunctionBody($function)
+  @#
+  @# First evaluate any computed vector that any of our operators may depend on
+${evaluateComputedVectors($dynamicVectorsNeedingPrecalculationForOperatorContainers($intraStepOperatorContainers), static = False)}@slurp
+  @#
+  @# Then loop over operators that come before the delta A operators in the order in which
+  @# they appear in the xmds script.
+  @#
+  @for $operatorContainer in $intraStepOperatorContainers
+
+${operatorContainer.evaluatePreDeltaAOperators(parentFunction = function)}@slurp
+  @end for
+  @#
+  @# Now loop over delta A operators
+  @# See the comment in _Integrator about why this needs to be done in
+  @# this particular order
+  @for $operatorContainer in $intraStepOperatorContainersInFieldDescendingOrder
+    @# Blank line for formatting
+
+${operatorContainer.evaluateDeltaAOperator(parentFunction = function)}@slurp
+  @end for
+  @#
+  @# Lastly, loop over the operators that come after the delta a operators in the order in
+  @# which they appear in the xmds script.
+  @#
+  @for $operatorContainer in $intraStepOperatorContainers
+    @# Blank line for formatting
+
+${operatorContainer.evaluatePostDeltaAOperators(parentFunction = function)}@slurp
+  @end for
+  @#
+@end def
+
+@def preSingleStep
+  @#
+${evaluateComputedVectors($dynamicVectorsNeedingPrecalculationForOperatorContainers($stepStartOperatorContainers))}@slurp
+  @#
+  @for $operatorContainer in $stepStartOperatorContainers
+
+${operatorContainer.evaluateOperators(_step = '_step')}@slurp
+  @end for
+  @#
+@end def
+
+@def postSingleStep
+  @#
+  @set $featureOrdering = ['HaltNonFinite']
+  @#
+${insertCodeForFeatures('postSingleStep', featureOrdering)}@slurp
+  @#
+${evaluateComputedVectors($dynamicVectorsNeedingPrecalculationForOperatorContainers($stepEndOperatorContainers))}@slurp
+  @#
+  @for $operatorContainer in $stepEndOperatorContainers
+
+${operatorContainer.evaluateOperators(_step = '_step')}@slurp
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def allocate
+@*doc:
+Allocate additional arrays needed for the integrator
+
+This is a call once-per-instance function because we may want to do the initialisation
+(and clean-up) for this segment in a parent segment for efficiency reasons (if, for
+example we are looping over this segment, or we are running multiple paths).
+*@
+  @#
+  @super
+  @#
+  @# Loop over the vectors creating the arrays
+  @for $vector in $integrationVectors
+    @# Loop over the variables that need to be created
+    @for $arrayName in $extraIntegrationArrayNames
+_${name}_${arrayName}_${vector.id} = @slurp
+(${vector.type}*) xmds_malloc(sizeof(${vector.type}) * MAX(${vector.allocSize},1));
+    @end for
+  @end for
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def free
+  @#
+  @super
+  @#
+  @for $vector in $integrationVectors
+    @for $arrayName in $extraIntegrationArrayNames
+xmds_free(_${name}_${arrayName}_${vector.id});
+    @end for
+  @end for
+  @#
+@end def
+
+@def localInitialise
+@*doc:
+Because the initialisation for the integrator could be in a different function,
+we need to set up pointers in the integrator to the appropriate arrays.
+*@
+  @#
+  @for $vector in $integrationVectors
+    @# Loop over the variables that need to be created
+    @for $arrayName in $extraIntegrationArrayNames
+${vector.type}* _${arrayName}_${vector.id} = _${name}_${arrayName}_${vector.id};
+    @end for
+  @end for
+
+${stepper.localInitialise}@slurp
+  @#
+@end def
+
+@def localFinalise
+@*doc:
+Because the finalisation for the integrator could be in a different function,
+we need to be able to insert code at the end of the integrator as well.
+*@
+  @#
+_SEGMENT${segmentNumber}_END:;
+${stepper.localFinalise}@slurp
+  @#
+@end def
+
+@def earlyTerminationCode
+@*doc:
+This method writes code that should be executed if the integrator needs
+to be terminated early
+*@
+  @#
+  @for mg, sampleCount in zip($momentGroups, $samples)
+    @if not $sampleCount
+      @continue
+    @end if
+    @#
+    @for dim in filter(lambda x: not x.transverse, mg.outputField.dimensions)
+      @set $dimRep = dim.inBasis(mg.outputBasis)
+if (${dimRep.prefix}_index_${dimRep.name} < ${dimRep.globalLattice})
+  _${mg.name}_sample();
+    @end for
+  @end for
+
+goto _SEGMENT${segmentNumber}_END;
+  @#
+@end def

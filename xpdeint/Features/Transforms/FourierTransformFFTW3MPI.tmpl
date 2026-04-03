@@ -1,0 +1,366 @@
+@shBang #!/usr/bin/env python3
+
+@*
+FourierTransformFFTW3MPI.tmpl
+
+Created by Graham Dennis on 2008-06-06.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.Transforms._FourierTransformFFTW3MPI
+@import operator
+@from xpdeint.Geometry.UniformDimensionRepresentation import UniformDimensionRepresentation
+@from xpdeint.Geometry.SplitUniformDimensionRepresentation import SplitUniformDimensionRepresentation
+
+@from xpdeint.Utilities import permutations
+
+@def description: FFTW3 with MPI
+@attr $fftwSuffix = 'mpi'
+
+@def includes
+  @#
+  @super
+  @#
+#include <fftw3-mpi.h>
+@end def
+
+@def globals
+  @#
+  @super
+  @#
+  @for dimRep in [dimRep for dim in self.mpiDimensions for dimRep in dim.representations if dimRep.hasLocalOffset]
+ptrdiff_t _block_size_${dimRep.name} = FFTW_MPI_DEFAULT_BLOCK;
+  @end for
+  @#
+@end def
+
+@def setLocalLatticeAndOffsetVariables
+  @#
+// First work out the local lattice and offset for the geometry
+ptrdiff_t _sizes[${len($geometry.dimensions)}];
+${fftwPrefix}_mpi_init();
+  @for firstMPIDimRep, secondMPIDimRep in permutations(*[dim.representations for dim in self.mpiDimensions]):
+    @if not (firstMPIDimRep.hasLocalOffset and secondMPIDimRep.hasLocalOffset)
+      @continue
+    @end if
+_sizes[0] = ${firstMPIDimRep.globalLattice}; _sizes[1] = ${secondMPIDimRep.globalLattice};
+${fftwPrefix}_mpi_local_size_many_transposed(
+  2, _sizes, 1, _block_size_${firstMPIDimRep.name}, _block_size_${secondMPIDimRep.name}, MPI_COMM_WORLD,
+  &${firstMPIDimRep.localLattice}, &${firstMPIDimRep.localOffset},
+  &${secondMPIDimRep.localLattice}, &${secondMPIDimRep.localOffset}
+);
+
+if (_rank == 0) {
+  _block_size_${firstMPIDimRep.name} = ${firstMPIDimRep.localLattice};
+  _block_size_${secondMPIDimRep.name} = ${secondMPIDimRep.localLattice};
+}
+MPI_Bcast(&_block_size_${firstMPIDimRep.name}, sizeof(ptrdiff_t), MPI_BYTE, 0, MPI_COMM_WORLD);
+MPI_Bcast(&_block_size_${secondMPIDimRep.name}, sizeof(ptrdiff_t), MPI_BYTE, 0, MPI_COMM_WORLD);
+
+  @end for
+  @#
+  @set firstMPIDim, secondMPIDim = $mpiDimensions
+  @for $field in $fields
+    @if field.name == 'geometry' or not field.isDistributed
+      @continue
+    @end if
+    @#
+    @# Set the local_lattice and local_offset variables based on the
+    @# values for the geometry's version of these
+    @set $fieldMPIDim1 = field.dimensionWithName(firstMPIDim.name)
+    @set $fieldMPIDim2 = field.dimensionWithName(secondMPIDim.name)
+    @for fieldDim, geometryDim in [(fieldMPIDim1, firstMPIDim), (fieldMPIDim2, secondMPIDim)]
+      @for fieldRep, geometryRep in zip(fieldDim.representations, geometryDim.representations)
+        @if (not fieldRep) or (not fieldRep.hasLocalOffset) or (not fieldRep.parent is fieldDim)
+          @continue
+        @end if
+// Set the local lattice and offset variables for the '${field.name}' field
+        @if fieldRep == geometryRep
+${fieldRep.localLattice} = ${geometryRep.localLattice};
+${fieldRep.localOffset} = ${geometryRep.localOffset};
+        @elif fieldRep.reductionMethod == fieldRep.ReductionMethod.fixedRange
+          @# In this case we are in 'x' space and are subdividing a distributed dimension
+          @# fixedRange reduction method means we take every nth point.
+ptrdiff_t _${field.name}_${fieldRep.name}_skip_size = ${geometryRep.globalLattice}/${fieldRep.globalLattice};
+if (_rank == 0) {
+  ${fieldRep.localOffset}  = 0;
+  ${fieldRep.localLattice} = (${geometryRep.localLattice}-1)/_${field.name}_${fieldRep.name}_skip_size + 1;
+} else {
+  ${fieldRep.localOffset}  = (${geometryRep.localOffset}-1)/_${field.name}_${fieldRep.name}_skip_size + 1;
+  ${fieldRep.localLattice} = (${geometryRep.localOffset} + ${geometryRep.localLattice} - 1)/_${field.name}_${fieldRep.name}_skip_size
+                             + 1 - ${fieldRep.localOffset};
+}
+        @elif isinstance(fieldRep, UniformDimensionRepresentation)
+          @# In this case, we are in 'k' space and may be subdividing a UniformDimensionRepresentation (dct/dst)
+          @# Note that this is a fixedStep reduction method
+if (${geometryRep.localOffset} >= ${fieldRep.globalLattice}) {
+  // No points here
+  ${fieldRep.localOffset} = 0;
+  ${fieldRep.localLattice} = 0;
+} else if (${geometryRep.localOffset} + ${geometryRep.localLattice} > ${fieldRep.globalLattice}){
+  // The upper edge is here
+  ${fieldRep.localOffset} = ${geometryRep.localOffset};
+  ${fieldRep.localLattice} = ${fieldRep.globalLattice} - ${geometryRep.localOffset};
+} else {
+  // somewhere near the start
+  ${fieldRep.localOffset} = ${geometryRep.localOffset};
+  ${fieldRep.localLattice} = ${geometryRep.localLattice};
+}
+        @elif isinstance(fieldRep, SplitUniformDimensionRepresentation)
+          @# In this case, we are in 'k' space and may be subdividing a SplitUniformDimensionRepresentation (dft)
+          @# Note that this is a fixedStep reduction method
+${fieldRep.localOffset} = -1;
+if (${geometryRep.localOffset} >= (${fieldRep.globalLattice}+1)/2) {
+  // No points due to positive 'k' values.
+} else if (${geometryRep.localOffset} + ${geometryRep.localLattice} > (${fieldRep.globalLattice}+1)/2) {
+  // the upper edge of the positive values are here
+  ${fieldRep.localOffset} = ${geometryRep.localOffset};
+  ${fieldRep.localLattice} = (${fieldRep.globalLattice}+1)/2 - ${geometryRep.localOffset};
+} else if (${geometryRep.localOffset} < (${fieldRep.globalLattice}+1)/2) {
+  // somewhere near the start of the positive values
+  ${fieldRep.localOffset} = ${geometryRep.localOffset};
+  ${fieldRep.localLattice} = ${geometryRep.localLattice};
+}
+
+if (${geometryRep.localOffset} + ${geometryRep.localLattice} <= ${geometryRep.globalLattice} - ${fieldRep.globalLattice}/2) {
+  // No points due to negative 'k' values.
+} else if (${geometryRep.localOffset} < ${geometryRep.globalLattice} - ${fieldRep.globalLattice}/2) {
+  // the lower edge of the negative values are here
+  if (${fieldRep.localOffset} == -1)
+    ${fieldRep.localOffset} = (${fieldRep.globalLattice}+1)/2;
+  ${fieldRep.localLattice} += ${geometryRep.localLattice} - (${geometryRep.globalLattice}-${fieldRep.globalLattice}/2-${geometryRep.localOffset});
+} else if (${geometryRep.localOffset} + ${geometryRep.localLattice} > ${geometryRep.globalLattice} - ${fieldRep.globalLattice}/2) {
+  // somewhere near the end of the negative values
+  ${fieldRep.localOffset} = ${geometryRep.localOffset} - (${geometryRep.globalLattice}-${fieldRep.globalLattice});
+  ${fieldRep.localLattice} = ${geometryRep.localLattice};
+}
+        @else
+          @assert False
+        @end if
+      @end for
+    @end for
+  @end for
+  @#
+@end def
+
+@def setVectorAllocSizes($vectors)
+  @#
+ptrdiff_t _local_alloc_size, _tmp;
+  @for tID, transformation in self.transformations
+    @if not transformation.get('distributedTransform', False)
+      @continue
+    @end if
+    @set untransformedDimRepBasis, transformedDimRepBasis = transformation['transformPair']
+    @for dimNum, dimRep in enumerate(untransformedDimRepBasis)
+_sizes[${dimNum}] = ${dimRep.globalLattice};
+    @end for
+_local_alloc_size = ${fftwPrefix}_mpi_local_size_many_transposed(
+  ${len(untransformedDimRepBasis)}, _sizes,
+  (ptrdiff_t)${transformation['postfixLatticeString']},
+  _block_size_${untransformedDimRepBasis[0].name}, _block_size_${transformedDimRepBasis[0].name},
+  MPI_COMM_WORLD,
+  &_tmp, &_tmp, &_tmp, &_tmp /* Local lattices and offsets were obtained above */
+);
+    @for vector in transformation['vectors']
+${vector.allocSize} = MAX(${vector.allocSize}, (_local_alloc_size${'+1) / 2' if vector.type == 'complex' and transformation.get('transformType', 'real') == 'real' else ')'});
+    @end for
+
+  @end for
+  @#
+@end def
+
+@def transposeTransformFunction(transformID, transformDict, function)
+  @#
+  @set runtimePrefix, prefixLattice, postfixLattice, runtimePostfix = transformDict['transformSpecifier']
+  @set flags = ' | FFTW_MPI_TRANSPOSED_IN | FFTW_MPI_TRANSPOSED_OUT' if transformDict['transposedOrder'] else ''
+  @set flags += ' | FFTW_DESTROY_INPUT' if transformDict.get('outOfPlace', False) else ''
+// _prefix_lattice should be ${prefixLattice}
+// _postfix_lattice should be ${postfixLattice}
+static ${fftwPrefix}_plan _fftw_forward_plan = NULL;
+static ${fftwPrefix}_plan _fftw_backward_plan = NULL;
+
+if (!_fftw_forward_plan) {
+  _LOG(_SIMULATION_LOG_LEVEL, "Planning for ${function.description}...");
+  @set $transformPair = transformDict['transformPair']
+  @if transformDict['transposedOrder']
+    @# Reverse the order
+    @silent transformPair = transformPair[::-1]
+  @end if
+  @set $dataOut = '_data_out' if transformDict.get('outOfPlace', False) else '_data_in'
+  
+  _fftw_forward_plan = ${fftwPrefix}_mpi_plan_many_transpose(
+    ${', '.join(dr.globalLattice for dr in transformPair[0])},
+    _postfix_lattice, _block_size_${transformPair[0][0].name}, _block_size_${transformPair[1][0].name},
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>($dataOut),
+    MPI_COMM_WORLD, ${planType}${flags}
+  );
+  
+  if (!_fftw_forward_plan)
+    _LOG(_ERROR_LOG_LEVEL, "(%s: %i) Unable to create forward mpi transform plan.\n", __FILE__, __LINE__);
+  
+  _fftw_backward_plan = ${fftwPrefix}_mpi_plan_many_transpose(
+    ${', '.join(dr.globalLattice for dr in transformPair[1])},
+    _postfix_lattice, _block_size_${transformPair[1][0].name}, _block_size_${transformPair[0][0].name},
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>($dataOut),
+    MPI_COMM_WORLD, ${planType}${flags}
+  );
+  
+  if (!_fftw_backward_plan)
+    _LOG(_ERROR_LOG_LEVEL, "(%s: %i) Unable to create backward mpi transform plan.\n", __FILE__, __LINE__);
+  
+  // Save wisdom
+  #if CFG_OSAPI == CFG_OSAPI_POSIX
+  ${saveWisdom, autoIndent=True}@slurp
+  #endif // POSIX
+  
+  _LOG(_SIMULATION_LOG_LEVEL, " done.\n");
+}
+
+if (_forward) {
+  ${fftwPrefix}_execute_r2r(
+    _fftw_forward_plan,
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>(${dataOut})
+  );
+} else {
+  ${fftwPrefix}_execute_r2r(
+    _fftw_backward_plan,
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>(${dataOut})
+  );
+}
+  @#
+@end def
+
+@def distributedTransformFunction(transformID, transformDict, function)
+  @#
+  @set runtimePrefix, prefixLattice, postfixLattice, runtimePostfix = transformDict['transformSpecifier']
+// _prefix_lattice should be ${prefixLattice}${''.join([' * ' + runtimeLattice for runtimeLattice in runtimePrefix])}
+// _postfix_lattice should be ${postfixLattice}${''.join([' * ' + runtimeLattice for runtimeLattice in runtimePostfix])}
+static ${fftwPrefix}_plan _fftw_forward_plan = NULL;
+static ${fftwPrefix}_plan _fftw_backward_plan = NULL;
+
+if (!_fftw_forward_plan) {
+  _LOG(_SIMULATION_LOG_LEVEL, "Planning for ${function.description}...");
+  @set $transformPair = transformDict['transformPair']
+  @set $dimensionsBeingTransformed = len(transformPair[0])
+  @set $transformType = transformDict['transformType']
+  @set $dataOut = '_data_out' if transformDict.get('outOfPlace', False) else '_data_in'
+  @set $flags = ' | FFTW_DESTROY_INPUT' if transformDict.get('outOfPlace', False) else ''
+  ptrdiff_t _transform_sizes[${dimensionsBeingTransformed}];
+  @if transformType == 'real'
+  ${fftwPrefix}_r2r_kind _r2r_kinds[${dimensionsBeingTransformed}];
+  @end if
+  
+  int _transform_sizes_index = 0;
+  
+  @#
+  @for dimID, dimRep in enumerate(transformPair[0])
+  _transform_sizes[_transform_sizes_index++] = ${dimRep.globalLattice};
+  @end for
+  
+  @if transformType == 'complex'
+    @set $guruPlanFunction = self.createGuruMPIDFTPlanInDirection
+  @else
+    @set $guruPlanFunction = self.createGuruMPIR2RPlanInDirection
+  @end if
+  @#
+  ${guruPlanFunction(
+      transformDict, 'forward', dataOut,
+      '_block_size_' + transformPair[0][0].name, '_block_size_' + transformPair[1][0].name, 'FFTW_MPI_TRANSPOSED_OUT', flags
+    ), autoIndent=True}@slurp
+  ${guruPlanFunction(
+      transformDict, 'backward', dataOut,
+      '_block_size_' + transformPair[1][0].name, '_block_size_' + transformPair[0][0].name, 'FFTW_MPI_TRANSPOSED_IN', flags
+    ), autoIndent=True}@slurp
+  
+  // Save wisdom
+  #if CFG_OSAPI == CFG_OSAPI_POSIX
+  ${saveWisdom, autoIndent=True}@slurp
+  #endif // POSIX
+  
+  _LOG(_SIMULATION_LOG_LEVEL, " done.\n");
+}
+
+if (_forward) {
+  ${fftwPrefix}_execute_r2r(
+    _fftw_forward_plan,
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>(${dataOut})
+  );
+} else {
+  ${fftwPrefix}_execute_r2r(
+    _fftw_backward_plan,
+    reinterpret_cast<real*>(_data_in),
+    reinterpret_cast<real*>(${dataOut})
+  );
+}
+  @#
+@end def
+
+@def createGuruMPIDFTPlanInDirection($transformDict, $direction, $dataOut, $inBlockSize, $outBlockSize, $transposedState, $flags)
+  @#
+_fftw_${direction}_plan = ${fftwPrefix}_mpi_plan_many_dft(
+  _transform_sizes_index, _transform_sizes, _postfix_lattice,
+  ${inBlockSize}, ${outBlockSize},
+  reinterpret_cast<${fftwPrefix}_complex*>(_data_in),
+  reinterpret_cast<${fftwPrefix}_complex*>(${dataOut}),
+  MPI_COMM_WORLD, FFTW_${direction.upper()}, ${planType} | ${transposedState}${flags}
+);
+if (!_fftw_${direction}_plan)
+  _LOG(_ERROR_LOG_LEVEL, "(%s: %i) Unable to create ${direction} mpi dft plan.\n", __FILE__, __LINE__);
+
+  @#
+@end def
+
+@def createGuruMPIR2RPlanInDirection($transformDict, $direction, $dataOut, $inBlockSize, $outBlockSize, $transposedState, $flags)
+  @#
+  @for idx, dimRep in enumerate(transformDict['transformPair'][0])
+_r2r_kinds[${idx}] = ${r2rKindForDimensionAndDirection(dimRep.name, direction)};
+  @end for
+
+_fftw_${direction}_plan = ${fftwPrefix}_mpi_plan_many_r2r(
+  _transform_sizes_index, _transform_sizes, _postfix_lattice,
+  ${inBlockSize}, ${outBlockSize},
+  reinterpret_cast<real*>(_data_in),
+  reinterpret_cast<real*>(${dataOut}),
+  MPI_COMM_WORLD, _r2r_kinds, ${planType} | ${transposedState}${flags}
+);
+
+if (!_fftw_${direction}_plan)
+  _LOG(_ERROR_LOG_LEVEL, "(%s: %i) Unable to create ${direction} mpi r2r plan.\n", __FILE__, __LINE__);
+  @#
+@end def
+
+
+@def loadWisdom
+  @#
+  @super
+  @#
+${fftwPrefix}_mpi_broadcast_wisdom(MPI_COMM_WORLD);
+  @#
+@end def
+
+@def saveWisdom
+  @#
+${fftwPrefix}_mpi_gather_wisdom(MPI_COMM_WORLD);
+  @#
+  @super
+  @#
+@end def

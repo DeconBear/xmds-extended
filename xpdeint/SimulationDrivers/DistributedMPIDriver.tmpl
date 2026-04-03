@@ -1,0 +1,353 @@
+@shBang #!/usr/bin/env python3
+
+@*
+DistributedMPIDriver.tmpl
+
+Created by Graham Dennis on 2008-03-28.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.SimulationDrivers._DistributedMPIDriver
+
+@def description: Distributed MPI Simulation Driver
+
+@def preAllocation($dict)
+  @#
+  ${distributedTransform.setLocalLatticeAndOffsetVariables, autoIndent=True}@slurp
+  @#
+@end def
+
+@def mainRoutine
+  @#
+int main(int argc, char **argv)
+{
+  MPI_Init(&argc, &argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &_size);
+  MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
+
+  ${mainRoutineInnerContent, autoIndent=True}@slurp
+  
+  MPI_Finalize();
+  
+  return 0;
+}
+  @#
+@end def
+
+@def setVectorAllocSizes($vectors)
+  @#
+  @super(vectors)
+  @#
+${distributedTransform.setVectorAllocSizes(vectors)}@slurp
+  @#
+@end def
+
+@def loopOverFieldInBasisWithVectorsAndInnerContentEnd($dict)
+  @#
+  @set $vectorOverrides = dict['vectorOverrides']
+  @set $indexOverrides = dict['indexOverrides']
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @#
+  @for $vector in $vectorOverrides
+    @if not (field.isDistributed and not vector.field.isDistributed)
+      @# If we aren't integrating over an MPI dimension, then everything is as usual.
+      @continue
+    @end if
+    @# We did integrate over the MPI dimension, so we need to run MPI_Allreduce to combine the results.
+    @set $arrayName = c'_active_${vector.id}'
+    @set $size = $vector.sizeInBasisInReals(basis)
+    @#
+    @# If we have any dimension overrides, then we don't want to add up the entire field
+    @for $dimRepName in indexOverrides.keys()
+      @if vector.field in indexOverrides[dimRepName]
+        @set dimReps = [dimRep for dimRep in vector.field.inBasis(basis) if dimRep.canonicalName == dimRepName]
+        @if not dimReps
+          @continue
+        @end if
+        @assert len(dimReps) == 1
+        @set vectorDimRep = dimReps[0]
+        @set $indexOverride = indexOverrides[dimRepName][vector.field]
+        @set $arrayName = c'${arrayName} + ${indexOverride} * ${vector.field.localPointsInDimensionsAfterDimRepInBasis(vectorDimRep, basis)} * _${vector.id}_ncomponents'
+        @set $size = size + ' / ' + vectorDimRep.localLattice
+      @end if
+    @end for
+MPI_Allreduce(MPI_IN_PLACE, $arrayName, $size,
+              MPI_REAL, MPI_SUM, MPI_COMM_WORLD);
+  @end for
+  @#
+@end def
+
+@def findMax($dict)
+  @#
+  @set $variable = dict['variable']
+  @set $count = dict['count']
+  @set $type = dict.get('type', 'real').upper()
+  @set $op = dict.get('op', 'max').upper()
+MPI_Allreduce(MPI_IN_PLACE, $variable, $count, MPI_${type}, MPI_${op}, MPI_COMM_WORLD);
+  @#
+@end def
+
+
+@def binaryWriteOutBegin($dict)
+  @#
+// Only write to file if we are rank 0, as we cannot assume
+// that the nodes have equal access to the filesystem
+if (_rank == 0) {
+  @set $dict['extraIndent'] += 2
+  @#
+@end def
+
+@def binaryWriteOutEnd($dict)
+  @#
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @set $dependentVariables = dict['dependentVariables']
+  @#
+  @set $dict['extraIndent'] -= 2
+  @#
+}
+  @if not all([field.hasDimensionName(dimName) for dimName in $distributedDimensionNames])
+    @# If we don't have all the MPI dimensions, then the data will be local.
+    @stop
+  @end if
+else {
+  // We are some other rank that isn't 0, so we need to send our data to rank 0.
+  ptrdiff_t _sending_var;
+  
+  @for $shadowVariable in $shadowedVariablesForField(field)
+  _sending_var = $shadowVariable;
+  MPI_Ssend(&_sending_var, sizeof(ptrdiff_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+  @end for
+  
+  @# Note that a variable corresponds to an array with given component names
+  @for $variable in $dependentVariables
+  _sending_var = ${variable.vector.sizeInBasisInReals(basis)};
+  MPI_Ssend(&_sending_var, sizeof(ptrdiff_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+  if (_sending_var == 0)
+    goto _BINARY_WRITE_OUT_END;
+  MPI_Ssend(${variable.arrayName}, ${variable.vector.sizeInBasisInReals(basis)}, MPI_REAL, 0, 0, MPI_COMM_WORLD);
+  
+  @end for
+_BINARY_WRITE_OUT_END:;
+}
+
+MPI_Barrier(MPI_COMM_WORLD);
+  @#
+@end def
+
+@def binaryWriteOutWriteDataBegin($dict)
+  @#
+  @set $field = dict['field']
+  @set $dependentVariables = dict['dependentVariables']
+  @#
+  @if not all([field.hasDimensionName(dimName) for dimName in $distributedDimensionNames])
+    @# If we don't have all the MPI dimensions, then the data will be local.
+    @return
+  @end if
+  @#
+  @for $shadowVariable in $shadowedVariablesForField(field)
+ptrdiff_t _my${shadowVariable} = ${shadowVariable};
+  @end for
+  @#
+
+  @for $variable in $dependentVariables
+${variable.vector.type}* _local${variable.arrayName};
+${variable.vector.type}* _backup${variable.arrayName} = ${variable.arrayName};
+  @end for
+
+for (long _dataForRank = 0; _dataForRank < _size; _dataForRank++) {
+  @for $shadowVariable in $shadowedVariablesForField(field)
+  ptrdiff_t ${shadowVariable};
+  @end for
+  ptrdiff_t _local_vector_size;
+  
+  if (_dataForRank == 0) {
+  @for $shadowVariable in $shadowedVariablesForField(field)
+    ${shadowVariable} = _my${shadowVariable};
+  @end for
+    
+  } else {
+    MPI_Status status;
+  @for $shadowVariable in $shadowedVariablesForField(field)
+    MPI_Recv(&${shadowVariable}, sizeof(ptrdiff_t), MPI_BYTE, _dataForRank, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+  @end for
+    
+    // Now allocate the space needed locally, and receive the entire buffer
+  @for $variable in $dependentVariables
+    MPI_Recv(&_local_vector_size, sizeof(ptrdiff_t), MPI_BYTE, _dataForRank, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    if (_local_vector_size == 0)
+      continue;
+    
+    _local${variable.arrayName} = (${variable.vector.type}*) xmds_malloc(sizeof(real) * _local_vector_size);
+    MPI_Recv(_local${variable.arrayName}, _local_vector_size,
+             MPI_REAL, _dataForRank, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    ${variable.arrayName} = _local${variable.arrayName};
+    
+  @end for
+  }
+  @set $dict['extraIndent'] += 2
+  @#
+@end def
+
+@def binaryWriteOutWriteDataEnd($dict)
+  @#
+  @set $field = dict['field']
+  @set $dict['extraIndent'] -= 2
+  @set $dependentVariables = dict['dependentVariables']
+  @#
+  @if not all([field.hasDimensionName(dimName) for dimName in $distributedDimensionNames])
+    @# If we don't have all the MPI dimensions, then the data will be local.
+    @return
+  @end if
+  @#
+  
+  if (_dataForRank != 0) {
+  @for $variable in $dependentVariables
+    xmds_free(_local${variable.arrayName});
+  @end for
+  }
+} // End looping over ranks
+  @for $variable in $dependentVariables
+${variable.arrayName} = _backup${variable.arrayName};
+  @end for
+
+  @#
+@end def
+
+@def writeDataHDF5ModifyLoopContents($dict)
+  @#
+  @set $dimRepOrdering = dict['dimRepOrdering']
+  @# We only care about elements that are reordered
+  @set $dimRepOrdering = [(fileDimIndex, memDimIndex, dimRep) \
+                          for fileDimIndex, memDimIndex, dimRep in dimRepOrdering if fileDimIndex != memDimIndex]
+  @# If dimRepOrdering is empty, we have nothing to do
+  @if not dimRepOrdering
+    @return
+  @end if
+  @#
+  @set $writeLoopContents = dict['writeLoopContents']
+  @capture newWriteLoopContents
+    @for fileDimIndex, memDimIndex, dimRep in dimRepOrdering
+hsize_t file_start_${dimRep.name} = file_start[$fileDimIndex];
+hsize_t mem_start_${dimRep.name} = mem_start[$memDimIndex];
+hsize_t count_${dimRep.name} = mem_count[$memDimIndex];
+mem_count[$memDimIndex] = 1;
+
+    @end for
+    @#
+${hdf5DataCopyLoops(dimRepOrdering[:], writeLoopContents)}@slurp
+    @for fileDimIndex, memDimIndex, dimRep in dimRepOrdering
+
+file_start[$fileDimIndex] = file_start_${dimRep.name};
+mem_start[$memDimIndex] = mem_start_${dimRep.name};
+mem_count[$memDimIndex] = count_${dimRep.name};
+    @end for
+  @end capture
+  @#
+  @silent dict['writeLoopContents'] = newWriteLoopContents
+  @#
+@end def
+
+@def hdf5DataCopyLoops(remainingDimReps, writeLoopContents)
+  @if not remainingDimReps
+${writeLoopContents}@slurp
+  @else
+    @set fileDimIndex, memDimIndex, dimRep = remainingDimReps.pop(0)
+for (hsize_t _i${dimRep.name} = 0; _i${dimRep.name} < count_${dimRep.name}; _i${dimRep.name}++) {
+  file_start[$fileDimIndex] = file_start_${dimRep.name} + _i${dimRep.name};
+  mem_start[$memDimIndex] = mem_start_${dimRep.name} + _i${dimRep.name};
+  
+  ${hdf5DataCopyLoops(remainingDimReps, writeLoopContents), autoIndent=True}@slurp
+}
+  @end if
+@end def
+
+@def evaluateNoiseVectorBegin($dict)
+  @#
+  @set noiseVector = dict['caller']
+  @#
+  @if noiseVector.field.isDistributed
+    @# If the field is distributed, then the noise
+    @# will need to vary along the MPI dimension, so all is
+    @# OK.
+    @return
+  @end if
+  @#
+  @# This means that the noise field doesn't contain the MPI dimension.
+  @# As a result, the noise vector should be identical
+if (_rank == 0) {
+  // This noise is for a field that isn't distributed, so we should
+  // make sure the noise is the same on all ranks
+  @set $dict['extraIndent'] += 2
+  @#
+@end def
+
+@def evaluateNoiseVectorEnd($dict)
+  @#
+  @set noiseVector = dict['caller']
+  @#
+  @if noiseVector.field.isDistributed
+    @# If the field is distributed, then the noise
+    @# will need to vary along the MPI dimension, so all is
+    @# OK.
+    @return
+  @end if
+  @#
+}
+// Broadcast the noises to other nodes
+MPI_Bcast(_active_${noiseVector.id}, ${noiseVector.sizeInBasisInReals(noiseVector.initialBasis)}, MPI_REAL, 0, MPI_COMM_WORLD);
+
+  @set $dict['extraIndent'] -= 2
+  @#
+@end def
+
+@def runtimeSeedGenerationBegin($dict)
+  @#
+  @set generator = dict['caller']
+  @#
+// Only generate random seeds on the first rank, then distribute to all.
+unsigned long _local_${generator.generatorName}_seeds[${generator.seedCount}];
+if (_rank == 0) {
+  @set dict['extraIndent'] += 2
+  @#
+@end def
+
+@def runtimeSeedGenerationEnd($dict)
+  @#
+  @set generator = dict['caller']
+  @set dict['extraIndent'] -= 2
+  for (int _i0 = 0; _i0 < ${generator.seedCount}; _i0++)
+      _local_${generator.generatorName}_seeds[_i0] = (unsigned long)${generator.generatorName}_seeds[_i0];
+}
+// Broadcast seeds to other nodes
+MPI_Bcast(_local_${generator.generatorName}_seeds, ${generator.seedCount}, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+// Copy to the correct array
+for (int _i0 = 0; _i0 < ${generator.seedCount}; _i0++)
+    ${generator.generatorName}_seeds[_i0] = (uint32_t)_local_${generator.generatorName}_seeds[_i0];
+
+  @#
+@end def
+
+@def openXSILFile($dict)
+  @#
+// Only let rank 0 do the writing to disk
+if (_rank != 0)
+  return NULL;
+  @#
+@end def
+

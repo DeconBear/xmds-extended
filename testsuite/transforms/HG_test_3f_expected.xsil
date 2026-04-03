@@ -1,0 +1,119 @@
+<?xml version="1.0" ?><simulation xmds-version="2">
+
+  <testing>
+    <xsil_file absolute_tolerance="1e-7" expected="HG_test_3f_expected.xsil" name="HG_test_3f.xsil" relative_tolerance="1e-7"/>
+  </testing>
+
+  <name>HG_test_3f</name>
+  <author> Mattias Johnsson </author>
+  <description>
+    Check accuracy of the 3f basis
+  </description>
+  
+  <features>
+    <benchmark/>
+    <bing/>
+    <validation kind="run-time"/>
+    <globals>
+      <![CDATA[
+        const real sigma = 1;    // length scale, sqrt(hbar/(mass*omega))
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension lattice="17" length_scale="sigma" name="x" spectral_lattice="8" transform="hermite-gauss"/>
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector initial_basis="x" name="wavefunction" type="complex">
+    <components> psi  </components>
+    <initialisation>
+      <![CDATA[
+        //psi0 = pow(1/(M_PI * sigma*sigma), 0.25) * exp(-0.5*x*x/sigma/sigma);
+        //psi1 = pow(1/(M_PI * sigma*sigma), 0.25) * sqrt(2) / sigma * x * exp(-0.5*x*x/sigma/sigma); 
+                psi = 1/sqrt(2) * pow(1/(M_PI * sigma*sigma), 0.25) * exp(-0.5*x*x/sigma/sigma) * (1.0 + sqrt(2) / sigma * x);
+      ]]>
+    </initialisation>
+  </vector>
+
+  
+  <sequence>
+
+
+   <integrate algorithm="ARK45" interval="1.0e-6" steps="100" tolerance="1e-10">
+     <samples>1 1</samples>
+
+      <operators>
+        <integration_vectors basis="x"> wavefunction </integration_vectors>
+        <![CDATA[
+          dpsi_dt = 0.0;
+        ]]>
+      </operators>
+    </integrate>
+
+
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x(0)" initial_sample="no">
+        <moments> integrated </moments>
+        <dependencies> wavefunction </dependencies>
+        <![CDATA[
+          // With lattice=17, spectral = 8 this gives 0.6504938028831753
+          // Correct answer is                        0.6504938029380581    
+          integrated = mod2(psi)*psi.Re();
+        ]]>
+      </sampling_group>
+      <sampling_group basis="x_3f(0)" initial_sample="no">
+        <moments> integrated_3f </moments>
+        <dependencies> wavefunction </dependencies>
+        <![CDATA[
+          // With lattice=17, spectral = 8 this gives 0.6504938029380579
+          // Correct answer is                        0.6504938029380581              
+          // With lattice=16, spectral = 8 this gives 0.6504938029380547
+
+          integrated_3f =  mod2(psi)*psi.Re();
+        ]]>
+      </sampling_group>
+  </output>
+
+<info>
+Script compiled with XMDS2 version VERSION_PLACEHOLDER (SUBVERSION_REVISION_PLACEHOLDER)
+See http://www.xmds.org for more information.
+</info>
+
+<XSIL Name="moment_group_1">
+  <Param Name="n_independent">0</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>1</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+integrated 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>1</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/1"/>
+HG_test_3f_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+
+<XSIL Name="moment_group_2">
+  <Param Name="n_independent">0</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>1</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+integrated_3f 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>1</Dim>
+    <Stream><Metalink Format="HDF5" Type="Remote" Group="/2"/>
+HG_test_3f_expected.h5
+    </Stream>
+  </Array>
+</XSIL>
+</simulation>

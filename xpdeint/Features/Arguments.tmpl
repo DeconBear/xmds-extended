@@ -1,0 +1,188 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Arguments.tmpl
+
+Created by Mattias Johnsson on 2008-02-21.
+
+Copyright (c) 2008-2012 Mattias Johnsson
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features._Feature
+
+@def description: Command line argument processing
+@attr featureName = 'Arguments'
+
+@def includes
+  @#
+  @super
+  @#
+#include <getopt.h>
+  @#
+@end def
+
+@def globals
+  @#
+  @super
+  @#
+  @for $argument in $argumentList
+    @if $argument.type == "string"
+$argument.type $argument.name = "$argument.defaultValue";
+    @else
+$argument.type $argument.name = $argument.defaultValue; 
+    @end if
+  @end for
+  @#
+@end def
+
+@def functionPrototypes
+  @#
+  @super
+  @#
+void _print_usage();
+  @#
+@end def
+
+@def functionImplementations
+  @#
+  @super
+  @#
+void _print_usage()
+{
+  // This function does not return.
+  _LOG(_NO_ERROR_TERMINATE_LOG_LEVEL, "\n\nUsage: $simulationName@slurp
+@for $argument in $argumentList
+ --$argument.name <$argument.type>@slurp
+@end for
+\n\n"
+                         "Details:\n"
+                         "Option\t\tType\t\tDefault value\n"
+@for $argument in $argumentList
+                         "-$argument.shortName,  --$argument.name\t$argument.type \t\t$argument.defaultValue\n"
+@end for
+                         );
+  // _LOG terminates the simulation.
+}
+  @#
+@end def
+
+
+
+@# This code needs to go at the very beginning of the main function
+@# so we use the preAllocation code insertion point instead of mainBegin.
+@# See SimulationDriver.tmpl for ordering of insertion points.
+
+@def preAllocation($dict)
+// *********** Parse the command line for arguments, and set  *********
+// *********** the appropriate global variables               *********
+
+int resp;
+std::map<string, string> mInputArgsAndValues;
+
+while (1) {
+  static struct option long_options[] = 
+    {
+      {"help", no_argument, 0, 'h'},
+  @for $argument in $argumentList
+      {"$argument.name", required_argument, 0, '$argument.shortName'},
+  @end for
+      {NULL, 0, 0, 0}
+    };
+  
+  int option_index = 0;
+
+  resp = getopt_long(argc, argv, "h@slurp
+  @for $argument in $argumentList
+$argument.shortName:@slurp
+  @end for
+", long_options, &option_index);
+  
+  if (resp == -1)
+    break;
+
+  switch (resp) {
+    case '?':
+      // An unknown option was passed. Show allowed options and exit. 
+      _print_usage(); // This causes the simulation to exit
+
+    case 'h':
+      _print_usage(); // This causes the simulation to exit
+  @for $argument in $argumentList
+    
+    case '$argument.shortName':
+    @if $appendArgsToOutputFilename
+      mInputArgsAndValues.insert ( pair<string, string> (string("$argument.name"), string(optarg)));
+    @end if
+    @if $argument.type == 'string'
+      $argument.name = string(optarg);
+    @elif $argument.type in ('integer', 'int', 'long'):
+      $argument.name = strtol(optarg, NULL, 10);
+    @elif $argument.type in 'real'
+      $argument.name = strtod(optarg, NULL);
+    @end if
+      break;
+  @end for
+      
+    default:
+      _LOG(_ERROR_LOG_LEVEL, "Internal error in processing arguments.\n");
+  }
+}
+
+  @if $appendArgsToOutputFilename
+// Try and insert all the default arguments; the insert will fail if that
+// argument is already in the map. This way we make sure that all the 
+// possible command line arguments are in the map, even if they weren't passed. 
+
+    @for $argument in $argumentList
+mInputArgsAndValues.insert ( pair<string, string> (string("$argument.name"), string("$argument.defaultValue")));
+    @end for
+
+// Since the command line arguments and their values are to be appended to the
+// output filenames, construct the append string here
+for (map<string, string>::iterator iter=mInputArgsAndValues.begin() ; iter != mInputArgsAndValues.end(); iter++ ) {
+  gsArgsAndValues += string(".") + (*iter).first + string("_") + (*iter).second;
+}
+  @end if
+
+if (optind < argc)
+  _print_usage(); // This causes the simulation to exit.
+
+  @if 'postArgumentProcessing' in self.codeBlocks
+// ******** Argument post-processing code *******
+${codeBlocks['postArgumentProcessing'].codeString}@slurp
+// **********************************************
+
+  @end if
+  @#
+@end def
+
+@def xsilOutputInfo($dict)
+  @#
+  @set $fp = dict['fp']
+  @set $formatSpecifierMap = {'string': ('s', '.c_str()'),
+                              'int':    ('i', ''),
+                              'long':   ('li', ''),
+                              'integer': ('li', ''),
+                              'real': ('e', '')}
+  @#
+fprintf($fp, "\nVariables that can be specified on the command line:\n");
+  @for $argument in $argumentList
+
+    @set formatSpecifier, argumentSuffix = formatSpecifierMap[$argument.type]
+fprintf($fp, "  Command line argument ${argument.name} = %${formatSpecifier}\n", ${argument.name}${argumentSuffix});
+  @end for
+  @#
+@end def

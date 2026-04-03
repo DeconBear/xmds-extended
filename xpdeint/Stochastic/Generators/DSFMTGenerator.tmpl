@@ -1,0 +1,222 @@
+@shBang #!/usr/bin/env python3
+
+@*
+DSFMTGenerator.tmpl
+
+Created by Joe Hope on 2009-08-22.
+
+Copyright (c) 2009-2012, Joe Hope
+Modified Mattias Johnsson 2012
+
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Stochastic.Generators.Generator
+
+@from xpdeint.CallOnceGuards import callOnceGuard
+@import random
+
+@attr uselib = ['dsfmt']
+
+@def description: Generic dSFMT noise
+@def generatorType: dsfmt_t*
+@def globals
+  @#
+  @super
+  @#
+$generatorType ${generatorName};
+  @#
+@end def
+
+@*
+  Static includes
+*@
+@#  The callOnceGuard won't work until the same includes are gone from the stochastic feature.
+@@callOnceGuard
+@def static_includes
+  @#
+  @super
+  @#
+#define DSFMT_DO_NOT_USE_OLD_NAMES
+#if CFG_HAVE_SSE2
+  #define HAVE_SSE2
+#elif CFG_HAVE_ALTIVEC
+  #define HAVE_ALTIVEC
+#endif
+
+#define DSFMT_MEXP 19937
+
+#include <dSFMT/dSFMT.h>
+#include <dSFMT/dSFMT.c>
+  @#
+@end def
+
+@@callOnceGuard
+@def static_globals
+  @if $precision == 'single'
+// ********************************************************
+//   Struct and typedef to help convert a double to two floats
+union float_double {
+       uint64_t u;
+       uint32_t u32[2];
+       double d;
+       float f[2];
+};
+
+typedef union float_double float_double_t;
+  @end if
+@end def
+
+@@callOnceGuard
+@def static_defines
+  @if $precision == 'single'
+// defines to help convert a double to two floats
+#define LOWER_FLOAT_MASK   0x00000000007fffffULL
+#define UPPER_FLOAT_MASK   0x007fffff00000000ULL
+#define UPPER_FLOAT_LSHIFT 3
+#define EXPONENT_BITS      0x3f8000003f800000ULL
+  @end if  
+@end def
+
+@@callOnceGuard
+@def static_functionPrototypes
+  @if $precision == 'single'
+float generate_float_close1_open2_via_dsfmt(dsfmt_t *dsfmt_array);
+void generate_float_pair_close1_open2_via_dsfmt(dsfmt_t *dsfmt_array, float &f1, float &f2);
+void generate_float_array_close0_open1(dsfmt_t *noise, real array[], int vector_size);
+  @end if  
+@end def
+
+@@callOnceGuard
+@def static_functionImplementations
+  @if $precision == 'single'
+    @set noiseVector = $parent.parent
+// Converts a double in the range [1,2) into two floats in the range [1,2)
+// returns one and stores the other in reserve for the next call to this
+// function.
+float generate_float_close1_open2_via_dsfmt(dsfmt_t *dsfmt_array) 
+{
+  static float_double_t twiddle;
+  // static bool bSpareNoise = false;
+
+  // Removing optimisation because in the situation where multiple RNGs with different seeds are being used,
+  // they will interfer with one another, defeating the purpose of a deterministic seed
+  /* if (bSpareNoise) {
+   *   bSpareNoise = false;
+   *   return twiddle.f[1];
+   * }
+   */
+  
+  twiddle.d = dsfmt_genrand_close1_open2(dsfmt_array);
+  twiddle.u = ((twiddle.u << UPPER_FLOAT_LSHIFT) & UPPER_FLOAT_MASK) | (twiddle.u & LOWER_FLOAT_MASK) | EXPONENT_BITS;
+  // bSpareNoise = true;
+  return twiddle.f[0];
+}
+
+// Returns two random floats [1,2) by generating one double and converting it 
+void generate_float_pair_close1_open2_via_dsfmt(dsfmt_t *noise, float &f1, float &f2) 
+{
+  float_double_t twiddle;
+
+  twiddle.d = dsfmt_genrand_close1_open2(noise);
+  twiddle.u = ((twiddle.u << UPPER_FLOAT_LSHIFT) & UPPER_FLOAT_MASK) | (twiddle.u & LOWER_FLOAT_MASK) | EXPONENT_BITS;
+  f1 = twiddle.f[0];
+  f2 = twiddle.f[1];
+}
+
+/* Fills an array with random floats [0,1) by calling dsfmt_fill_array_close1_open2
+** to fill an array half as long with doubles [1,2), then converting these to twice 
+** as many floats [1,2), then subtracting one.
+** This seems to be slightly faster than calling generate_float_pair_close1_open2_via_dsfmt
+** over and over again.
+*/
+void generate_float_array_close0_open1(dsfmt_t *noise, real noiseVector[], int vector_size) {
+  // We can only ask dsfmt to fill arrays that have an even number of doubles, and the
+  // number of floats must therefore be divisible by four
+  int padding = vector_size & 0x3;
+  int num_doubles = (vector_size - padding)/2;
+  float_double_t twiddle;
+
+  if (num_doubles > dsfmt_get_min_array_size()) {
+    double *array_double = new double[num_doubles];
+    dsfmt_fill_array_close1_open2(noise, array_double, num_doubles);
+
+    for (int i=0; i<num_doubles; i++) {
+      twiddle.d = array_double[i];
+      twiddle.u = ((twiddle.u << UPPER_FLOAT_LSHIFT) & UPPER_FLOAT_MASK) | (twiddle.u & LOWER_FLOAT_MASK) | EXPONENT_BITS;
+      reinterpret_cast<real*>(noiseVector)[2*i] = twiddle.f[0] - 1.0f;
+      reinterpret_cast<real*>(noiseVector)[2*i+1] = twiddle.f[1] - 1.0f;
+    }
+    
+    // Finish up by generating the 0,1,2 or 3 numbers on the end of the noise vector
+    for (int i=0; i<padding; i++)
+    {
+      reinterpret_cast<real*>(noiseVector)[vector_size-i] = generate_float_close1_open2_via_dsfmt(noise) - 1.0f;
+    }
+    delete [] array_double;
+  }
+  else {
+    // The number of floats we need does meet the minimum of what dsfmt can provide in 
+    // and array, so it by a single number at a time instead.
+    for (long _i0 = 0; _i0 < vector_size; _i0++) {
+      reinterpret_cast<real*>(noiseVector)[_i0] = generate_float_close1_open2_via_dsfmt(noise) - 1.0f;
+    }
+  }
+}
+  @end if
+@end def
+
+
+@def constructArrayUniformRandomNumbers
+  @set noiseVector = $parent.parent
+  @if $precision == 'single'  
+generate_float_array_close0_open1(${generatorName}, reinterpret_cast<real*>(_active_${noiseVector.id}), _vector_size);
+  @else
+if (!(_vector_size & 0x1) && _vector_size > dsfmt_get_min_array_size())
+  dsfmt_fill_array_open_open(${generatorName}, reinterpret_cast<real*>(_active_${noiseVector.id}), _vector_size);
+else {
+  for (long _i0 = 0; _i0 < _vector_size; _i0++) {
+    reinterpret_cast<real*>(_active_${noiseVector.id})[_i0] = dsfmt_genrand_open_open(${generatorName});
+  }
+}
+  @end if
+@end def
+
+@def minusOneToOneRandomNumber
+  @if $precision == 'single'
+(2.0*generate_float_close1_open2_via_dsfmt(${generatorName}) - 3.0)@slurp
+  @else
+(2.0*dsfmt_genrand_close1_open2($generatorName) - 3.0)@slurp
+  @end if
+@end def
+
+@def zeroToOneRandomNumber
+  @if $precision == 'single'
+(generate_float_close1_open2_via_dsfmt(${generatorName}) - 1.0)@slurp
+  @else
+dsfmt_genrand_open_open(${generatorName})@slurp
+  @end if
+@end def
+
+@def initialiseLocalSeeds
+  @#
+  @super
+  @#
+${generatorName} = (dsfmt_t *)xmds_malloc(sizeof(dsfmt_t));
+dsfmt_init_by_array(${generatorName}, ${generatorName}_local_seeds, ${seedCount});
+  @#
+@end def
+
+
