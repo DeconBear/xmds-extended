@@ -30,9 +30,9 @@ import xml
 from xml.dom import minidom
 import xpdeint.minidom_extras
 import subprocess
-from pkg_resources import resource_filename
 import hashlib
 import shutil
+from xpdeint._resource_compat import resource_filename
 
 DATA_CACHE_VERSION = 2
 

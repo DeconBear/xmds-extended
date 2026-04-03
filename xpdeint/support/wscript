@@ -189,6 +189,17 @@ def configure(conf):
         
         
         if conf.env['CXX_NAME'] == 'gcc' or conf.env['CXX_NAME'] == 'clang':
+            if check_cxx(
+                cxxflags='-std=gnu++11',
+                uselib_store='cxx11',
+                msg="Checking for compiler flag to enable GNU C++11",
+                fragment="""
+                #include <cstdint>
+                int main() { return 0; }
+                """,
+            ):
+                if env['CXXFLAGS_cxx11']:
+                    env.append_unique('CXXFLAGS', env['CXXFLAGS_cxx11'])
 
             machine_optimisations = [
                 {
@@ -418,6 +429,11 @@ def configure(conf):
             )
         
         # Check for hdf5
+        prefer_dynamic_hdf5 = Utils.unversioned_sys_platform() == 'win32'
+        hdf5_cxxflags = {}
+        if conf.env['CXX_NAME'] == 'gcc' or conf.env['CXX_NAME'] == 'clang':
+            hdf5_cxxflags['cxxflags'] = '-std=gnu++11'
+
         h5cc_usable = False
         if conf.find_program('h5cc', var='H5CC', mandatory = False):
             try:
@@ -463,6 +479,7 @@ def configure(conf):
                 shared_lib_extra_options = dict(uselib = 'hdf5_shared'),
                 uselib_store='hdf5',
                 msg = "Checking for HDF5",
+                **hdf5_cxxflags
             )
 
 
@@ -482,7 +499,8 @@ def configure(conf):
                         } ''',
                     uselib_store='hdf5',
                     uselib='hdf5',
-                    msg = "Checking for HDF5 High-level library"
+                    msg = "Checking for HDF5 High-level library",
+                    **hdf5_cxxflags
                 )
 
                 #check_cxx(
@@ -515,10 +533,15 @@ def configure(conf):
                         int main() {
                             void *p=(void*)(H5Lexists);
                             return 0;
-                        } '''
+                        } ''',
+                    **hdf5_cxxflags
                 )
 
         else:
+            hdf5_check_kws = dict(uselib_store='hdf5', msg = "Checking for HDF5", **hdf5_cxxflags)
+            if prefer_dynamic_hdf5:
+                hdf5_check_kws.update(dict(_skip=True, defines='H5_BUILT_AS_DYNAMIC_LIB'))
+
             check_cxx(
                 lib='hdf5',
                 header_name='hdf5.h',
@@ -528,11 +551,19 @@ def configure(conf):
                         void *p=(void*)(H5check_version);
                         return 0;
                     } ''',
-                uselib_store='hdf5',
-                msg = "Checking for HDF5",
+                **hdf5_check_kws
             )
 
             if 'hdf5' in conf.env['uselib']:
+                hdf5_hl_check_kws = dict(
+                    uselib_store='hdf5',
+                    uselib='hdf5',
+                    msg = "Checking for HDF5 High-level library",
+                    **hdf5_cxxflags
+                )
+                if prefer_dynamic_hdf5:
+                    hdf5_hl_check_kws.update(dict(_skip=True))
+
                 check_cxx(
                     lib='hdf5_hl',
                     defines='HAVE_HDF5_HL',
@@ -544,9 +575,7 @@ def configure(conf):
                             void *p=(void*)(H5DSset_scale);
                             return 0;
                         } ''',
-                    uselib_store='hdf5',
-                    uselib='hdf5',
-                    msg = "Checking for HDF5 High-level library"
+                    **hdf5_hl_check_kws
                 )
 
                 check_cxx(
@@ -559,7 +588,8 @@ def configure(conf):
                         int main() {
                             void *p=(void*)(H5Lexists);
                             return 0;
-                        } '''
+                        } ''',
+                    **hdf5_cxxflags
                 )
 
         check_cxx(
