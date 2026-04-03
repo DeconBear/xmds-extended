@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: ${{ matrix.os }} smoke
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          auto-activate-base: false
+          activate-environment: xmds-ci
+          channels: conda-forge,defaults
+          python-version: "3.11"
+          use-mamba: true
+
+      - name: Install dependencies on Linux and macOS
+        if: runner.os != 'Windows'
+        shell: bash -el {0}
+        run: |
+          set -euxo pipefail
+          mamba install -y \
+            cheetah3 \
+            "pyparsing!=2.0.0" \
+            mpmath \
+            numpy \
+            lxml \
+            h5py \
+            hdf5 \
+            fftw \
+            setuptools
+          python -V
+          c++ --version
+
+      - name: Install dependencies on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          conda install -n xmds-ci -y -c conda-forge -c defaults `
+            cheetah3 `
+            'pyparsing!=2.0.0' `
+            mpmath `
+            numpy `
+            lxml `
+            h5py `
+            hdf5 `
+            fftw `
+            setuptools `
+            m2w64-toolchain
+
+      - name: Smoke test on Linux and macOS
+        if: runner.os != 'Windows'
+        shell: bash -el {0}
+        run: |
+          set -euxo pipefail
+          export XMDS_USER_DATA="$PWD/.xmds-ci-home"
+          PREFIX="$(python -c 'import sys; print(sys.prefix)')"
+          python bin/xmds2 --reconfigure \
+            --include-path "$PREFIX/include" \
+            --lib-path "$PREFIX/lib"
+          python bin/xmds2 examples/lorenz.xmds
+          ./lorenz
+
+      - name: Smoke test on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
+          $prefix = (conda run -n xmds-ci python -c "import sys; print(sys.prefix)").Trim()
+          $includePath = Join-Path $prefix 'Library\include'
+          $libPath = Join-Path $prefix 'Library\lib'
+          $extraPaths = @(
+            (Join-Path $prefix 'Library\mingw-w64\bin'),
+            (Join-Path $prefix 'Library\usr\bin'),
+            (Join-Path $prefix 'Library\bin'),
+            (Join-Path $prefix 'Scripts'),
+            (Join-Path $prefix 'bin')
+          ) | Where-Object { Test-Path $_ }
+          if (-not $extraPaths) {
+            throw "No expected compiler/runtime paths were found under $prefix"
+          }
+          $env:PATH = (($extraPaths -join ';') + ';' + $env:PATH)
+          g++ --version
+          conda run -n xmds-ci python bin\xmds2 --reconfigure --include-path $includePath --lib-path $libPath
+          conda run -n xmds-ci python bin\xmds2 examples\lorenz.xmds
+          .\lorenz.cmd
+
+      - name: Geometry regression on Linux
+        if: runner.os == 'Linux'
+        shell: bash -el {0}
+        run: |
+          set -euxo pipefail
+          export XMDS_USER_DATA="$PWD/.xmds-test-home"
+          PREFIX="$(python -c 'import sys; print(sys.prefix)')"
+          python bin/xmds2 --reconfigure \
+            --include-path "$PREFIX/include" \
+            --lib-path "$PREFIX/lib"
+          python run_tests.py geometry
