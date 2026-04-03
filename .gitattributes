@@ -1,0 +1,12 @@
+* text=auto
+
+*.py text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.xmds text eol=lf
+*.tmpl text eol=lf
+*.rnc text eol=lf
+*.rng text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
