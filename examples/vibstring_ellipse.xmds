@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>vibstring_ellipse</name>
+  <author>Graham Dennis</author>
+  <description>
+    Vibrating string with Dirichlet boundary conditions on an ellipse.
+  </description>
+  
+  <features>
+    <benchmark />
+    <bing />
+    <fftw plan="patient" />
+
+    <globals>
+      <![CDATA[
+      const real T = 10.0;
+      const real mass = 1e-3;
+      const real length = 1.0;
+      const real mu = mass/length;
+      const real T_mu = T/mu;
+      
+      const real ellipse_a = 0.9;
+      const real ellipse_b = 0.5;
+      const real ellipse_focus = sqrt(ellipse_a*ellipse_a - ellipse_b*ellipse_b);
+      
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="128"  domain="(-1, 1)" />
+      <dimension name="y" lattice="128"  domain="(-1, 1)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="main" initial_basis="x y" type="complex">
+    <components>
+      u uDot
+    </components>
+    <initialisation>
+      <![CDATA[
+        u = exp(-500.0*((x-ellipse_focus)*(x-ellipse_focus) + y*y));
+        uDot = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="boundary" initial_basis="x y" type="real">
+    <components>
+      bc
+    </components>
+    <initialisation>
+      <![CDATA[
+        real r_norm = sqrt(x*x/ellipse_a/ellipse_a + y*y/ellipse_b/ellipse_b);
+
+        if ( r_norm > 1.0)
+          bc = 0.0;
+        else
+          bc = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" tolerance="1e-8" interval="2e-2" steps="1000">
+      <samples>50</samples>
+      <operators>
+        <operator kind="ex" basis="x y">
+          <operator_names>L</operator_names>
+          <![CDATA[
+          real r_norm = sqrt(x*x/ellipse_a/ellipse_a + y*y/ellipse_b/ellipse_b);
+
+          if ( r_norm > 1.0)
+            L = 0.0;
+          else
+            L = 1.0;
+          ]]>
+        </operator>
+        <integration_vectors basis="kx ky">main</integration_vectors>
+        <![CDATA[
+          du_dt = uDot;
+          duDot_dt = L[-T_mu*(kx*kx+ky*ky)*u];
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group basis="x y" initial_sample="yes">
+        <moments>amp</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          amp = Re(u);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

@@ -1,0 +1,405 @@
+@shBang #!/usr/bin/env python3
+
+F@*
+AdaptiveStep.tmpl
+
+Created by Graham Dennis on 2007-11-16.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators.Integrator
+
+@def description: segment $segmentNumber ($stepper.name adaptive-step integrator)
+
+@attr $supportsConstantIPOperators = False
+
+@*
+  Function prototypes
+*@
+@def functionPrototypes
+  @#
+  @super
+  @#
+real _segment${segmentNumber}_setup_sampling(bool* _next_sample_flag, long* _next_sample_counter);
+  @#
+  @for $vector in $integrationVectors
+real _segment${segmentNumber}_${vector.id}_timestep_error(${vector.type}* _checkfield);
+bool _segment${segmentNumber}_${vector.id}_reset(${vector.type}* _reset_to);
+  @end for
+  @#
+@end def
+
+
+@*
+  Function implementations
+*@
+@def functionImplementations
+  @#
+  @super
+  @#
+${setupSamplingFunctionImplementation}@slurp
+  @for $vector in $integrationVectors
+
+${timestepErrorFunctionImplementation($vector)}@slurp
+
+${resetFunctionImplementation($vector)}@slurp
+  @end for
+  @#
+@end def
+
+
+@def setupSamplingFunctionImplementation
+  @#
+real _segment${segmentNumber}_setup_sampling(bool* _next_sample_flag, long* _next_sample_counter)
+{
+  // The numbers of the moment groups that need to be sampled at the next sampling point.
+  // An entry of N+1 means "reached end of integration interval"
+  long _momentGroupNumbersNeedingSamplingNext[${len($samples) + 1}];
+  long _numberOfMomentGroupsToBeSampledNext = 1;
+  
+  long _previous_m = 1;
+  long _previous_M = 1;
+  
+  real _${propagationDimension}_break_next = (real)${interval};
+  _momentGroupNumbersNeedingSamplingNext[0] = ${len($samples)};
+  
+  // initialise all flags to false
+  for (long _i0 = 0; _i0 < ${len($samples) + 1}; _i0++)
+    _next_sample_flag[_i0] = false;
+  
+  /* Check if moment group needs sampling at the same time as another already discovered sample (or the final time).
+   * If so, add this moment group to the to-be-sampled list. If moment group demands sampling earlier than all
+   * previously noted moment groups, erase all previous ones from list and set the sample time to this earlier one.
+   */
+  @for $momentGroupNumber, $sampleCount in enumerate($samples)
+    @if $sampleCount == 0
+      @continue
+    @end if
+  if (_next_sample_counter[$momentGroupNumber] * _previous_M == _previous_m * $sampleCount) {
+    _momentGroupNumbersNeedingSamplingNext[_numberOfMomentGroupsToBeSampledNext] = $momentGroupNumber;
+    _numberOfMomentGroupsToBeSampledNext++;
+  } else if (_next_sample_counter[$momentGroupNumber] * _previous_M < _previous_m * $sampleCount) {
+    _${propagationDimension}_break_next = _next_sample_counter[$momentGroupNumber] * ((real)$interval) / ((real)$sampleCount);
+    _numberOfMomentGroupsToBeSampledNext = 1;
+    _momentGroupNumbersNeedingSamplingNext[0] = $momentGroupNumber;
+    _previous_M = $sampleCount;
+    _previous_m = _next_sample_counter[$momentGroupNumber];
+  }
+  
+  @end for
+  // _momentGroupNumbersNeedingSamplingNext now contains the complete list of moment groups that need
+  // to be sampled at the next sampling point. Set their flags to true.
+  for (long _i0 = 0; _i0 < _numberOfMomentGroupsToBeSampledNext; _i0++)
+    _next_sample_flag[_momentGroupNumbersNeedingSamplingNext[_i0]] = true;
+  
+  return _${propagationDimension}_break_next;
+}
+  @#
+@end def
+
+
+@def timestepErrorFunctionImplementation($vector)
+  @#
+real _segment${segmentNumber}_${vector.id}_timestep_error(${vector.type}* _checkfield)
+{
+  real _error = 1e-24;
+  real _temp_error = 0.0;
+  real _temp_mod = 0.0;
+
+  @set $featureOrdering = ['Diagnostics']
+  @set $dict = {'vector': vector}
+  ${insertCodeForFeatures('timestepErrorBegin', featureOrdering, {'vector': vector}), autoIndent=True}@slurp
+  
+  @if len($vector.field.dimensions) > 0
+    @# FIXME: We need to have the capacity to have both a peak cutoff and an absolute cutoff
+  // Find the peak value for each component of the field
+  real _cutoff[_${vector.id}_ncomponents];
+  
+  for (long _i0 = 0; _i0 < _${vector.id}_ncomponents; _i0++)
+    _cutoff[_i0] = 0.0;
+  
+  {
+    ${loopOverVectorsInBasisWithInnerContent([vector], $homeBasis, $insideFindPeakLoops(vector)), autoIndent=True}@slurp
+  }
+  ${insertCodeForFeatures('findMax', ['Driver'], {'variable': '_cutoff', 'count': c'_${vector.id}_ncomponents'}), autoIndent=True}@slurp
+  
+  for (long _i0 = 0; _i0 < _${vector.id}_ncomponents; _i0++) {
+    if (_xmds_isnonfinite(_cutoff[_i0]))
+      // Return an error two times the tolerance in this case because the timestep must be reduced.
+      return 2.0*${tolerance};
+    _cutoff[_i0] *= ${cutoff};
+    @if $vector.type == 'complex'
+      @# multiply again because we are using norm for our complex vector and the cutoff should be interpreted in terms of
+      @# the absolute magnitude of the variables, not the mod-square
+    _cutoff[_i0] *= ${cutoff};
+    @end if
+  }
+  @end if
+  
+  @# Code for absolute cutoff should go here and modify
+  @# the _cutoff variables
+  @#
+  @# @for $absoluteCutoff in $absoluteCutoffs
+  @# // absolute cutoff for component '$absoluteCutoff.name'
+  @# if (_cutoff[${absoluteCutoff.componentIndex}])
+  @# @end for
+  @#
+  {
+    ${loopOverVectorsInBasisWithInnerContent([vector], $homeBasis, $insideFindMaxErrorLoops(vector)), autoIndent=True}@slurp
+  }
+  ${insertCodeForFeatures('findMax', ['Driver'], {'variable': '&_error', 'count': '1'}), autoIndent=True}@slurp
+  ${insertCodeForFeaturesInReverseOrder('timestepErrorEnd', featureOrdering, dict), autoIndent=True}@slurp
+  
+  return _error;
+}
+  @#
+@end def
+
+
+@def insideFindPeakLoops($vector)
+  @#
+for (long _i1 = 0; _i1 < _${vector.id}_ncomponents; _i1++) {
+  @if $vector.type == 'complex'
+    @set $modFunction = 'mod2'
+  @else
+    @set $modFunction = 'abs'
+  @end if
+  _temp_mod = ${modFunction}(_${vector.id}[_${vector.id}_index_pointer + _i1]);
+  if (_xmds_isnonfinite(_temp_mod))
+    _cutoff[_i1] = INFINITY;
+  else if (_cutoff[_i1] < _temp_mod)
+    _cutoff[_i1] = _temp_mod;
+}
+  @#
+@end def
+
+
+@def insideFindMaxErrorLoops($vector)
+  @#
+for (long  _i1 = 0; _i1 < _${vector.id}_ncomponents; _i1++) {
+  @if $vector.type == 'complex'
+    @set $modCutoffFunction = 'mod2'
+  @else
+    @set $modCutoffFunction = 'abs'
+  @end if
+  @if len($vector.field.dimensions) > 0
+  if (${modCutoffFunction}(_${vector.id}[_${vector.id}_index_pointer + _i1]) > _cutoff[_i1]) {
+    ${updateMaximumError($vector), autoIndent=True}@slurp
+  }
+  @else
+  ${updateMaximumError($vector), autoIndent=True}@slurp
+  @end if
+}
+  @#
+@end def
+
+@def insideLookForNaNLoops($vector)
+  @#
+  @# No point in fancy logic trying to exit the test early if a NaN is found, even
+  @# though this is hot path code, since a NaN means we're about to exit the simulation
+  @# anyway. Worth having seperate code depending on whether the vector values are
+  @# real or complex though, since complex requires either two checks or taking the
+  @# modulus. Presumably two seperate Re(), Im() checks are faster than mod2
+  @#
+  for (long _i1 = 0; _i1 < _${vector.id}_ncomponents; _i1++) {
+  @if $vector.type == 'complex'
+    if (_xmds_isnonfinite(_${vector.id}[_${vector.id}_index_pointer + _i1].Re())
+      || _xmds_isnonfinite(_${vector.id}[_${vector.id}_index_pointer + _i1].Im())) bNoNaNsPresent = false;
+  @else
+    if (_xmds_isnonfinite(_${vector.id}[_${vector.id}_index_pointer + _i1])) bNoNaNsPresent = false;
+  @end if
+  }
+  @#
+@end def
+
+@def updateMaximumError($vector)
+  @#
+_temp_error = abs(_${vector.id}[_${vector.id}_index_pointer + _i1] - _checkfield[_${vector.id}_index_pointer + _i1]) / (0.5*abs(_${vector.id}[_${vector.id}_index_pointer + _i1]) + 0.5*abs(_checkfield[_${vector.id}_index_pointer + _i1]));
+
+if (_xmds_isnonfinite(_temp_error)) {
+  /* For _temp_error to be NaN, both the absolute value of the higher and lower order solutions
+     must BOTH be zero. This therefore implies that their difference is zero, and that there is no error. */
+  _temp_error = 0.0;
+}
+
+if (_error < _temp_error) // UNVECTORISABLE
+  _error = _temp_error;
+  @#
+${insertCodeForFeatures('updateMaximumError', ['Diagnostics'], {'vector': vector})}@slurp
+  @#
+@end def
+
+
+@def resetFunctionImplementation($vector)
+  @#
+bool _segment${segmentNumber}_${vector.id}_reset(${vector.type}* _reset_to_${vector.id})
+{
+  ${copyVectors([vector], destPrefix = '', srcPrefix = '_reset_to'), autoIndent=True}@slurp
+  
+  /* return false if there's a NaN somewhere in the vector, otherwise return true */
+  bool bNoNaNsPresent = true;
+  {
+    ${loopOverVectorsInBasisWithInnerContent([vector], $homeBasis, $insideLookForNaNLoops(vector)), autoIndent=True}@slurp
+  }
+  return bNoNaNsPresent;
+}
+  @#
+@end def
+
+@def createToleranceVariable
+@*doc:
+This function returns the code that will create a _step variable,
+including any modifications necessary due to the ErrorCheck feature.
+*@
+  @#
+real _tolerance = ${tolerance};
+  @#
+  @set $featureOrdering = ['ErrorCheck']
+${insertCodeForFeatures('createToleranceVariable', featureOrdering)}@slurp
+  @#
+@end def
+
+@def segmentFunctionBody($function)
+  @#
+real _step = ${interval}/(real)${stepCount};
+real _old_step = _step;
+real _min_step = _step;
+real _max_step = _step;
+long _attempted_steps = 0;
+long _unsuccessful_steps = 0;
+
+${createToleranceVariable}@slurp
+  @# Insert code for features
+  @set $featureOrderingOuter = ['Stochastic']
+${insertCodeForFeatures('integrateAdaptiveStepBegin', featureOrderingOuter)}@slurp
+
+real _error, _last_norm_error = 1.0;
+  @for $vector in $integrationVectors
+real _${name}_${vector.id}_error;
+  @end for
+
+bool _discard = false;
+bool _break_next = false;
+
+  @set $momentGroupCount = len($momentGroups)
+bool _next_sample_flag[${momentGroupCount + 2}];
+for (long _i0 = 0; _i0 < ${momentGroupCount + 2}; _i0++)
+  _next_sample_flag[_i0] = false;
+
+long _next_sample_counter[$momentGroupCount];
+for (long _i0 = 0; _i0 < $momentGroupCount; _i0++)
+  _next_sample_counter[_i0] = 1;
+
+real _${propagationDimension}_local = 0.0;
+
+real _${propagationDimension}_break_next = _${name}_setup_sampling(_next_sample_flag, _next_sample_counter);
+
+if ( (_${propagationDimension}_local + _step)*(1.0 + _EPSILON) >= _${propagationDimension}_break_next) {
+  _break_next = true;
+  _step = _${propagationDimension}_break_next - _${propagationDimension}_local;
+}
+
+${allocate}@slurp
+${initialise}@slurp
+${localInitialise}@slurp
+
+do {
+  @set $featureOrderingOuterLoop = ['MaxIterations', 'Output', 'ErrorCheck']
+  ${insertCodeForFeatures('integrateAdaptiveStepOuterLoopBegin', featureOrderingOuterLoop), autoIndent=True}@slurp
+  
+  ${preSingleStep, autoIndent=True}@slurp
+  do {
+  @# Insert code for features
+  @set $featureOrderingInnerLoop = ['Stochastic']
+    ${insertCodeForFeatures('integrateAdaptiveStepInnerLoopBegin', featureOrderingInnerLoop), autoIndent=True}@slurp
+    
+    ${stepper.singleIntegrationStep(function), autoIndent=True}@slurp
+    
+    ${insertCodeForFeaturesInReverseOrder('integrateAdaptiveStepInnerLoopEnd', featureOrderingInnerLoop), autoIndent=True}@slurp
+    
+    _error = 0.0;
+  @for $vector in $integrationVectors
+    
+    _${name}_${vector.id}_error = _${name}_${vector.id}_timestep_error(_${stepper.errorFieldName}_${vector.id});
+    if (_${name}_${vector.id}_error > _error)
+      _error = _${name}_${vector.id}_error;
+  @end for
+    
+    _attempted_steps++;
+    
+  @set $featureOrderingForToleranceChecking = ['Diagnostics', 'Stochastic']
+    if (_error < _tolerance) {
+      ${insertCodeForFeatures('adaptiveStepSucceeded', $featureOrderingForToleranceChecking), autoIndent=True}@slurp
+      _${propagationDimension}_local += _step;
+      if (_step > _max_step)
+        _max_step = _step;
+      if (!_break_next && _step < _min_step)
+        _min_step = _step;
+      _discard = false;
+    } else {
+      ${insertCodeForFeatures('adaptiveStepFailed', $featureOrderingForToleranceChecking), autoIndent=True}@slurp
+      ${propagationDimension} -= _step;
+
+  @for $vector in $integrationVectors
+      if (_${name}_${vector.id}_reset(_${stepper.resetFieldName}_${vector.id}) == false) {
+
+        _LOG(_WARNING_LOG_LEVEL, "WARNING: NaN present. Integration halted at ${propagationDimension} = %e.\n"
+                           "         Non-finite number in integration vector \"${vector.name}\" in segment ${segmentNumber}.\n", $propagationDimension);
+        ${earlyTerminationCode, autoIndent=True}@slurp 
+      }
+  @end for
+
+      ${functions['ipEvolve'].call(_exponent = -1, parentFunction=function)}
+      
+      _discard = true;
+      _break_next = false;
+      _unsuccessful_steps++;
+    }
+    
+    _old_step = _step;
+    
+    // Resize step
+    if (_error < 0.5*_tolerance || _error > _tolerance) {
+      const real _safetyFactor = 0.90;
+      real _scalingFactor = _safetyFactor * pow(abs(_error/_tolerance), real(-0.7/${integrationOrder})) * pow(_last_norm_error, real(0.4/${integrationOrder}));
+      _scalingFactor = MAX(_scalingFactor, 1.0/5.0);
+      _scalingFactor = MIN(_scalingFactor, 7.0);
+      if (_error > _tolerance && _scalingFactor > 1.0) {
+        // If our step failed don't try and increase our step size. That would be silly.
+        _scalingFactor = _safetyFactor * pow(abs(_error/_tolerance), real(-1.0/${integrationOrder}));
+      }
+      _old_step = _step;
+      _last_norm_error = pow(_safetyFactor/_scalingFactor*pow(_last_norm_error, real(0.4/${integrationOrder})), real(${integrationOrder}/0.7));
+      _step *= _scalingFactor;
+    }
+    
+  } while (_discard);
+  ${postSingleStep, autoIndent=True}@slurp
+  
+  ${insertCodeForFeaturesInReverseOrder('integrateAdaptiveStepOuterLoopEnd', featureOrderingOuterLoop), autoIndent=True}@slurp
+} while (!_next_sample_flag[${momentGroupCount + 1}]);
+
+${localFinalise}@slurp
+${finalise}@slurp
+${free}@slurp
+  @#
+${insertCodeForFeaturesInReverseOrder('integrateAdaptiveStepEnd', featureOrderingOuter)}@slurp
+
+_LOG(_SEGMENT_LOG_LEVEL, "Segment ${segmentNumber}: minimum timestep: %e maximum timestep: %e\n", _min_step, _max_step);
+_LOG(_SEGMENT_LOG_LEVEL, "  Attempted %li steps, %.2f%% steps failed.\n", _attempted_steps, (100.0*_unsuccessful_steps)/_attempted_steps);
+  @#
+@end def

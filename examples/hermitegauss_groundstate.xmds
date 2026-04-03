@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>hermitegauss_groundstate</name>
+  <author>Graham Dennis</author>
+  <description>
+    Solve for the groundstate of the Gross-Pitaevskii equation using the hermite-Gauss basis.
+  </description>
+  
+  <features>
+    <benchmark />
+    <bing />
+    <validation kind="run-time" />
+    <globals>
+      <![CDATA[
+        const real omegaz = 2*M_PI*20;
+        const real omegarho = 2*M_PI*200;
+        const real hbar = 1.05457148e-34;
+        const real M = 1.409539200000000e-25;
+        const real g = 9.8;
+        const real scatteringLength = 5.57e-9;
+        const real transverseLength = 1e-5;
+        const real Uint = 4.0*M_PI*hbar*hbar*scatteringLength/M/transverseLength/transverseLength;
+        const real Nparticles = 5.0e5;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="81" spectral_lattice="40" length_scale="sqrt(hbar/(M*omegarho))" transform="hermite-gauss" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="wavefunction" initial_basis="x" type="complex">
+    <components> phi </components>
+    <initialisation>
+      <![CDATA[
+      real eta = sqrt(M*omegarho/hbar)*x;
+      phi = sqrt(Nparticles) * pow(M*omegarho/(hbar*M_PI), 0.25) * exp(-0.5*eta*eta);
+        ]]>
+    </initialisation>
+  </vector>
+  
+  <computed_vector name="normalisation" dimensions="" type="real">
+    <components> Ncalc </components>
+    <evaluation>
+      <dependencies basis="x">wavefunction</dependencies>
+      <![CDATA[
+        // Calculate the current normalisation of the wave function.
+        Ncalc = mod2(phi);
+      ]]>
+    </evaluation>
+  </computed_vector>
+  
+  <sequence>
+    <integrate algorithm="ARK45" interval="2.0e-3" steps="4000"  tolerance="1e-10">
+      <samples>100 100</samples>
+      <filters>
+        <filter>
+          <dependencies>wavefunction normalisation</dependencies>
+          <![CDATA[
+            // Correct normalisation of the wavefunction
+            phi *= sqrt(Nparticles/Ncalc);
+          ]]>
+        </filter>
+      </filters>
+      <operators>
+        <operator kind="ip" type="real">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = - (nx + 0.5)*omegarho;
+          ]]>
+        </operator>
+        <!-- The 'x_4f' basis permits exact calculation of |psi|^2 psi provided that lattice="2N+1" with spectral_lattice="N" -->
+        <!-- If there were other terms in the integration code, the nonlinear term could be calculated exactly in a computed vector -->
+        <!-- See the example NLProjection.xmds for an example. -->
+        <integration_vectors basis="x_4f">wavefunction</integration_vectors>
+        <![CDATA[
+          dphi_dt = L[phi] - Uint/hbar*mod2(phi)*phi;
+        ]]>
+      </operators>
+    </integrate>
+
+    <filter>
+        <dependencies>normalisation wavefunction</dependencies>
+      <![CDATA[
+        phi *= sqrt(Nparticles/Ncalc);
+      ]]>
+    </filter>
+    
+    <breakpoint filename="hermitegauss_groundstate_break.xsil" format="ascii">
+      <dependencies basis="nx">wavefunction</dependencies>
+    </breakpoint>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="x" initial_sample="yes">
+        <moments>dens</moments>
+        <dependencies>wavefunction</dependencies>
+        <![CDATA[
+          dens = mod2(phi);
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx" initial_sample="yes">
+        <moments>dens</moments>
+        <dependencies>wavefunction</dependencies>
+        <![CDATA[
+          dens = mod2(phi);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

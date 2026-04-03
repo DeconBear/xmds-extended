@@ -1,0 +1,263 @@
+\begin{sphinxtheindex}
+\let\bigletter\sphinxstyleindexlettergroup
+\let\spxpagem \sphinxstyleindexpagemain
+\let\spxentry \sphinxstyleindexentry
+\let\spxextra \sphinxstyleindexextra
+
+  \bigletter {\sphinxsymbolsname}
+  \item \spxentry{\_SAMPLE\_COMPLEX}, \hyperpage{33}
+  \item \spxentry{\_dx}, \hyperpage{81}
+  \item \spxentry{\_lattice}, \hyperpage{81}
+  \item \spxentry{\_max}, \hyperpage{81}
+  \item \spxentry{\_min}, \hyperpage{81}
+
+  \indexspace
+  \bigletter A
+  \item \spxentry{Adding an integrator}, \hyperpage{113}
+  \item \spxentry{Advanced topics}, \hyperpage{83}
+  \item \spxentry{Aliases}, \hyperpage{44}, \hyperpage{59, 60}
+
+  \indexspace
+  \bigletter B
+  \item \spxentry{Boundary conditions}, \hyperpage{63}, \hyperpage{76}
+  \item \spxentry{Boundary conditions}\spxextra{Bessel}, \hyperpage{63}
+  \item \spxentry{Boundary conditions}\spxextra{DCT}, \hyperpage{61}
+  \item \spxentry{Boundary conditions}\spxextra{DFT}, \hyperpage{60}
+  \item \spxentry{Boundary conditions}\spxextra{DST}, \hyperpage{62}
+  \item \spxentry{Bug reports}, \hyperpage{93}
+  \item \spxentry{Bulirsch\sphinxhyphen{}Stoer algorithm}, \hyperpage{82}
+  \item \spxentry{Bulirsch\sphinxhyphen{}Stoer error scaling}, \hyperpage{82}
+
+  \indexspace
+  \bigletter C
+  \item \spxentry{Citing XMDS2}, \hyperpage{93}
+  \item \spxentry{Command line arguments}, \hyperpage{32}
+  \item \spxentry{Computed vectors}, \hyperpage{36}
+  \item \spxentry{Convolutions and Fourier transforms}, \hyperpage{88}
+  \item \spxentry{Cross\sphinxhyphen{}propagation}, \hyperpage{75}
+
+  \indexspace
+  \bigletter D
+  \item \spxentry{Dimension aliases}, \hyperpage{90}
+  \item \spxentry{Distributed MPI}, \hyperpage{32}
+  \item \spxentry{Documentation format}, \hyperpage{110}
+  \item \spxentry{Double precision}, \hyperpage{57}
+  \item \spxentry{Driver examples}
+    \subitem \spxentry{distributed\sphinxhyphen{}mpi}, \hyperpage{32}
+    \subitem \spxentry{mpi\sphinxhyphen{}multi\sphinxhyphen{}path}, \hyperpage{25}
+    \subitem \spxentry{multi\sphinxhyphen{}path}, \hyperpage{21}
+  \item \spxentry{Drivers}
+    \subitem \spxentry{adaptive\sphinxhyphen{}mpi\sphinxhyphen{}multi\sphinxhyphen{}path"}, 
+		\hyperpage{58}
+    \subitem \spxentry{distributed\sphinxhyphen{}mpi"}, \hyperpage{58}
+    \subitem \spxentry{mpi\sphinxhyphen{}multi\sphinxhyphen{}path"}, \hyperpage{58}
+    \subitem \spxentry{multi\sphinxhyphen{}path"}, \hyperpage{58}
+
+  \indexspace
+  \bigletter E
+  \item \spxentry{EX operators}, \hyperpage{75}
+  \item \spxentry{Examples}, \hyperpage{14}
+  \item \spxentry{Exporting data}, \hyperpage{11}, \hyperpage{104}
+
+  \indexspace
+  \bigletter F
+  \item \spxentry{FAQ}, \hyperpage{91}
+  \item \spxentry{Fibre noise}, \hyperpage{22}
+
+  \indexspace
+  \bigletter G
+  \item \spxentry{Geometry matching mode \sphinxhyphen{} loose}, \hyperpage{90}
+  \item \spxentry{GNU Free Documentation License}, \hyperpage{135}
+  \item \spxentry{GNU General Public License}, \hyperpage{131}
+  \item \spxentry{GPL}, \hyperpage{131}
+  \item \spxentry{Grid specification at run\sphinxhyphen{}time}, \hyperpage{94}
+
+  \indexspace
+  \bigletter I
+  \item \spxentry{Importing data}, \hyperpage{85}
+  \item \spxentry{Installers \sphinxhyphen{} linux}, \hyperpage{3}
+  \item \spxentry{Installers \sphinxhyphen{} Max OS X}, \hyperpage{4}
+  \item \spxentry{Installing via source}, \hyperpage{4}
+  \item \spxentry{Installing XMDS2}, \hyperpage{2}
+  \item \spxentry{Integer dimensions}, \hyperpage{26}
+  \item \spxentry{Integration algorithms}
+    \subitem \spxentry{adaptive Runge\sphinxhyphen{}Kutta}\spxextra{ARK}, \hyperpage{77}
+    \subitem \spxentry{all}, \hyperpage{73}
+    \subitem \spxentry{Richardson extrapolation}, \hyperpage{78}
+    \subitem \spxentry{Runge\sphinxhyphen{}Kutta}\spxextra{RK}, \hyperpage{77}
+    \subitem \spxentry{semi\sphinxhyphen{}implicit}\spxextra{SI}, \hyperpage{76}
+  \item \spxentry{IP operators}, \hyperpage{75}
+  \item \spxentry{IP versus EX operators}, \hyperpage{94}
+
+  \indexspace
+  \bigletter K
+  \item \spxentry{Kubo oscillator}, \hyperpage{19}
+
+  \indexspace
+  \bigletter L
+  \item \spxentry{Licensing}, \hyperpage{129}
+
+  \indexspace
+  \bigletter M
+  \item \spxentry{Modified midpoint method}, \hyperpage{81}
+  \item \spxentry{MPI}, \hyperpage{32}
+    \subitem \spxentry{non\sphinxhyphen{}local vector access}, \hyperpage{66}
+  \item \spxentry{Multi\sphinxhyphen{}path MPI}, \hyperpage{25}
+
+  \indexspace
+  \bigletter N
+  \item \spxentry{News}, \hyperpage{139}
+  \item \spxentry{Noise}
+    \subitem \spxentry{gaussian}, \hyperpage{70}
+    \subitem \spxentry{jump}, \hyperpage{72}
+    \subitem \spxentry{poissonian}, \hyperpage{71}
+    \subitem \spxentry{uniform}, \hyperpage{70}
+    \subitem \spxentry{wiener}, \hyperpage{71}
+  \item \spxentry{Noise vector example}, \hyperpage{21}
+  \item \spxentry{Nonlinear Schroedinger equation}, \hyperpage{15}
+
+  \indexspace
+  \bigletter O
+  \item \spxentry{Operators}, \hyperpage{74}
+    \subitem \spxentry{EX}, \hyperpage{75}
+    \subitem \spxentry{IP}, \hyperpage{75}
+
+  \indexspace
+  \bigletter P
+  \item \spxentry{Precision}, \hyperpage{57}
+  \item \spxentry{Producing generating reproducible C++ code}, \hyperpage{107}
+
+  \indexspace
+  \bigletter R
+  \item \spxentry{Reference}, \hyperpage{51}
+
+  \indexspace
+  \bigletter S
+  \item \spxentry{Sampling}, \hyperpage{79}
+  \item \spxentry{Script elements}, \hyperpage{51}
+  \item \spxentry{Single precision}, \hyperpage{57}
+
+  \indexspace
+  \bigletter T
+  \item \spxentry{Test scripts}, \hyperpage{107}
+  \item \spxentry{Time dependence in vectors}, \hyperpage{93}
+  \item \spxentry{Transforms}
+    \subitem \spxentry{bessel}, \hyperpage{62}
+    \subitem \spxentry{dct}, \hyperpage{61}
+    \subitem \spxentry{dft}, \hyperpage{60}
+    \subitem \spxentry{dst}, \hyperpage{62}
+    \subitem \spxentry{hermite\sphinxhyphen{}gauss}, \hyperpage{64}
+    \subitem \spxentry{spherical\sphinxhyphen{}bessel}, \hyperpage{64}
+  \item \spxentry{Tutorial}, \hyperpage{7}
+
+  \indexspace
+  \bigletter V
+  \item \spxentry{Vectors}
+    \subitem \spxentry{non\sphinxhyphen{}local access}, \hyperpage{59}, \hyperpage{66}, 
+		\hyperpage{74}
+
+  \indexspace
+  \bigletter X
+  \item \spxentry{XMDS2 parsing process}, \hyperpage{116}
+  \item \spxentry{XMDS2 project directory layout}, \hyperpage{128}
+  \item \spxentry{XMDS2 XML schema}, \hyperpage{48}
+  \item \spxentry{XML element attributes}
+    \subitem \spxentry{algorithm}, \hyperpage{73}
+    \subitem \spxentry{aliases}, \hyperpage{59}
+    \subitem \spxentry{basis}\spxextra{dependencies element}, \hyperpage{67}
+    \subitem \spxentry{basis}\spxextra{sampling\_group element}, \hyperpage{80, 81}
+    \subitem \spxentry{constant}, \hyperpage{75}
+    \subitem \spxentry{cross\sphinxhyphen{}propagation}, \hyperpage{76}
+    \subitem \spxentry{cycles}, \hyperpage{72}
+    \subitem \spxentry{default\_value}, \hyperpage{54}
+    \subitem \spxentry{dimensions}\spxextra{computed vector}, \hyperpage{68}
+    \subitem \spxentry{dimensions}\spxextra{noise vector}, \hyperpage{69}
+    \subitem \spxentry{domain}, \hyperpage{59}
+    \subitem \spxentry{filename}\spxextra{breakpoint element}, \hyperpage{79}
+    \subitem \spxentry{filename}\spxextra{output element}, \hyperpage{79}
+    \subitem \spxentry{format}\spxextra{breakpoint element}, \hyperpage{79}
+    \subitem \spxentry{format}\spxextra{output element}, \hyperpage{79}
+    \subitem \spxentry{geometry\_matching\_mode}, \hyperpage{66}
+    \subitem \spxentry{initial\_basis}\spxextra{noise vector}, \hyperpage{69}
+    \subitem \spxentry{initial\_basis}\spxextra{vector}, \hyperpage{66}
+    \subitem \spxentry{initial\_sample}, \hyperpage{80}
+    \subitem \spxentry{interval}, \hyperpage{73}
+    \subitem \spxentry{kind}, \hyperpage{57}
+    \subitem \spxentry{kind}\spxextra{boundary\_condition element}, \hyperpage{76}
+    \subitem \spxentry{kind}\spxextra{initialisation element}, \hyperpage{66}
+    \subitem \spxentry{kind}\spxextra{noise vector}, \hyperpage{69}
+    \subitem \spxentry{kind}\spxextra{operator}, \hyperpage{75}
+    \subitem \spxentry{lattice}, \hyperpage{59}
+    \subitem \spxentry{length\_scale}, \hyperpage{65}
+    \subitem \spxentry{method}, \hyperpage{69}
+    \subitem \spxentry{name}, \hyperpage{54}
+    \subitem \spxentry{name}\spxextra{computed vector}, \hyperpage{68}
+    \subitem \spxentry{name}\spxextra{dimension}, \hyperpage{59}
+    \subitem \spxentry{name}\spxextra{driver}, \hyperpage{58}
+    \subitem \spxentry{name}\spxextra{filter}, \hyperpage{73}
+    \subitem \spxentry{name}\spxextra{noise vector}, \hyperpage{69}
+    \subitem \spxentry{name}\spxextra{vector}, \hyperpage{66}
+    \subitem \spxentry{plan}, \hyperpage{56}
+    \subitem \spxentry{seed}, \hyperpage{69}
+    \subitem \spxentry{steps}, \hyperpage{73}
+    \subitem \spxentry{tolerance}, \hyperpage{73}
+    \subitem \spxentry{transform}, \hyperpage{60}
+    \subitem \spxentry{type}, \hyperpage{54}
+    \subitem \spxentry{type}\spxextra{computed vector}, \hyperpage{68}
+    \subitem \spxentry{type}\spxextra{dimension}, \hyperpage{59}
+    \subitem \spxentry{type}\spxextra{noise vector}, \hyperpage{69}
+    \subitem \spxentry{type}\spxextra{vector}, \hyperpage{66}
+    \subitem \spxentry{volume\_prefactor}, \hyperpage{59}
+    \subitem \spxentry{where}, \hyperpage{78}
+  \item \spxentry{XML Elements}, \hyperpage{51}
+  \item \spxentry{XML elements}
+    \subitem \spxentry{argument}, \hyperpage{54}
+    \subitem \spxentry{arguments}, \hyperpage{53}
+    \subitem \spxentry{author}, \hyperpage{52}
+    \subitem \spxentry{autovectorise}, \hyperpage{54}
+    \subitem \spxentry{benchmark}, \hyperpage{54}
+    \subitem \spxentry{bing}, \hyperpage{54}
+    \subitem \spxentry{boundary\_conditions}, \hyperpage{76}
+    \subitem \spxentry{breakpoint}, \hyperpage{79}
+    \subitem \spxentry{cflags}, \hyperpage{54}
+    \subitem \spxentry{chunked\_output}, \hyperpage{55}
+    \subitem \spxentry{components}, \hyperpage{66}
+    \subitem \spxentry{computed\_vector}, \hyperpage{68}
+    \subitem \spxentry{dependencies}, \hyperpage{67}
+    \subitem \spxentry{description}, \hyperpage{52}
+    \subitem \spxentry{diagnostics}, \hyperpage{55}
+    \subitem \spxentry{dimension}, \hyperpage{59}
+    \subitem \spxentry{driver}, \hyperpage{58}
+    \subitem \spxentry{error\_check}, \hyperpage{55}
+    \subitem \spxentry{evaluation}, \hyperpage{68}
+    \subitem \spxentry{features}, \hyperpage{52}
+    \subitem \spxentry{fftw}, \hyperpage{56}
+    \subitem \spxentry{filename}, \hyperpage{66}
+    \subitem \spxentry{filter}, \hyperpage{72}
+    \subitem \spxentry{filters}, \hyperpage{78}
+    \subitem \spxentry{geometry}, \hyperpage{59}
+    \subitem \spxentry{globals}, \hyperpage{56}
+    \subitem \spxentry{halt\_non\_finite}, \hyperpage{56}
+    \subitem \spxentry{initialisation}, \hyperpage{66}
+    \subitem \spxentry{integrate}, \hyperpage{73}
+    \subitem \spxentry{integration\_vectors}, \hyperpage{74}
+    \subitem \spxentry{name}\spxextra{of simulation}, \hyperpage{51}
+    \subitem \spxentry{noise\_vector}, \hyperpage{69}
+    \subitem \spxentry{openmp}, \hyperpage{56}
+    \subitem \spxentry{operator}, \hyperpage{75}
+    \subitem \spxentry{operators}, \hyperpage{74}
+    \subitem \spxentry{output}, \hyperpage{79}
+    \subitem \spxentry{precision}, \hyperpage{57}
+    \subitem \spxentry{propagation\_dimension}, \hyperpage{59}
+    \subitem \spxentry{samples}, \hyperpage{73}
+    \subitem \spxentry{sampling\_group}, \hyperpage{79}
+    \subitem \spxentry{sequence}, \hyperpage{72}
+    \subitem \spxentry{simulation}, \hyperpage{51}
+    \subitem \spxentry{transverse\_dimensions}, \hyperpage{59}
+    \subitem \spxentry{validation}, \hyperpage{57}
+    \subitem \spxentry{vector}, \hyperpage{65}
+  \item \spxentry{XML schema}, \hyperpage{48}
+  \item \spxentry{XML schema updates}, \hyperpage{110}
+  \item \spxentry{xsil2graphics2}, \hyperpage{104}
+
+\end{sphinxtheindex}

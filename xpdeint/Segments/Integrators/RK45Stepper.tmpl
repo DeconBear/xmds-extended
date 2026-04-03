@@ -1,0 +1,292 @@
+@shBang #!/usr/bin/env python3
+
+@*
+RK45Stepper.tmpl
+
+Created by Graham Dennis on 2007-11-16.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators._Stepper
+
+@def name: RK45
+@attr $ipPropagationStepFractions = ['1.0', '4.0/5.0', '7.0/10.0', '2.0/5.0', '1.0/8.0']
+@attr $extraIntegrationArrayNames = ['akfield', 'aifield', 'ajfield', 'alfield', 'checkfield']
+
+@attr $errorFieldName = 'checkfield'
+@attr $resetFieldName = 'aifield'
+
+@attr $integrationOrder = 5.0
+
+@def localInitialise
+@*doc:
+Initialise all of the Cash-Karp coefficients, etc.
+*@
+  @#
+  @super
+  @#
+
+// Cash-Karp coefficients
+real _a_raw[7];
+real _a[7];
+real _b[7][7];
+real _c[7];
+real _cs[7];
+// linear combinations for the (k_i)s
+real _d[4];
+real _e[5];
+real _f[6];
+real _g[7];
+
+_a_raw[0]=0.0;
+_a_raw[1]=0.0;
+_a_raw[2]=1.0/5;
+_a_raw[3]=3.0/10;
+_a_raw[4]=3.0/5;
+_a_raw[5]=1.0;
+_a_raw[6]=7.0/8.0;
+
+_a[0]=0.0;
+_a[1]=0.0;
+for(long _i0 = 2; _i0 < 7; _i0++)
+  _a[_i0] = _a_raw[_i0] - _a_raw[_i0-1];
+
+_b[2][1]=1.0/5;
+_b[3][1]=3.0/40;
+_b[3][2]=9.0/40;
+_b[4][1]=3.0/10;
+_b[4][2]=-9.0/10;
+_b[4][3]=6.0/5;
+_b[5][1]=-11.0/54;
+_b[5][2]=5.0/2;
+_b[5][3]=-70.0/27;
+_b[5][4]=35.0/27;
+_b[6][1]=1631.0/55296;
+_b[6][2]=175.0/512;
+_b[6][3]=575.0/13824;
+_b[6][4]=44275.0/110592;
+_b[6][5]=253.0/4096;
+
+_c[0]=0.0;
+_c[1]=37.0/378;
+_c[2]=0.0;
+_c[3]=250.0/621;
+_c[4]=125.0/594;
+_c[5]=0.0;
+_c[6]=512.0/1771;
+
+_cs[0]=0.0;
+_cs[1]=2825.0/27648;
+_cs[2]=0.0;
+_cs[3]=18575.0/48384;
+_cs[4]=13525.0/55296;
+_cs[5]=277.0/14336;
+_cs[6]=1.0/4;
+
+_d[0]=0.0;
+_d[1]=1.0-_b[3][1]/_c[1];
+_d[2]=_b[3][1]/_c[1];
+_d[3]=_b[3][2];
+
+_e[0]=0.0;
+_e[1]=1.0-_b[4][1]/_c[1];
+_e[2]=_b[4][1]/_c[1];
+_e[3]=_b[4][2];
+_e[4]=_b[4][3];
+
+_f[0]=0.0;
+_f[1]=1.0-_b[5][1]/_c[1];
+_f[2]=_b[5][1]/_c[1];
+_f[3]=_b[5][2];
+_f[4]=_b[5][3]-_b[5][1]/_c[1]*_c[3];
+_f[5]=_b[5][4]-_b[5][1]/_c[1]*_c[4];
+
+real _den=_c[1]*_cs[4]-_cs[1]*_c[4];
+_g[0]=0.0;
+_g[1]=( _b[6][4]*(_cs[1]-_c[1]) + _b[6][1]*(_c[4]-_cs[4]) )/_den + 1.0;
+_g[2]=  _b[6][2];
+_g[3]=( _b[6][4]*(_cs[1]*_c[3] - _c[1]*_cs[3]) + _b[6][1]*(_cs[3]*_c[4] - _c[3]*_cs[4]) )/_den + _b[6][3];
+_g[4]=( _b[6][1]*_cs[4]-_b[6][4]*_cs[1] )/_den;
+_g[5]=  _b[6][5] + _cs[5]*( _b[6][1]*_c[4]-_b[6][4]*_c[1] )/_den;
+_g[6]=( -_b[6][1]*_c[4]+_b[6][4]*_c[1] )/_den;
+  @#
+@end def
+
+@*
+  Single integration step (ARK45)
+*@
+@def singleIntegrationStep($function)
+  @#
+  @set $arguments = {'_step': '_step'}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+// a_k = y1
+${copyVectors($integrationVectors, '_akfield')}@slurp
+
+${callFunction('nonconstantIPFields', arguments, _exponent = 1, parentFunction=function)}
+
+// a_i = D(a_2*dt)[y1]
+${callFunction('ipEvolve', arguments, _exponent = +1, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+// y2 = y1
+${copyVectors($integrationVectors, '_checkfield')}@slurp
+
+// a_i = y1
+${copyVectors($integrationVectors, '_aifield')}@slurp
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _akfield_${vector.id};
+  @end for
+
+// a_k = G[a_k, t]
+${callFunction('deltaA', arguments, parentFunction=function)}
+
+// a_k = D(a_2*dt)[a_k]
+${callFunction('ipEvolve', arguments, _exponent = +1, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// y1 = y1 + c_1*a_k
+_${vector.id}[$index] += _c[1]*_akfield_${vector.id}[$index];
+// y2 = y2 + cs_1*a_k
+_checkfield_${vector.id}[$index] += _cs[1]*_akfield_${vector.id}[$index];
+// a_k = a_i + b_21*a_k
+_akfield_${vector.id}[$index] = _aifield_${vector.id}[$index] + _b[2][1]*_akfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+${propagationDimension} += _a[2] * _step;
+
+${callFunction('nonconstantIPFields', arguments, _exponent = 2, parentFunction=function)}
+
+${callFunction('ipEvolve', arguments, _exponent = -2, parentFunction=function)}
+
+// a_k = G[a_k, t + aa_2*dt]
+${callFunction('deltaA', arguments, parentFunction=function)}
+
+${callFunction('ipEvolve', arguments, _exponent = +2, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+// c_2 == cs_2 == 0
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// a_j = d_1*a_i + d_2*y1 + d_3*a_k
+_ajfield_${vector.id}[$index] = _d[1]*_aifield_${vector.id}[$index] + _d[2]*_${vector.id}[$index] + _d[3]*_akfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+${propagationDimension} += _a[3] * _step;
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _ajfield_${vector.id};
+  @end for
+
+${callFunction('nonconstantIPFields', arguments, _exponent = 3, parentFunction=function)}
+
+// a_j = D((a_3 - a_2)*dt)[a_j]
+${callFunction('ipEvolve', arguments, _exponent = -3, parentFunction=function)}
+
+// a_j = G[a_j, t + aa_3*dt]
+${callFunction('deltaA', arguments, parentFunction=function)}
+
+// a_j = D(-(a_3 - a_2)*dt)[a_j]
+${callFunction('ipEvolve', arguments, _exponent = +3, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// a_l = e_1*a_i + e_2*y1 + e_3*a_k + e_4*a_j
+_alfield_${vector.id}[$index] = _e[1]*_aifield_${vector.id}[$index] + _e[2]*_${vector.id}[$index] + _e[3]*_akfield_${vector.id}[$index] + _e[4]*_ajfield_${vector.id}[$index];
+// y1 = y1 + c_3*a_j
+_${vector.id}[$index] += _c[3]*_ajfield_${vector.id}[$index];
+// y2 = y2 + cs_3*a_j
+_checkfield_${vector.id}[$index] += _cs[3]*_ajfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+${propagationDimension} += _a[4] * _step;
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _alfield_${vector.id};
+  @end for
+
+${callFunction('nonconstantIPFields', arguments, _exponent = 4, parentFunction=function)}
+
+// a_l = D((a_4 - a_2)*dt)[a_l]
+${callFunction('ipEvolve', arguments, _exponent = -4, parentFunction=function)}
+
+// a_l = G[a_l, t + aa_4*dt]
+${callFunction('deltaA', arguments, parentFunction=function)}
+
+// a_l = D(-(a_4 - a_2)*dt)[a_l]
+${callFunction('ipEvolve', arguments, _exponent = +4, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// y1 = y1 + c_4*a_l
+_${vector.id}[$index] += _c[4]*_alfield_${vector.id}[$index];
+// y2 = y2 + cs_4*a_l
+_checkfield_${vector.id}[$index] += _cs[4]*_alfield_${vector.id}[$index];
+// a_l = f_1*a_i + f_2*y1 + f_3*a_k + f_4*a_j + f_5*a_l
+_alfield_${vector.id}[$index] = _f[1]*_aifield_${vector.id}[$index] + _f[2]*_${vector.id}[$index] + _f[3]*_akfield_${vector.id}[$index] + _f[4]*_ajfield_${vector.id}[$index] + _f[5]*_alfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+${propagationDimension} += _a[5] * _step;
+
+// a_l = G[a_l, t + aa_5*dt]
+${callFunction('deltaA', arguments, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+// c_5 == 0
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// y2 = y2 + cs_5*a_l
+_checkfield_${vector.id}[$index] += _cs[5]*_alfield_${vector.id}[$index];
+// a_l = g_1*a_i + g_2*a_k + g_3*a_j + g_4*y_1 + g_5*a_l + g_6*y2
+_alfield_${vector.id}[$index] = _g[1]*_aifield_${vector.id}[$index] + _g[2]*_akfield_${vector.id}[$index] + _g[3]*_ajfield_${vector.id}[$index] + _g[4]*_${vector.id}[$index] + _g[5]*_alfield_${vector.id}[$index] + _g[6]*_checkfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+${propagationDimension} += _a[6] * _step;
+
+${callFunction('nonconstantIPFields', arguments, _exponent = 5, parentFunction=function)}
+
+// a_l = D((a_6 - a_2)*dt)[a_l]
+${callFunction('ipEvolve', arguments, _exponent = -5, parentFunction=function)}
+
+// a_l = G[a_l, t + aa_6*dt]
+${callFunction('deltaA', arguments, parentFunction=function)}
+
+// a_l = D(-(a_6 - a_2)*dt)[a_l]
+${callFunction('ipEvolve', arguments, _exponent = +5, parentFunction=function)}
+${transformVectorsToBasis($integrationVectors, $homeBasis)}@slurp
+
+// c_5 == 0
+${loopOverVectorsWithInnerContentTemplate($integrationVectors,
+"""// y1 = y1 + c_6*a_l
+_${vector.id}[$index] += _c[6]*_alfield_${vector.id}[$index];
+// y2 = y2 + cs_6*a_l
+_checkfield_${vector.id}[$index] += _cs[6]*_alfield_${vector.id}[$index];
+""", basis = $homeBasis)}@slurp
+
+// t -> t + dt
+${propagationDimension} -= _a[6]*_step;
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _checkfield_${vector.id};
+  @end for
+
+  @for $vector in $integrationVectors
+_active_${vector.id} = _${vector.id};
+  @end for
+
+  @#
+@end def

@@ -1,0 +1,197 @@
+\indexentry{Installing XMDS2@\spxentry{Installing XMDS2}|hyperpage}{2}
+\indexentry{Installers \sphinxhyphen{} linux@\spxentry{Installers \sphinxhyphen{} linux}|hyperpage}{3}
+\indexentry{Installers \sphinxhyphen{} Max OS X@\spxentry{Installers \sphinxhyphen{} Max OS X}|hyperpage}{4}
+\indexentry{Installing via source@\spxentry{Installing via source}|hyperpage}{4}
+\indexentry{Tutorial@\spxentry{Tutorial}|hyperpage}{7}
+\indexentry{Exporting data@\spxentry{Exporting data}|hyperpage}{11}
+\indexentry{Examples@\spxentry{Examples}|hyperpage}{14}
+\indexentry{Nonlinear Schroedinger equation@\spxentry{Nonlinear Schroedinger equation}|hyperpage}{15}
+\indexentry{Kubo oscillator@\spxentry{Kubo oscillator}|hyperpage}{19}
+\indexentry{Driver examples@\spxentry{Driver examples}!multi\sphinxhyphen{}path@\spxentry{multi\sphinxhyphen{}path}|hyperpage}{21}
+\indexentry{Noise vector example@\spxentry{Noise vector example}|hyperpage}{21}
+\indexentry{Fibre noise@\spxentry{Fibre noise}|hyperpage}{22}
+\indexentry{Multi\sphinxhyphen{}path MPI@\spxentry{Multi\sphinxhyphen{}path MPI}|hyperpage}{25}
+\indexentry{Driver examples@\spxentry{Driver examples}!mpi\sphinxhyphen{}multi\sphinxhyphen{}path@\spxentry{mpi\sphinxhyphen{}multi\sphinxhyphen{}path}|hyperpage}{25}
+\indexentry{Integer dimensions@\spxentry{Integer dimensions}|hyperpage}{26}
+\indexentry{Distributed MPI@\spxentry{Distributed MPI}|hyperpage}{32}
+\indexentry{MPI@\spxentry{MPI}|hyperpage}{32}
+\indexentry{Driver examples@\spxentry{Driver examples}!distributed\sphinxhyphen{}mpi@\spxentry{distributed\sphinxhyphen{}mpi}|hyperpage}{32}
+\indexentry{Command line arguments@\spxentry{Command line arguments}|hyperpage}{32}
+\indexentry{\_SAMPLE\_COMPLEX@\spxentry{\_SAMPLE\_COMPLEX}|hyperpage}{33}
+\indexentry{Computed vectors@\spxentry{Computed vectors}|hyperpage}{36}
+\indexentry{Aliases@\spxentry{Aliases}|hyperpage}{44}
+\indexentry{XMDS2 XML schema@\spxentry{XMDS2 XML schema}|hyperpage}{48}
+\indexentry{XML schema@\spxentry{XML schema}|hyperpage}{48}
+\indexentry{Reference@\spxentry{Reference}|hyperpage}{51}
+\indexentry{XML Elements@\spxentry{XML Elements}|hyperpage}{51}
+\indexentry{Script elements@\spxentry{Script elements}|hyperpage}{51}
+\indexentry{XML elements@\spxentry{XML elements}!simulation@\spxentry{simulation}|hyperpage}{51}
+\indexentry{XML elements@\spxentry{XML elements}!name (of simulation)@\spxentry{name}\spxextra{of simulation}|hyperpage}{51}
+\indexentry{XML elements@\spxentry{XML elements}!author@\spxentry{author}|hyperpage}{52}
+\indexentry{XML elements@\spxentry{XML elements}!description@\spxentry{description}|hyperpage}{52}
+\indexentry{XML elements@\spxentry{XML elements}!features@\spxentry{features}|hyperpage}{52}
+\indexentry{XML elements@\spxentry{XML elements}!arguments@\spxentry{arguments}|hyperpage}{53}
+\indexentry{XML elements@\spxentry{XML elements}!argument@\spxentry{argument}|hyperpage}{54}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name@\spxentry{name}|hyperpage}{54}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!type@\spxentry{type}|hyperpage}{54}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!default\_value@\spxentry{default\_value}|hyperpage}{54}
+\indexentry{XML elements@\spxentry{XML elements}!autovectorise@\spxentry{autovectorise}|hyperpage}{54}
+\indexentry{XML elements@\spxentry{XML elements}!benchmark@\spxentry{benchmark}|hyperpage}{54}
+\indexentry{XML elements@\spxentry{XML elements}!bing@\spxentry{bing}|hyperpage}{54}
+\indexentry{XML elements@\spxentry{XML elements}!cflags@\spxentry{cflags}|hyperpage}{54}
+\indexentry{XML elements@\spxentry{XML elements}!chunked\_output@\spxentry{chunked\_output}|hyperpage}{55}
+\indexentry{XML elements@\spxentry{XML elements}!diagnostics@\spxentry{diagnostics}|hyperpage}{55}
+\indexentry{XML elements@\spxentry{XML elements}!error\_check@\spxentry{error\_check}|hyperpage}{55}
+\indexentry{XML elements@\spxentry{XML elements}!halt\_non\_finite@\spxentry{halt\_non\_finite}|hyperpage}{56}
+\indexentry{XML elements@\spxentry{XML elements}!fftw@\spxentry{fftw}|hyperpage}{56}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!plan@\spxentry{plan}|hyperpage}{56}
+\indexentry{XML elements@\spxentry{XML elements}!globals@\spxentry{globals}|hyperpage}{56}
+\indexentry{XML elements@\spxentry{XML elements}!openmp@\spxentry{openmp}|hyperpage}{56}
+\indexentry{Single precision@\spxentry{Single precision}|hyperpage}{57}
+\indexentry{Double precision@\spxentry{Double precision}|hyperpage}{57}
+\indexentry{Precision@\spxentry{Precision}|hyperpage}{57}
+\indexentry{XML elements@\spxentry{XML elements}!precision@\spxentry{precision}|hyperpage}{57}
+\indexentry{XML elements@\spxentry{XML elements}!validation@\spxentry{validation}|hyperpage}{57}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!kind@\spxentry{kind}|hyperpage}{57}
+\indexentry{XML elements@\spxentry{XML elements}!driver@\spxentry{driver}|hyperpage}{58}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (driver)@\spxentry{name}\spxextra{driver}|hyperpage}{58}
+\indexentry{Drivers@\spxentry{Drivers}!distributed\sphinxhyphen{}mpi""@\spxentry{distributed\sphinxhyphen{}mpi""}|hyperpage}{58}
+\indexentry{Drivers@\spxentry{Drivers}!multi\sphinxhyphen{}path""@\spxentry{multi\sphinxhyphen{}path""}|hyperpage}{58}
+\indexentry{Drivers@\spxentry{Drivers}!mpi\sphinxhyphen{}multi\sphinxhyphen{}path""@\spxentry{mpi\sphinxhyphen{}multi\sphinxhyphen{}path""}|hyperpage}{58}
+\indexentry{Drivers@\spxentry{Drivers}!adaptive\sphinxhyphen{}mpi\sphinxhyphen{}multi\sphinxhyphen{}path""@\spxentry{adaptive\sphinxhyphen{}mpi\sphinxhyphen{}multi\sphinxhyphen{}path""}|hyperpage}{58}
+\indexentry{XML elements@\spxentry{XML elements}!geometry@\spxentry{geometry}|hyperpage}{59}
+\indexentry{XML elements@\spxentry{XML elements}!propagation\_dimension@\spxentry{propagation\_dimension}|hyperpage}{59}
+\indexentry{XML elements@\spxentry{XML elements}!transverse\_dimensions@\spxentry{transverse\_dimensions}|hyperpage}{59}
+\indexentry{XML elements@\spxentry{XML elements}!dimension@\spxentry{dimension}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (dimension)@\spxentry{name}\spxextra{dimension}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!type (dimension)@\spxentry{type}\spxextra{dimension}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!lattice@\spxentry{lattice}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!domain@\spxentry{domain}|hyperpage}{59}
+\indexentry{Aliases@\spxentry{Aliases}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!aliases@\spxentry{aliases}|hyperpage}{59}
+\indexentry{Vectors@\spxentry{Vectors}!non\sphinxhyphen{}local access@\spxentry{non\sphinxhyphen{}local access}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!volume\_prefactor@\spxentry{volume\_prefactor}|hyperpage}{59}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!transform@\spxentry{transform}|hyperpage}{60}
+\indexentry{Aliases@\spxentry{Aliases}|hyperpage}{60}
+\indexentry{Transforms@\spxentry{Transforms}!dft@\spxentry{dft}|hyperpage}{60}
+\indexentry{Boundary conditions (DFT)@\spxentry{Boundary conditions}\spxextra{DFT}|hyperpage}{60}
+\indexentry{Transforms@\spxentry{Transforms}!dct@\spxentry{dct}|hyperpage}{61}
+\indexentry{Boundary conditions (DCT)@\spxentry{Boundary conditions}\spxextra{DCT}|hyperpage}{61}
+\indexentry{Transforms@\spxentry{Transforms}!dst@\spxentry{dst}|hyperpage}{62}
+\indexentry{Boundary conditions (DST)@\spxentry{Boundary conditions}\spxextra{DST}|hyperpage}{62}
+\indexentry{Transforms@\spxentry{Transforms}!bessel@\spxentry{bessel}|hyperpage}{62}
+\indexentry{Boundary conditions (Bessel)@\spxentry{Boundary conditions}\spxextra{Bessel}|hyperpage}{63}
+\indexentry{Boundary conditions@\spxentry{Boundary conditions}|hyperpage}{63}
+\indexentry{Transforms@\spxentry{Transforms}!spherical\sphinxhyphen{}bessel@\spxentry{spherical\sphinxhyphen{}bessel}|hyperpage}{64}
+\indexentry{Transforms@\spxentry{Transforms}!hermite\sphinxhyphen{}gauss@\spxentry{hermite\sphinxhyphen{}gauss}|hyperpage}{64}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!length\_scale@\spxentry{length\_scale}|hyperpage}{65}
+\indexentry{XML elements@\spxentry{XML elements}!vector@\spxentry{vector}|hyperpage}{65}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (vector)@\spxentry{name}\spxextra{vector}|hyperpage}{66}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!type (vector)@\spxentry{type}\spxextra{vector}|hyperpage}{66}
+\indexentry{XML elements@\spxentry{XML elements}!components@\spxentry{components}|hyperpage}{66}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!initial\_basis (vector)@\spxentry{initial\_basis}\spxextra{vector}|hyperpage}{66}
+\indexentry{XML elements@\spxentry{XML elements}!initialisation@\spxentry{initialisation}|hyperpage}{66}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (vector)@\spxentry{name}\spxextra{vector}|hyperpage}{66}
+\indexentry{Vectors@\spxentry{Vectors}!non\sphinxhyphen{}local access@\spxentry{non\sphinxhyphen{}local access}|hyperpage}{66}
+\indexentry{Vectors@\spxentry{Vectors}!non\sphinxhyphen{}local access@\spxentry{non\sphinxhyphen{}local access}|hyperpage}{66}
+\indexentry{MPI@\spxentry{MPI}!non\sphinxhyphen{}local vector access@\spxentry{non\sphinxhyphen{}local vector access}|hyperpage}{66}
+\indexentry{XML elements@\spxentry{XML elements}!filename@\spxentry{filename}|hyperpage}{66}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!kind (initialisation element)@\spxentry{kind}\spxextra{initialisation element}|hyperpage}{66}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!geometry\_matching\_mode@\spxentry{geometry\_matching\_mode}|hyperpage}{66}
+\indexentry{XML elements@\spxentry{XML elements}!dependencies@\spxentry{dependencies}|hyperpage}{67}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!basis (dependencies element)@\spxentry{basis}\spxextra{dependencies element}|hyperpage}{67}
+\indexentry{XML elements@\spxentry{XML elements}!computed\_vector@\spxentry{computed\_vector}|hyperpage}{68}
+\indexentry{XML elements@\spxentry{XML elements}!evaluation@\spxentry{evaluation}|hyperpage}{68}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (computed vector)@\spxentry{name}\spxextra{computed vector}|hyperpage}{68}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!dimensions (computed vector)@\spxentry{dimensions}\spxextra{computed vector}|hyperpage}{68}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!type (computed vector)@\spxentry{type}\spxextra{computed vector}|hyperpage}{68}
+\indexentry{XML elements@\spxentry{XML elements}!noise\_vector@\spxentry{noise\_vector}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (noise vector)@\spxentry{name}\spxextra{noise vector}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!dimensions (noise vector)@\spxentry{dimensions}\spxextra{noise vector}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!type (noise vector)@\spxentry{type}\spxextra{noise vector}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!initial\_basis (noise vector)@\spxentry{initial\_basis}\spxextra{noise vector}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!method@\spxentry{method}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!seed@\spxentry{seed}|hyperpage}{69}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!kind (noise vector)@\spxentry{kind}\spxextra{noise vector}|hyperpage}{69}
+\indexentry{Noise@\spxentry{Noise}!uniform@\spxentry{uniform}|hyperpage}{70}
+\indexentry{Noise@\spxentry{Noise}!gaussian@\spxentry{gaussian}|hyperpage}{70}
+\indexentry{Noise@\spxentry{Noise}!wiener@\spxentry{wiener}|hyperpage}{71}
+\indexentry{Noise@\spxentry{Noise}!poissonian@\spxentry{poissonian}|hyperpage}{71}
+\indexentry{Noise@\spxentry{Noise}!jump@\spxentry{jump}|hyperpage}{72}
+\indexentry{XML elements@\spxentry{XML elements}!sequence@\spxentry{sequence}|hyperpage}{72}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!cycles@\spxentry{cycles}|hyperpage}{72}
+\indexentry{XML elements@\spxentry{XML elements}!filter@\spxentry{filter}|hyperpage}{72}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!name (filter)@\spxentry{name}\spxextra{filter}|hyperpage}{73}
+\indexentry{XML elements@\spxentry{XML elements}!integrate@\spxentry{integrate}|hyperpage}{73}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!interval@\spxentry{interval}|hyperpage}{73}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!algorithm@\spxentry{algorithm}|hyperpage}{73}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!steps@\spxentry{steps}|hyperpage}{73}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!tolerance@\spxentry{tolerance}|hyperpage}{73}
+\indexentry{Integration algorithms@\spxentry{Integration algorithms}!all@\spxentry{all}|hyperpage}{73}
+\indexentry{XML elements@\spxentry{XML elements}!samples@\spxentry{samples}|hyperpage}{73}
+\indexentry{Operators@\spxentry{Operators}|hyperpage}{74}
+\indexentry{XML elements@\spxentry{XML elements}!operators@\spxentry{operators}|hyperpage}{74}
+\indexentry{XML elements@\spxentry{XML elements}!integration\_vectors@\spxentry{integration\_vectors}|hyperpage}{74}
+\indexentry{Vectors@\spxentry{Vectors}!non\sphinxhyphen{}local access@\spxentry{non\sphinxhyphen{}local access}|hyperpage}{74}
+\indexentry{XML elements@\spxentry{XML elements}!operator@\spxentry{operator}|hyperpage}{75}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!kind (operator)@\spxentry{kind}\spxextra{operator}|hyperpage}{75}
+\indexentry{Operators@\spxentry{Operators}!IP@\spxentry{IP}|hyperpage}{75}
+\indexentry{Operators@\spxentry{Operators}!EX@\spxentry{EX}|hyperpage}{75}
+\indexentry{IP operators@\spxentry{IP operators}|hyperpage}{75}
+\indexentry{EX operators@\spxentry{EX operators}|hyperpage}{75}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!constant@\spxentry{constant}|hyperpage}{75}
+\indexentry{Cross\sphinxhyphen{}propagation@\spxentry{Cross\sphinxhyphen{}propagation}|hyperpage}{75}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!cross\sphinxhyphen{}propagation@\spxentry{cross\sphinxhyphen{}propagation}|hyperpage}{76}
+\indexentry{XML elements@\spxentry{XML elements}!boundary\_conditions@\spxentry{boundary\_conditions}|hyperpage}{76}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!kind (boundary\_condition element)@\spxentry{kind}\spxextra{boundary\_condition element}|hyperpage}{76}
+\indexentry{Boundary conditions@\spxentry{Boundary conditions}|hyperpage}{76}
+\indexentry{Integration algorithms@\spxentry{Integration algorithms}!semi\sphinxhyphen{}implicit (SI)@\spxentry{semi\sphinxhyphen{}implicit}\spxextra{SI}|hyperpage}{76}
+\indexentry{Integration algorithms@\spxentry{Integration algorithms}!Runge\sphinxhyphen{}Kutta (RK)@\spxentry{Runge\sphinxhyphen{}Kutta}\spxextra{RK}|hyperpage}{77}
+\indexentry{Integration algorithms@\spxentry{Integration algorithms}!adaptive Runge\sphinxhyphen{}Kutta (ARK)@\spxentry{adaptive Runge\sphinxhyphen{}Kutta}\spxextra{ARK}|hyperpage}{77}
+\indexentry{Integration algorithms@\spxentry{Integration algorithms}!Richardson extrapolation@\spxentry{Richardson extrapolation}|hyperpage}{78}
+\indexentry{XML elements@\spxentry{XML elements}!filters@\spxentry{filters}|hyperpage}{78}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!where@\spxentry{where}|hyperpage}{78}
+\indexentry{XML elements@\spxentry{XML elements}!breakpoint@\spxentry{breakpoint}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!filename (breakpoint element)@\spxentry{filename}\spxextra{breakpoint element}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!format (breakpoint element)@\spxentry{format}\spxextra{breakpoint element}|hyperpage}{79}
+\indexentry{XML elements@\spxentry{XML elements}!output@\spxentry{output}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!format (output element)@\spxentry{format}\spxextra{output element}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!filename (output element)@\spxentry{filename}\spxextra{output element}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!format (output element)@\spxentry{format}\spxextra{output element}|hyperpage}{79}
+\indexentry{Sampling@\spxentry{Sampling}|hyperpage}{79}
+\indexentry{XML elements@\spxentry{XML elements}!sampling\_group@\spxentry{sampling\_group}|hyperpage}{79}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!basis (sampling\_group element)@\spxentry{basis}\spxextra{sampling\_group element}|hyperpage}{80}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!initial\_sample@\spxentry{initial\_sample}|hyperpage}{80}
+\indexentry{\_lattice@\spxentry{\_lattice}|hyperpage}{81}
+\indexentry{\_min@\spxentry{\_min}|hyperpage}{81}
+\indexentry{\_max@\spxentry{\_max}|hyperpage}{81}
+\indexentry{\_dx@\spxentry{\_dx}|hyperpage}{81}
+\indexentry{XML element attributes@\spxentry{XML element attributes}!basis (sampling\_group element)@\spxentry{basis}\spxextra{sampling\_group element}|hyperpage}{81}
+\indexentry{Modified midpoint method@\spxentry{Modified midpoint method}|hyperpage}{81}
+\indexentry{Bulirsch\sphinxhyphen{}Stoer algorithm@\spxentry{Bulirsch\sphinxhyphen{}Stoer algorithm}|hyperpage}{82}
+\indexentry{Bulirsch\sphinxhyphen{}Stoer error scaling@\spxentry{Bulirsch\sphinxhyphen{}Stoer error scaling}|hyperpage}{82}
+\indexentry{Advanced topics@\spxentry{Advanced topics}|hyperpage}{83}
+\indexentry{Importing data@\spxentry{Importing data}|hyperpage}{85}
+\indexentry{Convolutions and Fourier transforms@\spxentry{Convolutions and Fourier transforms}|hyperpage}{88}
+\indexentry{Geometry matching mode \sphinxhyphen{} loose@\spxentry{Geometry matching mode \sphinxhyphen{} loose}|hyperpage}{90}
+\indexentry{Dimension aliases@\spxentry{Dimension aliases}|hyperpage}{90}
+\indexentry{FAQ@\spxentry{FAQ}|hyperpage}{91}
+\indexentry{Citing XMDS2@\spxentry{Citing XMDS2}|hyperpage}{93}
+\indexentry{Bug reports@\spxentry{Bug reports}|hyperpage}{93}
+\indexentry{Time dependence in vectors@\spxentry{Time dependence in vectors}|hyperpage}{93}
+\indexentry{Grid specification at run\sphinxhyphen{}time@\spxentry{Grid specification at run\sphinxhyphen{}time}|hyperpage}{94}
+\indexentry{IP versus EX operators@\spxentry{IP versus EX operators}|hyperpage}{94}
+\indexentry{xsil2graphics2@\spxentry{xsil2graphics2}|hyperpage}{104}
+\indexentry{Exporting data@\spxentry{Exporting data}|hyperpage}{104}
+\indexentry{Producing generating reproducible C++ code@\spxentry{Producing generating reproducible C++ code}|hyperpage}{107}
+\indexentry{Test scripts@\spxentry{Test scripts}|hyperpage}{107}
+\indexentry{Documentation format@\spxentry{Documentation format}|hyperpage}{110}
+\indexentry{XML schema updates@\spxentry{XML schema updates}|hyperpage}{110}
+\indexentry{Adding an integrator@\spxentry{Adding an integrator}|hyperpage}{113}
+\indexentry{XMDS2 parsing process@\spxentry{XMDS2 parsing process}|hyperpage}{116}
+\indexentry{XMDS2 project directory layout@\spxentry{XMDS2 project directory layout}|hyperpage}{128}
+\indexentry{Licensing@\spxentry{Licensing}|hyperpage}{129}
+\indexentry{GNU General Public License@\spxentry{GNU General Public License}|hyperpage}{131}
+\indexentry{GPL@\spxentry{GPL}|hyperpage}{131}
+\indexentry{GNU Free Documentation License@\spxentry{GNU Free Documentation License}|hyperpage}{135}
+\indexentry{News@\spxentry{News}|hyperpage}{139}

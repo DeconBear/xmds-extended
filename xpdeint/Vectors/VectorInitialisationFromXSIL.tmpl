@@ -1,0 +1,426 @@
+@shBang #!/usr/bin/env python3
+
+@*
+VectorInitialisationFromXSIL.tmpl
+
+Created by Graham Dennis on 2008-03-14.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors.VectorInitialisation
+
+@from xpdeint.CallOnceGuards import callOnceGuard
+@from xpdeint.Geometry.UniformDimensionRepresentation import UniformDimensionRepresentation
+@from xpdeint.Geometry.SplitUniformDimensionRepresentation import SplitUniformDimensionRepresentation
+
+@attr $uselib = ['xmds']
+
+@def description: Vector initialisation from an XSIL file
+
+@@callOnceGuard
+@def static_functionPrototypes
+  @#
+  @super
+  @#
+static inline uint32_t XMDSSwapInt32(uint32_t __arg);
+static inline uint64_t XMDSSwapInt64(uint64_t __arg);
+static inline float XMDSSwapFloat(float __in);
+static inline double XMDSSwapDouble(double __in);
+  @#
+@end def
+
+@@callOnceGuard
+@def globals
+  @super
+  @#
+// This stuff is here because libxmds requires it.
+// That is because we need the XML parser in order to be able
+// to load XSIL files to initialise fields
+bool debugFlag = false;
+bool xmlDebugFlag =  false;
+  @#
+@end def
+
+@@callOnceGuard
+@def static_functionImplementations
+  @#
+  @super
+  @#
+
+static inline uint32_t XMDSSwapInt32(uint32_t __arg)
+{
+  union {
+    uint8_t ui8[4];
+    uint32_t ui32;
+  } a, b;
+  a.ui32 = __arg;
+  b.ui8[0] = a.ui8[3];
+  b.ui8[1] = a.ui8[2];
+  b.ui8[2] = a.ui8[1];
+  b.ui8[3] = a.ui8[0];
+  return b.ui32;
+}
+
+static inline uint64_t XMDSSwapInt64(uint64_t __arg)
+{
+  union {
+    uint32_t ui32[2];
+    uint64_t ui64;
+  } a, b;
+  a.ui64 = __arg;
+  b.ui32[0] = XMDSSwapInt32(a.ui32[1]);
+  b.ui32[1] = XMDSSwapInt32(a.ui32[0]);
+  return b.ui64;
+}
+
+static inline float XMDSSwapFloat(float __arg)
+{
+  union {
+    uint32_t ui32;
+    float f;
+  } a;
+  a.f = __arg;
+  a.ui32 = XMDSSwapInt32(a.ui32);
+  return a.f;
+}
+
+static inline double XMDSSwapDouble(double __arg)
+{
+  union {
+    uint64_t ui64;
+    double d;
+  } a;
+  a.d = __arg;
+  a.ui64 = XMDSSwapInt64(a.ui64);
+  return a.d;
+}
+  @#
+@end def
+
+
+@*
+  Initialise a vector
+*@
+@def initialiseVector
+  @#
+  @set $initialisationCodeBlock = $codeBlocks['initialisation']
+// XSIL initialisation has three stages.
+// 1. Initialise the vector to zero.
+// 2. Execute any CDATA code if there is any.
+// 3. Read data from the XSIL file.
+
+{
+  // Stage 1 of initialisation
+  bzero(_active_${vector.id}, sizeof(${vector.type}) * ${vector.allocSize});
+  @if $initialisationCodeBlock.codeString.isspace()
+  // There is no stage 2
+  @else
+    @set $vectorOverrides = []
+    @if $vector.integratingComponents
+      @silent vectorOverrides.append($vector)
+    @end if
+  // Stage 2 of initialisation
+  ${initialisationCodeBlock.loop(self.insideInitialisationLoops, vectorOverrides=vectorOverrides), autoIndent=True}@slurp
+  @end if
+}
+
+const char **_dimNames  = new const char* [_${vector.field.name}_ndims];
+double *_dimDelta = new double[_${vector.field.name}_ndims];
+double *_dimMin   = new double[_${vector.field.name}_ndims];
+unsigned long *_dimLattice = new unsigned long[_${vector.field.name}_ndims];
+
+  @for dimensionNumber, dimension in enumerate($vector.field.dimensions)
+    @set $dimRep = dimension.inBasis($vector.initialBasis)
+_dimNames[$dimensionNumber]   = "${dimRep.name}";
+_dimDelta[$dimensionNumber]   = ${dimRep.stepSize};
+_dimMin[$dimensionNumber]     = ${dimRep.minimum};
+_dimLattice[$dimensionNumber] = ${dimRep.globalLattice};
+
+  @end for
+  @#
+  @set $componentNameSizePrefix = ''
+  @if $vector.type == 'complex'
+    @set $componentNameSizePrefix = '2 * '
+  @end if
+const char **_componentNames = new const char*[${componentNameSizePrefix}_${vector.id}_ncomponents + 1];
+int *_componentFieldIndices = new int[${componentNameSizePrefix}_${vector.id}_ncomponents];
+
+  @set $componentNameIndex = 0
+  @for component in $vector.components
+_componentNames[$componentNameIndex] = "${component}R";
+    @set $componentNameIndex += 1
+    @#
+    @if $vector.type == 'complex'
+_componentNames[$componentNameIndex] = "${component}I";
+      @set $componentNameIndex += 1
+    @end if
+
+  @end for
+_componentNames[$componentNameIndex] = NULL;
+
+char *_binaryDataFilename;
+int _unsignedLongSize;
+bool _dataEncodingIsNative;
+bool _isPrecisionDouble;
+unsigned long _nDataComponents;
+unsigned long *_inputLattice;
+int *_componentInputIndices;
+
+if (!initialiseFieldFromXSILFile("${filename}", "${momentGroupName}", _${vector.field.name}_ndims, _dimNames, _componentNames, 
+                                 // output variables
+                                 &_binaryDataFilename, &_unsignedLongSize, &_dataEncodingIsNative, &_isPrecisionDouble,
+                                 &_nDataComponents, &_inputLattice, &_componentInputIndices))
+  _LOG(_ERROR_LOG_LEVEL, "Unable to load data from ${filename}\nExiting.\n");
+
+FILE *_inputFile = fopen(_binaryDataFilename, "rb");
+if (_inputFile == NULL)
+  _LOG(_ERROR_LOG_LEVEL, "Unable to open binary input file %s\n", _binaryDataFilename);
+
+typedef union {
+  float *_floatPtr;
+  double *_doublePtr;
+} _GenericRealNumberPtr;
+
+typedef union {
+  unsigned long _ulong;
+  uint32_t _uint32;
+  uint64_t _uint64;
+} _GenericUnsignedLong;
+
+_GenericUnsignedLong _size;
+_GenericRealNumberPtr *_inputData = new _GenericRealNumberPtr[_${vector.field.name}_ndims];
+
+// loop over the dimensions in the binary file
+for (int __i = 0; __i < _${vector.field.name}_ndims; __i++) {
+  uint64_t _sizeValue;
+  switch(_unsignedLongSize) {
+  @for unsignedLongSize, unionElement, typeName, swapFunctionName in [('0', '_ulong',  'unsigned long', 'XMDSSwapInt32'),
+                                                                      ('4', '_uint32', 'uint32_t',      'XMDSSwapInt32'),
+                                                                      ('8', '_uint64', 'uint64_t',      'XMDSSwapInt64')]
+    case ${unsignedLongSize}:
+      fread(&_size.${unionElement}, sizeof(${typeName}), 1, _inputFile);
+      if (_dataEncodingIsNative)
+        _sizeValue = _size.${unionElement};
+      else
+        _sizeValue = ${swapFunctionName}(_size.${unionElement});
+      _unsignedLongSize = sizeof(${typeName});
+      break;
+    
+  @end for
+    default:
+      _LOG(_ERROR_LOG_LEVEL, "Unexpected unsigned long size in input XSIL file. Was expecting '4' or '8', instead got '%i'\n", _unsignedLongSize);
+  }
+  
+  // Read in the data (in either single or double precision)
+  if (_isPrecisionDouble) {
+    _inputData[__i]._doublePtr = new double[_sizeValue];
+    fread(_inputData[__i]._doublePtr, sizeof(double), _sizeValue, _inputFile);
+    if (!_dataEncodingIsNative) {
+      for (unsigned int __j = 0; __j < _sizeValue; __j++)
+        _inputData[__i]._doublePtr[__j] = XMDSSwapDouble(_inputData[__i]._doublePtr[__j]);
+    }
+  } else {
+    _inputData[__i]._floatPtr = new float[_sizeValue];
+    fread(_inputData[__i]._floatPtr, sizeof(float), _sizeValue, _inputFile);
+    if (!_dataEncodingIsNative) {
+      for (unsigned int __j = 0; __j < _sizeValue; __j++)
+        _inputData[__i]._floatPtr[__j] = XMDSSwapFloat(_inputData[__i]._floatPtr[__j]);
+    }
+  }
+  
+  double _difference;
+  if (_isPrecisionDouble)
+    _difference = _inputData[__i]._doublePtr[1] - _inputData[__i]._doublePtr[0];
+  else
+    _difference = _inputData[__i]._floatPtr[1]  - _inputData[__i]._floatPtr[0];
+  
+  // Assert that the deltas are the same to within 1%
+  if (abs(_dimDelta[__i] - _difference) > 0.01 * _dimDelta[__i])
+    // _LOG will cause the simulation to exit
+    _LOG(_ERROR_LOG_LEVEL, "The step size in the '%s' dimension of the input data and the simulation grid do not match.\n"
+                           "The step size in the '%s' dimension was %e, while the input data had a step size of %e.\n",
+                           _dimNames[__i], _dimNames[__i], _dimDelta[__i], _difference);
+  @#
+  @if $geometryMatchingMode == 'strict'
+  
+  // STRICT MODE: assert that the start point is the same to within 10% of one delta,
+  //              and that the number of lattice points is the same.
+  double _start;
+  if (_isPrecisionDouble)
+    _start = _inputData[__i]._doublePtr[0];
+  else
+    _start = _inputData[__i]._floatPtr[0];
+  
+  if (abs(_dimMin[__i] - _start) > 0.1*_dimDelta[__i])
+    // _LOG will cause the simulation to exit
+    _LOG(_ERROR_LOG_LEVEL, "Geometry matching mode is strict, so the starting coordinate of each dimension in the field\n"
+                           "must be the same as in the input grid.\n"
+                           "The problem is with dimension '%s'.\n", _dimNames[__i]);
+  
+  if (_dimLattice[__i] != _inputLattice[__i])
+    // _LOG will cause the simulation to exit
+    _LOG(_ERROR_LOG_LEVEL, "Geometry matching mode is strict, so the number of lattice points in each dimension of the field\n"
+                           "must be the same as in the input grid.\n"
+                           "The problem is with dimension '%s'.\n", _dimNames[__i]);
+  @end if
+}
+
+long _binaryFileBaseOffset = ftell(_inputFile);
+long _realNumberSize = _isPrecisionDouble ? sizeof(double) : sizeof(float);
+off_t _vectorFieldSize = _unsignedLongSize + _realNumberSize${''.join([c' * _inputLattice[$i]' for i in range(len($vector.field.dimensions))])};
+
+// Create minimum value variables for dimensions not in fourier space
+  @for dimensionNumber, dimension in enumerate($vector.field.dimensions)
+double _inputfield_min_${dimension.name};
+if (_isPrecisionDouble)
+  _inputfield_min_${dimension.name} = _inputData[${dimensionNumber}]._doublePtr[0];
+else
+  _inputfield_min_${dimension.name} = _inputData[${dimensionNumber}]._floatPtr[0];
+  @end for
+
+  @if len($vector.field.dimensions)
+// Create inputfield index variables
+long ${', '.join([c'_inputfield${dim.inBasis($vector.initialBasis).loopIndex}' for dim in $vector.field.dimensions])};
+  @end if
+
+// Index pointer into the input array (new and old)
+off_t _inputfield_index_pointer, _inputfield_old_index_pointer;
+for (unsigned int _component = 0; _component < ${componentNameSizePrefix}_${vector.id}_ncomponents; _component++) {
+  if (_componentInputIndices[_component] == -1)
+    // This just means that this component doesn't exist in the XSIL file
+    continue;
+  _inputfield_index_pointer = -42; // Just so that we always seek the first time
+  
+  @set $loopingVectors = $initialisationCodeBlock.dependencies.copy()
+  @silent loopingVectors.add($vector)
+  
+  ${loopOverFieldInBasisWithVectorsAndInnerContent($initialisationCodeBlock.field,
+                                                   $initialisationCodeBlock.basis,
+                                                   $loopingVectors,
+                                                   $insideDataLoops), autoIndent=True}@slurp
+  
+} // end the loop over components
+
+fclose(_inputFile);
+delete [] _dimNames;
+delete [] _componentNames;
+free(_binaryDataFilename);
+delete [] _inputLattice;
+delete [] _componentInputIndices;
+for (int __i = 0; __i < _${vector.field.name}_ndims; __i++) {
+  if (_isPrecisionDouble)
+    delete [] _inputData[__i]._doublePtr;
+  else
+    delete [] _inputData[__i]._floatPtr;
+}
+delete [] _inputData;
+  @#
+@end def
+
+@def insideInitialisationLoops($codeString)
+  @#
+// Stage 2 of initialisation
+
+// The purpose of the following define is to give a (somewhat helpful) compile-time error
+// if the user has attempted to use the propagation dimension variable in the initialisation
+// block of a <vector> element. If they're trying to do this, what they really want is a 
+// <computed_vector> instead.
+#define ${propagationDimension} Dont_use_propagation_dimension_${propagationDimension}_in_vector_element_CDATA_block___Use_a_computed_vector_instead
+
+// ********** Initialisation code ***************
+${codeString}@slurp
+// **********************************************
+#undef ${propagationDimension}
+  @#
+@end def
+
+@def insideDataLoops
+  @#
+  @set $basis = $vector.initialBasis
+// Save the old initialisation pointer, and clear the new one
+_inputfield_old_index_pointer = _inputfield_index_pointer;
+_inputfield_index_pointer = 0;
+
+  @for dimensionNumber, dimension in enumerate($vector.field.dimensions)
+    @set dimRep = dimension.inBasis(basis)
+    @set dimName = dimRep.name
+_inputfield${dimRep.loopIndex} = @slurp
+    @# FIXME: Consider moving this to the dimension representations
+    @if isinstance(dimRep, UniformDimensionRepresentation)
+lround((${dimName} - _inputfield_min_${dimName})/_dimDelta[${dimensionNumber}]);
+    @elif isinstance(dimRep, SplitUniformDimensionRepresentation)
+lround(${dimName}/_dimDelta[${dimensionNumber}]) + (_inputLattice[${dimensionNumber}]/2);
+    @else
+      @assert False, "XSIL Loading does not support loading data for dimensions that aren't uniformly spaced. The problem is with %s" % dimName
+    @end if
+
+// Check if the input grid has this coordinate value
+if (_inputfield${dimRep.loopIndex} < 0 || _inputfield${dimRep.loopIndex} >= _inputLattice[${dimensionNumber}])
+  // The input grid doesn't cover this point.
+  goto _ENDLOOP;
+
+// check that the input coordinate matches up with a field coordinate
+{
+  double _inputfield_${dimName};
+  if (_isPrecisionDouble)
+    _inputfield_${dimName} = _inputData[${dimensionNumber}]._doublePtr[_inputfield${dimRep.loopIndex}];
+  else
+    _inputfield_${dimName} = _inputData[${dimensionNumber}]._floatPtr[_inputfield${dimRep.loopIndex}];
+  
+  if (abs(_inputfield_${dimName} - ${dimName}) > 0.1*_dimDelta[${dimensionNumber}])
+    // This only happens if your input field grid does not exactly match up with the simulation grid.
+    // _LOG will cause the simulation to exit
+    @set dimRepTypeFormat = {'real': 'e', 'long': 'li'}[dimRep.type]
+    _LOG(_ERROR_LOG_LEVEL, "The input field coordinate in the '$dimName' dimension does not match up with the field coordinate.\n"
+                           "${dimRep.loopIndex}: %li, ${dimName}: %${dimRepTypeFormat}, _inputfield${dimRep.loopIndex}: %li, "
+                           "_inputfield_${dimName}: %e, d${dimName}: %e, diff/Delta: %e\n",
+                           ${dimRep.loopIndex}, ${dimName}, _inputfield${dimRep.loopIndex},
+                           _inputfield_${dimName}, (real)d${dimName}, abs(_inputfield_${dimName} - ${dimName})/_dimDelta[$dimensionNumber]);
+}
+
+_inputfield_index_pointer += _inputfield${dimRep.loopIndex}${''.join([c' * _inputLattice[$i]' for i in range(dimensionNumber + 1, len($vector.field.dimensions))])};
+
+  @end for
+
+
+double _value;
+if (_inputfield_index_pointer != _inputfield_old_index_pointer + 1)
+  fseeko(_inputFile, _binaryFileBaseOffset + (_componentInputIndices[_component] - _${vector.field.name}_ndims) * _vectorFieldSize
+                     + _unsignedLongSize + _inputfield_index_pointer * _realNumberSize, SEEK_SET);
+
+if (_isPrecisionDouble) {
+  fread(&_value, sizeof(double), 1, _inputFile);
+  if (!_dataEncodingIsNative)
+    _value = XMDSSwapDouble(_value);
+} else {
+  float _temp;
+  fread(&_temp, sizeof(float), 1, _inputFile);
+  if (!_dataEncodingIsNative)
+    _temp = XMDSSwapFloat(_temp);
+  _value = (double)_temp;
+}
+
+  @if $vector.type == 'real'
+_active_${vector.id}[_${vector.id}_index_pointer + _component] = (real)_value;
+  @else
+reinterpret_cast<real*>(_active_${vector.id})[2*_${vector.id}_index_pointer + _component] = (real)_value;
+  @end if
+  
+_ENDLOOP:;
+  @#
+@end def
+

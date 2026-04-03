@@ -1,0 +1,223 @@
+@shBang #!/usr/bin/env python3
+
+@*
+VectorInitialisationFromHDF5.tmpl
+
+Created by Graham Dennis on 2009-01-29.
+
+Copyright (c) 2009-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors._VectorInitialisationFromHDF5
+
+@from xpdeint.Geometry.SplitUniformDimensionRepresentation import SplitUniformDimensionRepresentation
+@from xpdeint.Geometry.NonUniformDimensionRepresentation import NonUniformDimensionRepresentation
+
+@def description: Vector initialisation from a HDF5 file
+
+@def initialiseVector
+  @#
+  @set $basis = $vector.initialBasis
+  @set $field = $vector.field
+  @set $dimensionOffsets = {}
+  @#
+  @set $initialisationCodeBlock = $codeBlocks['initialisation']
+// HDF5 initialisation has three stages.
+// 1. Initialise the vector to zero.
+// 2. Execute any CDATA code if there is any.
+// 3. Read data from the HDF5 file.
+
+{
+  // Stage 1 of initialisation
+  bzero(_active_${vector.id}, sizeof(${vector.type}) * ${vector.allocSize});
+  @if $initialisationCodeBlock.codeString.isspace()
+  // There is no stage 2
+  @else
+    @set $vectorOverrides = []
+    @if $vector.integratingComponents
+      @silent vectorOverrides.append($vector)
+    @end if
+  // Stage 2 of initialisation
+  ${initialisationCodeBlock.loop(self.insideInitialisationLoops, vectorOverrides=vectorOverrides), autoIndent=True}@slurp
+  @end if
+}
+
+htri_t result;
+hid_t hdf5_file = H5Fopen("${filename}", H5F_ACC_RDONLY, H5P_DEFAULT);
+if (hdf5_file < 0) {
+  _LOG(_ERROR_LOG_LEVEL, "Unable to open input HDF5 file '${filename}'. Does it exist?\n");
+}
+hid_t hdf5_parent = 0;
+  @if $groupName
+if ((result = H5Lexists(hdf5_file, "${groupName}", H5P_DEFAULT)) > 0) {
+  hdf5_parent = H5Gopen(hdf5_file, "${groupName}");
+} else if (!result) {
+  _LOG(_ERROR_LOG_LEVEL, "Unable to find group '${groupName}' in HDF5 file '${filename}'.\n");
+} else {
+  _LOG(_ERROR_LOG_LEVEL, "Unable to determine if group '${groupName}' exists in HDF5 file '${filename}'. Is the file corrupt?\n");
+}
+  @else
+if ((result = H5Lexists(hdf5_file, "/1", H5P_DEFAULT)) > 0) {
+  hdf5_parent = H5Gopen(hdf5_file, "/1");
+} else if (!result) {
+  hdf5_parent = hdf5_file;
+} else {
+  _LOG(_ERROR_LOG_LEVEL, "Unable to determine if group '/1' exists in HDF5 file '${filename}'. Is the file corrupt?\n");
+}
+  @end if
+
+  @set $dimCount = len(field.dimensions)
+hsize_t file_dims[${dimCount}];
+
+  @for dimNum, dim in enumerate(field.dimensions)
+    @set $dimRep = dim.inBasis($vector.initialBasis)
+hid_t dataset_${dimRep.name};
+if ((result = H5Lexists(hdf5_parent, "${dimRep.name}", H5P_DEFAULT))>0)
+  dataset_${dimRep.name} = H5Dopen(hdf5_parent, "${dimRep.name}");
+else if (!result)
+  _LOG(_ERROR_LOG_LEVEL, "Error: Unable to find dimension '${dimRep.name}' in HDF5 file.\n");
+else
+  _LOG(_ERROR_LOG_LEVEL, "Error: Unable to determine if dimension '${dimRep.name}' exists in HDF5 file. Is the file corrupt?\n");
+hid_t dataspace_${dimRep.name} = H5Dget_space(dataset_${dimRep.name});
+file_dims[$dimNum] = H5Sget_simple_extent_npoints(dataspace_${dimRep.name});
+${dimRep.type}* ${dimRep.name}_inputdata = (${dimRep.type}*)xmds_malloc(file_dims[${dimNum}] * sizeof(${dimRep.type}));
+    @set $dataType = {'real': 'H5T_NATIVE_REAL', 'long': 'H5T_NATIVE_LONG'}[$dimRep.type]
+H5Dread(dataset_${dimRep.name}, $dataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, ${dimRep.name}_inputdata);
+    @if isinstance(dimRep, SplitUniformDimensionRepresentation)
+      @set $dimArrayName = c'${dimRep.name}_data'
+${dimRep.type}* ${dimArrayName} = (${dimRep.type}*)xmds_malloc(${dimRep.globalLattice} * sizeof(${dimRep.type}));
+for (long _i0 = 0; _i0 < ${dimRep.globalLattice}; _i0++) {
+  ${dimArrayName}[_i0] = ${dimRep.arrayName}[(_i0 + (${dimRep.globalLattice}+1)/2) % ${dimRep.globalLattice}];
+}
+    @else
+      @set $dimArrayName = dimRep.arrayName
+    @end if
+    @if $geometryMatchingMode == 'strict' or isinstance(dimRep, NonUniformDimensionRepresentation)
+for (long _i0 = 0; _i0 < ${dimRep.globalLattice}-1; _i0++) {
+  real step = ${dimArrayName}[_i0+1] - ${dimArrayName}[_i0];
+  if (abs(${dimArrayName}[_i0] - ${dimRep.name}_inputdata[_i0]) > 0.01 * step) {
+    // _LOG will cause the simulation to exit
+    _LOG(_ERROR_LOG_LEVEL, "Geometry matching mode is strict for dimension '${dimRep.name}'.\n"
+                           "This means that the coordinates must be the same as for the input grid.\n"
+                           "The problem was found at input_${dimRep.name}: %e, simulation_${dimRep.name}: %e, difference: %e\n",
+                           (real)${dimRep.name}_inputdata[_i0], (real)${dimArrayName}[_i0], (real)${dimRep.name}_inputdata[_i0] - ${dimArrayName}[_i0]);
+  }
+}
+    @else
+      @# Here we implement any checks required for 'loose' geometryMatchingMode
+      @# We know that the dimension is uniform, therefore we should first check the deltas.
+// Check that the deltas are the same to within 0.1%
+real ${dimRep.name}_step = ${dimArrayName}[1] - ${dimArrayName}[0];
+real ${dimRep.name}_inputdata_step = ${dimRep.name}_inputdata[1] - ${dimRep.name}_inputdata[0];
+if (abs(${dimRep.name}_step - ${dimRep.name}_inputdata_step) > 1e-3*${dimRep.name}_step) {
+  // _LOG will cause the simulation to exit
+  _LOG(_ERROR_LOG_LEVEL, "The step size in the '${dimRep.name}' dimension of the input data and simulation grid do not match.\n"
+                         "The step size in the '${dimRep.name}' dimension was %e, while the input data had step size %e.\n",
+                         (real)${dimRep.name}_step, (real)${dimRep.name}_inputdata_step);
+}
+// Check the input and simulation grids overlap
+if ((${dimArrayName}[0] > ${dimRep.name}_inputdata[file_dims[${dimNum}]-1]) || (${dimArrayName}[${dimRep.globalLattice}-1] < ${dimRep.name}_inputdata[0])) {
+  // _LOG will cause the simulation to exit
+  _LOG(_ERROR_LOG_LEVEL, "The input and simulation grids do not overlap!\n"
+                         "The simulation grid runs from %e to %e, but the input grid runs from %e to %e.\n",
+                         (real)${dimArrayName}[0], (real)${dimArrayName}[${dimRep.globalLattice}-1],
+                         (real)${dimRep.name}_inputdata[0], (real)${dimRep.name}_inputdata[file_dims[${dimNum}]-1]);
+}
+real ${dimRep.name}_fileOffsetR = (${dimRep.name}_inputdata[0]-${dimArrayName}[0])/${dimRep.name}_step;
+if (remainder(${dimRep.name}_inputdata[0]-${dimArrayName}[0], ${dimRep.name}_step) > 0.01*${dimRep.name}_step) {
+  _LOG(_ERROR_LOG_LEVEL, "The input and simulation grids do not overlap sufficiently!\n"
+                         "The calculated offset for the input grid from the simulation grid in the '${dimRep.name}' dimension is %f, and it should be integral!\n",
+                         (${dimRep.name}_inputdata[0]-${dimArrayName}[0])/${dimRep.name}_step);
+}
+long ${dimRep.name}_fileOffset = lround((${dimRep.name}_inputdata[0]-${dimArrayName}[0])/${dimRep.name}_step);
+      @silent dimensionOffsets[dimRep.name] = c'${dimRep.name}_fileOffset'
+    @end if
+  @end for
+
+  @set $processingDict = {'field': field, 'operation': 'read', 'basis': basis, 'dimensionOffsets': dimensionOffsets}
+  @set $variables = [{'vector': $vector, 'arrayName': c'_active_${vector.id}', 'components': $vector.components}]
+hid_t file_dataspace;
+file_dataspace = H5Screate_simple(${len(field.dimensions)}, file_dims, NULL);
+  @for variable in variables
+    @if $variable.vector.type == 'real'
+      @set $variable['separatedComponents'] = list(enumerate($variable.components))
+    @else
+      @set $components = []
+      @set variable['separatedComponents'] = components
+      @for offset, componentName in enumerate($variable.components)
+        @silent components.extend([(2*offset, componentName + 'R'), (2*offset+1, componentName + 'I')])
+      @end for
+    @end if
+bool _variablesFound = false;
+    @for offset, componentName in $variable.separatedComponents
+hid_t dataset_${componentName} = 0;
+if ((result = H5Lexists(hdf5_parent, "${componentName}", H5P_DEFAULT))>0) {
+  dataset_${componentName} = H5Dopen(hdf5_parent, "${componentName}");
+  _variablesFound = true;
+} else if (!result)
+  _LOG(_WARNING_LOG_LEVEL, "Warning: Unable to find variable name '${componentName}' in HDF5 file.\n");
+else
+  _LOG(_WARNING_LOG_LEVEL, "Warning: Unable to determine if variable '${componentName}' exists in HDF5 file. Is the file corrupt?\n");
+    @end for
+  @end for
+
+if (!_variablesFound) {
+  // We haven't found anything. There's a problem with the input file.
+  _LOG(_ERROR_LOG_LEVEL, "Error: None of the variables were found in the HDF5 file. Please check the file.\n");
+}
+  @silent processingDict['variables'] = variables
+${processData(processingDict)}@slurp
+
+
+  @for variable in variables
+    @for offset, componentName in $variable.separatedComponents
+if (dataset_${componentName}) H5Dclose(dataset_${componentName});
+    @end for
+  @end for
+H5Sclose(file_dataspace);
+
+  @for dim in $vector.field.dimensions
+    @set $dimRep = dim.inBasis($vector.initialBasis)
+    @if isinstance(dimRep, SplitUniformDimensionRepresentation)
+xmds_free(${dimRep.name}_data);
+    @end if
+xmds_free(${dimRep.name}_inputdata);
+H5Sclose(dataspace_${dimRep.name});
+H5Dclose(dataset_${dimRep.name});
+  @end for
+if (hdf5_parent != hdf5_file)
+  H5Gclose(hdf5_parent);
+H5Fclose(hdf5_file);
+  @#
+@end def
+
+@def insideInitialisationLoops($codeString)
+  @#
+// Stage 2 of initialisation
+
+// The purpose of the following define is to give a (somewhat helpful) compile-time error
+// if the user has attempted to use the propagation dimension variable in the initialisation
+// block of a <vector> element. If they're trying to do this, what they really want is a 
+// <computed_vector> instead.
+#define ${propagationDimension} Dont_use_propagation_dimension_${propagationDimension}_in_vector_element_CDATA_block___Use_a_computed_vector_instead
+
+// ********** Initialisation code ***************
+${codeString}@slurp
+// **********************************************
+#undef ${propagationDimension}
+  @#
+@end def
+

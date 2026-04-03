@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>le</name>
+
+  <author>Chaojie Mo</author>
+  <description>
+    The program solves the nonlinear lubrication equation. 
+  </description>
+
+  <features>
+      <benchmark />
+      <bing />
+      <fftw plan="patient" />
+
+      <auto_vectorise />
+      <globals>
+          <![CDATA[
+          const double rho = 6;
+          const double mu = 5;
+          const double lambda = 7.2;
+          const double R = 6.0;
+          const double pi = 3.1415926;
+          ]]>
+       </globals>
+     </features>
+
+  <geometry>
+      <propagation_dimension> t </propagation_dimension>
+      <transverse_dimensions>
+        <dimension name="z" lattice="120"  domain="(-30, 30)" transform="dft"/>
+      </transverse_dimensions>
+   </geometry>
+
+  <vector name="hv" type="complex" dimensions="z">
+    <components>h v</components>
+    <initialisation>
+      <![CDATA[
+      h = R-0.01*R*cos(pi*z/60.0);
+      v = 0;
+      ]]>
+    </initialisation>
+  </vector>
+
+  <sequence>
+    <integrate algorithm="ARK89" interval="240.0" tolerance="1e-7">
+      <samples>100</samples>
+      <operators>
+        <integration_vectors>hv</integration_vectors>
+        <operator kind="ex">
+          <operator_names>Lz</operator_names>
+          <![CDATA[
+            Lz = i*kz;
+          ]]>
+        </operator>
+
+        <operator kind="ex">
+          <operator_names>Lzzz</operator_names>
+          <![CDATA[
+            Lzzz = -i*kz*kz*kz;
+          ]]>
+        </operator>
+
+        <operator kind="ex">
+          <operator_names>Lzz</operator_names>
+          <![CDATA[
+            Lzz = -kz*kz;
+          ]]>
+        </operator>
+
+ 
+        <![CDATA[
+          dh_dt = -v*Lz[h] - h*Lz[v]/2.0;
+          dv_dt = -v*Lz[v]  + 3.0*mu/rho/h/h*(2.0*h*Lz[h]*Lz[v]+h*h*Lzz[v]) - lambda/rho*((-Lz[h]*sqrt(1+Lz[h]*Lz[h]) - h*Lz[h]*Lzz[h]/sqrt(1+Lz[h]*Lz[h]))/(h*h*(1+Lz[h]*Lz[h])) - (Lzzz[h]*pow(1+Lz[h]*Lz[h],3.0/2.0)-3.0*Lz[h]*Lzz[h]*Lzz[h]*sqrt(1+Lz[h]*Lz[h]))/pow(1+Lz[h]*Lz[h],3.0));
+        ]]>
+ 
+      </operators>
+    </integrate>
+  </sequence>
+
+  <output>
+      <sampling_group basis="z" initial_sample="yes">
+        <moments>hR hI vR vI</moments>
+        <dependencies>hv</dependencies>
+        <![CDATA[
+          hR = h.Re();
+          hI = h.Im();
+          vR = v.Re();
+          vI = v.Im();
+        ]]>
+      </sampling_group>
+  </output>
+
+</simulation>
+

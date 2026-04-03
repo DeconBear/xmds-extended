@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <testing>
+    <xsil_file name="fibre_with_correlation_function.xsil" expected="fibre_with_correlation_function_expected.xsil" absolute_tolerance="5e-5" relative_tolerance="1e-3" />
+  </testing>
+  <name>fibre_with_correlation_function</name>
+  <author>Unknown author</author>
+  <description>
+    Example fibre noise simulation
+  </description>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="64"  domain="(-5, 5)" aliases="xp" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <features>
+    <auto_vectorise />
+    <benchmark />
+    <bing />
+    <globals>
+      <![CDATA[
+      const real ggamma = 1.0;
+      const real bbeta = sqrt(4.0*M_PI*ggamma/10.0);
+      ]]>
+    </globals>
+  </features>
+  
+  <vector name="main" initial_basis="x" type="complex">
+    <components>phi</components>
+    <initialisation>
+      <![CDATA[
+        phi = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <noise_vector name="noise" kind="wiener" type="complex" method="solirte" seed="293485">
+    <components>n_1</components>
+  </noise_vector>
+  
+  <sequence>
+    <integrate algorithm="SI" interval="2.5" steps="200000" tolerance="1e-6">
+      <samples>50 1 1</samples>
+      <operators>
+        <operator kind="ex" constant="yes">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -i*kx*kx;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <dependencies>noise</dependencies>
+        <![CDATA[
+          dphi_dt = L[phi] - ggamma*phi + bbeta*n_1;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output format="binary">
+      <sampling_group basis="kx" initial_sample="yes">
+        <moments>pow_dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          pow_dens = mod2(phi);
+        ]]>
+      </sampling_group>
+      <sampling_group basis="x xp" initial_sample="no">
+        <moments>g1 g2</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          g1 = abs(conj(phi) * phi(x => xp));
+          g2 = mod2(phi) * mod2(phi(x => xp));
+        ]]>
+      </sampling_group>
+      <sampling_group basis="kx kxp" initial_sample="no">
+        <moments>g1 g2 g2minus</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          g1 = abs(conj(phi) * phi(kx => kxp));
+          g2 = mod2(phi) * mod2(phi(kx => kxp));
+          g2minus = mod2(phi) * mod2(phi(kx => -kxp));
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

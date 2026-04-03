@@ -1,0 +1,127 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Output.tmpl
+
+Created by Graham Dennis on 2007-08-26.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features._Feature
+@from xpdeint.Utilities import lazy_property
+
+@def description: output
+@attr $featureName = 'Output'
+
+@@lazy_property
+@def outputGroups
+  @return len($momentGroups)
+@end def
+
+@def functionPrototypes
+  @#
+  @super
+  @#
+void _write_output();
+  @#
+@end def
+
+@def functionImplementations
+  @#
+  @super
+  @#
+${writeOutFunctionImplementation}@slurp
+  @#
+@end def
+
+@def writeOutFunctionImplementation
+void _write_output()
+{
+  _LOG(_SIMULATION_LOG_LEVEL, "Generating output for ${simulationName}\n");
+  
+  @if not $momentGroups
+  _LOG(_SIMULATION_LOG_LEVEL, "Warning: No output moment groups.\n");
+  @else
+    @set $featureOrdering = ['Driver', 'ChunkedOutput']
+  ${insertCodeForFeatures('writeOutBegin', featureOrdering), autoIndent=True}@slurp
+  
+  ${outputFormat.writeOutSetup(c'("${filename}" + gsArgsAndValues).c_str()', self), autoIndent=True}@slurp
+    @for $momentGroup in $momentGroups
+  ${momentGroup.functions['writeOut'].call(_outfile = '_outfile')}
+    @end for
+  
+  ${outputFormat.writeOutTearDown, autoIndent=True}@slurp
+  
+  ${insertCodeForFeaturesInReverseOrder('writeOutEnd', featureOrdering), autoIndent=True}@slurp
+  @end if
+}
+@end def
+
+@def writeOutFunctionImplementationBody($dict)
+  @silent dict.setdefault('baseFilename', c'("${filename}" + gsArgsAndValues).c_str()')
+  @silent dict.setdefault('outputGroupFilenameSuffix', '_' + dict['caller'].name)
+${outputFormat.writeOutFunctionImplementationBody(dict)}@slurp
+@end def
+
+@def mainEnd($dict)
+
+_write_output();
+@end def
+
+@def integrateFixedStepInnerLoopEnd($dict)
+  @#
+  @set $integrator = dict['caller']
+  @assert len($momentGroups) == len($integrator.samples)
+  @#
+  @for $momentGroupNumber, $sampleCount in enumerate($integrator.samples)
+    @if $sampleCount > 0
+      @assert ($integrator.stepCount % $sampleCount) == 0
+      @set $sampleEveryNthStep = $integrator.stepCount / $sampleCount
+if ((_istep % ${int(sampleEveryNthStep)}) == ${sampleEveryNthStep - 1})
+  _mg${momentGroupNumber}_sample();
+    @end if
+  @end for
+  @#
+@end def
+
+@def integrateAdaptiveStepOuterLoopEnd($dict)
+  @#
+  @set $integrator = dict['caller']
+  @assert len($momentGroups) == len($integrator.samples)
+  @#
+if (_break_next) {
+  @for $momentGroupNumber, $sampleCount in enumerate($integrator.samples)
+  if (_next_sample_flag[$momentGroupNumber]) {
+    _mg${momentGroupNumber}_sample();
+    _next_sample_counter[$momentGroupNumber]++;
+  }
+  @end for
+  @set $momentGroupCount = len($integrator.samples)
+  if (_next_sample_flag[${momentGroupCount}])
+    _next_sample_flag[${momentGroupCount + 1}] = true;
+  else {
+    _break_next = false;
+    _${propagationDimension}_break_next = _${integrator.name}_setup_sampling(_next_sample_flag, _next_sample_counter);
+  }
+}
+
+if ( (_${propagationDimension}_local + _step)*(1.0 + _EPSILON) > _${propagationDimension}_break_next) {
+  _break_next = true;
+  _LOG(_SAMPLE_LOG_LEVEL, "Current timestep: %e\n", _old_step);
+  _step = _${propagationDimension}_break_next - _${propagationDimension}_local;
+}
+@end def

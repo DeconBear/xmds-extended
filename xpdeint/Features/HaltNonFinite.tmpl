@@ -1,0 +1,58 @@
+@shBang #!/usr/bin/env python3
+
+@*
+HaltNonFinite.tmpl
+
+Created by Graham Dennis on 2008-05-04.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Based on code originally written by Gabriel McManus
+*@
+@extends xpdeint.Features._Feature
+
+@def description: Halt simulation on non-finite results
+@attr featureName = 'HaltNonFinite'
+@attr uselib = ['safe_math']
+
+@def postSingleStep($dict)
+  @#
+  @set $integrator = dict['caller']
+// Check if a component of any integration vector is non-finite
+// no need to check all components since they will be quickly mixed
+  @#
+if (@slurp
+  @set $separator = ''
+  @for integrationVector in integrator.integrationVectors
+    @set $suffix = ''
+    @if integrationVector.type == 'complex'
+      @# Check the real component
+      @set $suffix = '.Re()'
+    @end if
+${separator}_xmds_isnonfinite(_active_${integrationVector.id}[0]${suffix})@slurp
+    @set $separator = ' || '
+  @end for
+) {
+  // One of the integration vectors has gone non-finite.
+  // Sample any moment groups that have pending samples,
+  // then leave the integrator.
+  _LOG(_WARNING_LOG_LEVEL, "WARNING: halt_non_finite: Integration halted at ${integrator.propagationDimension} = %e.\n"
+                           "         Non-finite number in integration vector in segment ${integrator.segmentNumber}.\n", $propagationDimension);
+  
+  ${integrator.earlyTerminationCode, autoIndent=True}@slurp
+}
+  @#
+@end def

@@ -1,0 +1,75 @@
+Notes on the API
+-------------------
+
+CUDA is a favourite for GPU compute, but it's Nvidia specific. It originally had the best toolchain, support and recognition, but now there's a bunch of good APIs. To begin with I'm just going to use CUDA to keep things simple, but we should investigate other options like ROCm and OpenCL as well, so we can use AMD and Intel GPUs as well.
+
+Possibly we could do something like write the code intially in CUDA and then use a wrapper to specialize to a type of GPU. Or use an API that exists on all vendors' hardware but is higher level than OpenCL.
+ 
+
+
+
+What should be run on the GPU?
+------------------------------
+
+Moving stuff between GPU and CPU is expensive, so ideally we do all the integration steps in a batch on the GPU and only leave it to do sampling.
+
+A GPU is massively parallel, so we need some way to do the RK algorithm as matrix multiplication, where we operate on all the entries of the transverse dimension simultaneously. Or perhaps spawn a GPU thread for each element of the transverse dimension? That's not going to work since they are coupled with the transverse derivative (but not in k-space, so GPU ffts will be needed, obviously).
+
+Problem: The CUDA version of FFTW (cuFFT) seems to take data from the host, do the fft on the GPU, then move the data back to the host. This is not what we want - we need the result of the fft to *stay* on the GPU. I guess this opens the door to a minimal GPU implementation - only do FFTs on the GPU. This would only give a speedup for large multi-dimensional problems.
+
+Apparently you can just keep using fftw syntax and do the ffts on the GPU by replacing fftw.h with  cufftw.h, instead of linking to  fftw3/fftw3f libraries, link with both the cuFFT and cuFFTW libraries, and ensuring the search path includes the directory containing cuda_runtime_api.h. See https://docs.nvidia.com/cuda/cufft/index.html#fftw-supported-interface
+
+
+Compile and link commands
+-------------------------
+
+/usr/bin/g++ -O2 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -fdebug-prefix-map==/usr/local/src/conda/- -fdebug-prefix-map==/usr/local/src/conda-prefix -g -I../includes -I/usr/include/x86_64-linux-gnu -I../../../anaconda3/include -DHAVE_HDF5_HL -DHAVE_H5LEXISTS -DNDEBUG -D_FORTIFY_SOURCE=2 nlse_minimal.cc -c -o/home/mattias/xmds-3.0.0/xpdeint/GPU_Acceleration_Development/nlse_minimal.cc.1.o
+
+/usr/bin/g++ -fPIC -Wl,-O2 -Wl,--sort-common -Wl,--as-needed -Wl,-z,relro -Wl,-z,now nlse_minimal.cc.1.o -o/home/mattias/xmds-3.0.0/xpdeint/GPU_Acceleration_Development/nlse_minimal -Wl,-rpath,/home/mattias/anaconda3/lib -Wl,-rpath,/home/mattias/anaconda3/lib -Wl,-Bstatic -lhdf5_hl -lhdf5 -lfftw3 -Wl,-Bdynamic -L/home/mattias/anaconda3/lib -L/home/mattias/anaconda3/lib -lrt -lpthread -lz -ldl -lm
+
+
+
+
+
+The code we need to port to the GPU is basically just the function 
+
+void _segment1()
+
+which does the integration. This function calls the following functions:
+
+    _segment1_calculate_nonconstant_ip_fields(_step, 1);
+    _segment1_ip_evolve(1);
+    _x_wavefunction_basis_transform(1); // (x)
+    _segment1_calculate_delta_a(_step);
+    _mg0_sample();
+    
+The following functions are empty: _segment1_calculate_nonconstant_ip_fields, _segment1_ip_evolve. _mg0_sample is only called when a sample is needed. Also _segment1_calculate_delta_a(_step) does nothing but call  _segment1_x_operators_evaluate_operator0() and _segment1_x_operators_evaluate_operator1(_step);
+
+
+So that leaves these three functions:
+
+_x_wavefunction_basis_transform(1); // (x)
+    - Transform between the x and k basis
+
+_segment1_x_operators_evaluate_operator0()
+    - Calculates     Ltt = -i*kx*kx*0.5;
+                    _Ltt_phi = Ltt * phi;
+        by transforming phi to kx basis
+        and stores _Ltt_phi in _active_x_segment1_x_operators_operator0_result
+
+
+_segment1_x_operators_evaluate_operator1(_step)
+    - Assumes _active_x_wavefunction contains the field phi at the current time step
+    - Calculates    dphi_dtau = _Ltt_phi + i*mod2(phi)*phi;    
+                    _active_x_wavefunction[_x_wavefunction_index_pointer + 0] = dphi_dtau * _step;
+    - So note that at the end of this function, _active_x_wavefunction contains dphi_dtau * _step, NOT phi!
+
+So this loop just implements RK4 in the standard way, using fourier transform to calculate transverse derivatives.
+
+It's a very linear implementation though. Just implementing it on a GPU won't give a speed up. We need to figure out a way to parallelize the RK4 algorithm efficiently.
+
+
+
+
+
+

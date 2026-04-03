@@ -1,0 +1,77 @@
+@shBang #!/usr/bin/env python3
+
+@*
+SolirteGenerator.tmpl
+
+Created by Joe Hope on 2009-08-22.
+
+Copyright (c) 2009-2012, Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Stochastic.Generators.Generator
+
+@from xpdeint.CallOnceGuards import callOnceGuard
+@import random
+
+@def description: Generic Solirte noise
+@def generatorType: CPRNG<CSFMTParams_19937>*
+
+@def globals
+  @#
+  @super
+  @#
+$generatorType ${generatorName};
+  @#
+@end def
+
+@*
+  Static includes
+*@
+@#  The callOnceGuard won't work until the same includes are gone from the stochastic feature.
+@@callOnceGuard
+@def static_includes
+  @#
+  @super
+  @#
+#define CFG_TIMETRACK_DISABLE
+// We have disabled Solirte's MMX version.
+// Use SSE2 or get a newer computer.
+#undef CFG_HAVE_MMX
+#define CFG_HAVE_MMX 0
+#include <solirte/SFMTparams.h>
+#include <solirte/prng.h>
+#include <solirte/ziggurat.cpp>
+  @#
+@end def
+
+@*
+  Initialise seeds
+*@
+@def initialiseLocalSeeds
+  @#
+  @set $featureOrdering = ['Driver']
+  @silent seedOffset = $insertCodeForFeatures('seedOffset', featureOrdering)
+  @#
+  @if not len($seedArray)
+    @set self.generatedSeeds = [random.randrange(0, pow(2, 31)) for i in range(1)]
+    @set seedArray = self.generatedSeeds
+  @end if
+  @#
+  @set $seedString = str($seedArray[0])+seedOffset
+  @#
+${generatorName} = new CPRNG<CSFMTParams_19937>($seedString);
+  @#
+@end def

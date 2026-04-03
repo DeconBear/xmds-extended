@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>lorenz_arguments</name>
+  <author>Mattias Johnsson</author>
+  <description>
+    First script to test command line argument passing.
+    Can accept an integration interval as the argument "time_arg"
+    Othewise the same as the lorenz script
+  </description>
+  
+  <features>
+    <arguments>
+      <argument name="sigma" type="real" default_value="10.0" />
+      <argument name="b"     type="real" default_value="2.67" />
+      <argument name="r"     type="real" default_value="28.0" />
+      <argument name="time_arg" type="real" default_value="100.0" />
+    </arguments>
+    <benchmark />
+    <error_check />
+    <bing />
+    <validation kind="run-time" />
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+  </geometry>
+  
+  <vector name="position" type="real">
+    <components>
+      x y z
+    </components>
+    <initialisation>
+      <![CDATA[
+      x = y = z = 1.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK89" interval="1.0*time_arg" steps="25000" tolerance="1e-7">
+      <samples>10</samples>
+      <operators>
+        <integration_vectors>position</integration_vectors>
+        <![CDATA[
+        dx_dt = sigma*(y-x);
+        dy_dt = r*x - y - x*z;
+        dz_dt = x*y - b*z;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+    <sampling_group initial_sample="yes">
+      <moments>xR yR zR</moments>
+      <dependencies>position</dependencies>
+      <![CDATA[
+        xR = x;
+        yR = y;
+        zR = z;
+      ]]>
+    </sampling_group>
+  </output>
+</simulation>

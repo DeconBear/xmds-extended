@@ -1,0 +1,76 @@
+@shBang #!/usr/bin/env python3
+
+@*
+MPI.tmpl
+
+Created by Graham Dennis on 2008-03-28.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.ScriptElement
+
+@attr $buildVariant = 'mpi'
+
+@def includes
+  @#
+  @super
+  @#
+#include <mpi.h>
+  @#
+@end def
+
+@def defines
+#undef MPI_REAL
+#define MPI_REAL MPI_${{'double': 'DOUBLE', 'single': 'FLOAT'}[$precision]}
+@end def
+
+@def globals
+  @#
+  @super
+  @#
+int _rank, _size;
+  @#
+@end def
+
+@def logFunctionBegin($dict)
+  @#
+  @# Insert code at the start of the _LOG function
+  @#
+if ((_rank == 0) || (logLevel & ~(_SIMULATION_LOG_LEVEL | _SEGMENT_LOG_LEVEL | _SAMPLE_LOG_LEVEL | _NO_ERROR_TERMINATE_LOG_LEVEL))) { \
+  if (logLevel & ~(_SIMULATION_LOG_LEVEL | _SEGMENT_LOG_LEVEL | _SAMPLE_LOG_LEVEL | _NO_ERROR_TERMINATE_LOG_LEVEL)) \
+    printf("Rank[%i]: ", _rank); \
+  @set $dict['extraIndent'] += 2
+  @#
+@end def
+
+@def logFunctionEnd($dict)
+  @#
+  @set $dict['extraIndent'] -= 2
+} \
+if (logLevel & _ERROR_LOG_LEVEL) \
+  MPI_Abort(MPI_COMM_WORLD, 1); \
+else if (logLevel & _NO_ERROR_TERMINATE_LOG_LEVEL) \
+  MPI_Finalize(); \
+  @#
+@end def
+
+@def seedOffset($dict)
+  @#
+ + _rank@slurp
+  @#
+@end def
+

@@ -1,0 +1,98 @@
+@shBang #!/usr/bin/env python3
+
+@*
+BreakpointSegment.tmpl
+
+Created by Graham Dennis on 2008-03-15.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments._BreakpointSegment
+@from xpdeint.CallOnceGuards import callOnceGuard
+
+@*
+  Description of template
+*@
+@def description: segment $segmentNumber (Breakpoint)
+
+@*
+  Static globals
+*@
+@@callOnceGuard
+@def static_globals
+  @#
+  @super
+  @#
+long _breakpointAutoNameCounter = 0;
+  @#
+@end def
+
+@*
+  Function implementations
+*@
+@def segmentFunctionBody($function)
+${evaluateComputedVectors($dependencies)}@slurp
+
+${transformVectorsToBasis($dependencies, $breakpointBasis)}@slurp
+
+  @set $featureOrdering = ['Driver']
+  @set $dict = {'extraIndent': 0}
+${insertCodeForFeatures('breakpointBegin', featureOrdering, dict)}@slurp
+  @set $extraIndent = dict['extraIndent']
+
+${breakpointFunctionContents, extraIndent=extraIndent}@slurp
+
+${insertCodeForFeaturesInReverseOrder('breakpointEnd', $featureOrdering, dict)}@slurp
+  @#
+@end def
+
+@def breakpointFunctionContents
+  @#
+char *_baseFilename = (char*)malloc(255);
+  @if not $filename
+    @# If we don't have a filename, then we are auto-naming
+_breakpointAutoNameCounter++;
+snprintf(_baseFilename, 255, "%li%s", _breakpointAutoNameCounter, gsArgsAndValues.c_str());
+  @else
+    @# We have a name, rip off the extension if its 'xsil'
+    @set baseFilename = $filename
+    @if baseFilename.endswith('.xsil')
+      @set baseFilename = baseFilename[0:-5]
+    @end if
+snprintf(_baseFilename, 255, "%s%s", "$baseFilename", gsArgsAndValues.c_str());
+  @end if
+
+  @set featureOrdering = ['Output']
+${outputFormat.writeOutSetup('_baseFilename', self)}@slurp
+
+  @set $dependentVariables = [{'vector': vector, 'arrayName': c'_active_${vector.id}', 'components': vector.components} for vector in $dependencies]
+  @set $writeOutDict = {'field': $field,
+                        'basis': $breakpointBasis,
+                        'fp': '_outfile',
+                        'baseFilename': "_baseFilename",
+                        'outputGroupFilenameSuffix': '',
+                        'dependentVariables': dependentVariables,
+                        'xsilElementName': "breakpoint",
+                        'groupID': 1
+                       }
+${outputFormat.writeOutFunctionImplementationBody(writeOutDict)}@slurp
+
+${outputFormat.writeOutTearDown}@slurp
+
+  @#
+@end def
+

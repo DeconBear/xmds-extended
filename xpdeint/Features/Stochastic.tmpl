@@ -1,0 +1,254 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Stochastic.tmpl
+
+Created by Graham Dennis on 2007-12-11.
+
+Copyright (c) 2007-2012, Graham Dennis and Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features._Stochastic
+
+@from xpdeint.Operators.DeltaAOperator import DeltaAOperator
+
+@def description: Stochastic
+@attr featureName = 'Stochastic'
+@attr $uselib = ['randomisation_seeding']
+
+@*
+  Globals
+*@
+@def globals
+  @#
+  @super
+  @#
+  @for integrator in self.adaptiveIntegratorsWithNoises() 
+// ********************************************************
+// struct used to store step size and noise vector to ensure
+// stochastic convergence
+struct _dtdWstore_segment${integrator.segmentNumber} {
+  real _step;
+    @#
+    @for noiseVector in integrator.dynamicNoiseVectors
+  $noiseVector.type* _${noiseVector.id};
+    @end for
+  
+  _dtdWstore_segment${integrator.segmentNumber}() {
+  _step = 0;
+    @#
+    @for noiseVector in integrator.dynamicNoiseVectors
+  _${noiseVector.id} = NULL;
+    @end for
+  }
+  ~_dtdWstore_segment${integrator.segmentNumber}() {
+    @#
+    @for noiseVector in integrator.dynamicNoiseVectors
+    if (_${noiseVector.id})
+      xmds_free(_${noiseVector.id});
+    @end for
+  }
+};
+  @end for
+  @#
+  @for dimRep in self.nonUniformDimRepsNeededForGaussianNoise
+${dimRep.type}* ${dimRep.stepSizeArrayName}_invsqrt = (${dimRep.type}*) xmds_malloc(sizeof(${dimRep.type}) * (${dimRep.globalLattice}));
+  @end for
+  @#
+@end def
+
+@def mainBegin($dict)
+  @#
+  @for dimRep in self.nonUniformDimRepsNeededForGaussianNoise
+for (long ${dimRep.loopIndex} = 0; ${dimRep.loopIndex} < ${dimRep.globalLattice}; ${dimRep.loopIndex}++) {
+  ${dimRep.stepSizeArrayName}_invsqrt[${dimRep.loopIndex}] = (real)1.0/sqrt(${dimRep.stepSizeArrayName}[${dimRep.loopIndex}] * (${dimRep.volumePrefactor}));
+}
+  @end for
+
+  @for noiseVector in $noiseVectors
+${noiseVector.initialiseGlobalSeeds}@slurp
+
+  @end for
+  @#
+@end def
+
+@def topLevelSequenceBegin($dict)
+  @#
+  @for noiseVector in $noiseVectors
+${noiseVector.initialiseLocalSeeds}@slurp
+
+  @end for
+  @#
+@end def
+
+@def integrateAdaptiveStepBegin($dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @if not integrator.dynamicNoiseVectors
+    @return
+  @end if
+  @#
+typedef _dtdWstore_segment${integrator.segmentNumber} _dtdWstore;
+list<_dtdWstore> _noise_list;
+list<_dtdWstore>::iterator _active_node;
+  @#
+@end def
+
+@def integrateAdaptiveStepEnd($dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @if not integrator.dynamicNoiseVectors
+    @return
+  @end if
+  @#
+  @for noiseVector in integrator.dynamicNoiseVectors
+_active_${noiseVector.id} = _${noiseVector.id};
+  @end for
+  @#
+@end def
+
+@def integrateFixedStepInnerLoopBegin(dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @if not integrator.dynamicNoiseVectors
+    @return
+  @end if
+  @#
+  @for noiseVector in integrator.dynamicNoiseVectors
+
+_active_${noiseVector.id} = _${noiseVector.id};
+${noiseVector.functions['evaluate'].call(_step = '_noiseStep')}
+  @end for
+  @#
+  @if 'ErrorCheck' in $features
+
+if (!_half_step) { // For the full step we average the two noises.
+    @for noiseVector in integrator.dynamicNoiseVectors
+      @#
+  _active_${noiseVector.id} = _${noiseVector.id}2;
+  ${noiseVector.functions['evaluate'].call(_step = '_noiseStep'), autoIndent=True}
+  ${loopOverVectorsWithInnerContentTemplate([noiseVector],
+  """_${vector.id}[$index] = 0.5*(_${vector.id}[$index] + _${vector.id}2[$index]);
+  """, basis = noiseVector.initialBasis), autoIndent=True}@slurp
+  _active_${noiseVector.id} = _${noiseVector.id};
+    @end for
+}
+  @end if
+  @#
+@end def
+
+@def integrateAdaptiveStepInnerLoopBegin(dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @if not integrator.dynamicNoiseVectors
+    @return
+  @end if
+  @#
+if (_noise_list.empty()) {
+  // Noise list empty so start afresh
+  _noise_list.push_front(_dtdWstore());
+  _active_node = _noise_list.begin();
+  _active_node->_step = _step;
+  @for noiseVector in integrator.dynamicNoiseVectors
+  
+  _active_${noiseVector.id} =  (${noiseVector.type}*) xmds_malloc(sizeof(${noiseVector.type}) * MAX(${noiseVector.allocSize},1));
+  _active_node->_${noiseVector.id} = _active_${noiseVector.id};
+  ${noiseVector.functions['evaluate'].call(_step = '_step')}
+  @end for
+} else if (_step*(1.0 + _EPSILON) < _noise_list.begin()->_step) {
+  // Create new smallest time step
+  
+  // If the step is greater than 50% of the current smallest step size
+  // then we should just use half the step size because we are going to have
+  // to do the other half at some point too.
+  
+  const real _old_smallest_step = _noise_list.begin()->_step;
+  
+  if (_step > 0.5*_old_smallest_step*(1.0 + _EPSILON))
+    _step = 0.5*_old_smallest_step;
+  
+  @for noiseVector in integrator.dynamicNoiseVectors
+    @# It is necessary to transform the noise vector back to its original basis, as it may have been transformed in the mean time.
+  ${transformVectorsToBasis([noiseVector], noiseVector.initialBasis), autoIndent=True}@slurp
+  _active_${noiseVector.id} = (${noiseVector.type}*) xmds_malloc(sizeof(${noiseVector.type}) * MAX(${noiseVector.allocSize},1));
+  ${noiseVector.functions['split'].call(_new_step = '_step', _old_step = '_old_smallest_step', _old_array = '_noise_list.begin()->_' + noiseVector.id)}
+  
+  @end for
+  @#
+  _noise_list.push_front(_dtdWstore());
+  _active_node = _noise_list.begin();
+  _active_node->_step = _step;
+  @for noiseVector in integrator.dynamicNoiseVectors
+  _active_node->_${noiseVector.id} = _active_${noiseVector.id};
+  @end for
+} else {
+  // Use step already attempted
+  for (_active_node = _noise_list.begin(); (_active_node != _noise_list.end()) && (_active_node->_step <= _step*(1.0 + _EPSILON)); _active_node++)
+    ;
+  
+  _active_node--;
+  _step = _active_node->_step;
+  @for noiseVector in integrator.dynamicNoiseVectors
+  _active_${noiseVector.id} = _active_node->_${noiseVector.id};
+    @if noiseVector.needsTransforms
+  _${noiseVector.id}_basis = ${basisIndexForBasis(noiseVector.initialBasis)};
+    @end if
+  @end for
+  
+  if ( _break_next && !((_${propagationDimension}_local + _step)*(1.0 + _EPSILON) >= _${propagationDimension}_break_next))
+    _break_next = false;
+} 
+
+  @#
+@end def
+
+@def adaptiveStepSucceeded(dict)
+  @#
+  @set $integrator = dict['caller']
+  @#
+  @if not integrator.dynamicNoiseVectors
+    @return
+  @end if
+  @#
+
+// Trim dtdW tree
+_active_node++;
+if (_active_node == _noise_list.end())
+  _noise_list.clear();
+else {
+  for (list<_dtdWstore>::iterator _temp_iter = _active_node; _temp_iter != _noise_list.end(); _temp_iter++) {
+    _temp_iter->_step -= _step;
+    real _temp_step = _temp_iter->_step;
+    
+  @for noiseVector in integrator.dynamicNoiseVectors
+    @# The noise vector must be transformed back to its initial basis in case it has been transformed during the integration step.
+    ${transformVectorsToBasis([noiseVector], noiseVector.initialBasis), autoIndent = True}@slurp
+    ${noiseVector.type}* _temp_${noiseVector.id} = _temp_iter->_${noiseVector.id};
+    ${loopOverVectorsWithInnerContentTemplate([$noiseVector],
+"""_temp_${vector.id}[$index] = (_temp_${vector.id}[$index]*(_temp_step + _step) - _active_${vector.id}[$index]*_step)/_temp_step;
+"""), autoIndent=True}@slurp
+  @end for
+  }
+  
+  _noise_list.erase(_noise_list.begin(), _active_node);
+}
+  @#
+@end def
+

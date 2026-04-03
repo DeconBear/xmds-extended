@@ -1,0 +1,34 @@
+@shBang #!/usr/bin/env python3
+
+@*
+GaussianMKLRandomVariable.tmpl
+
+Created by Joe Hope on 2009-08-22.
+
+Copyright (c) 2009-2012, Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Stochastic.RandomVariables.GaussianRandomVariable
+
+@def makeFixedVarianceNoises
+@*doc:
+  Return the code for the contents of the makeNoises function for
+  a gaussian noise generated with the MKL generator
+*@
+  @set noiseVector = $parent
+vdRngGaussian(VSL_METHOD_DGAUSSIAN_BOXMULLER2, ${generator.generatorName}, _vector_size, reinterpret_cast<real*>(_active_${noiseVector.id}), 0.0, sqrt(_var));
+  @#
+@end def

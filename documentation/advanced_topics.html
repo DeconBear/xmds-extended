@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Advanced Topics &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML,http://www.xmds.org/_static/mathjax-use-tex-fonts.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Frequently Asked Questions" href="faq.html" />
+    <link rel="prev" title="Modified Midpoint Method" href="bulirschStoer.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="faq.html" title="Frequently Asked Questions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="bulirschStoer.html" title="Modified Midpoint Method"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Advanced Topics</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="advanced-topics">
+<span id="advancedtopics"></span><span id="index-0"></span><h1>Advanced Topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h1>
+<p>This section has further details on some important topics.</p>
+<p><a class="reference internal" href="#importing"><span class="std std-ref">Importing data</span></a> (importing data into XMDS2, and data formats used in the export)</p>
+<p><a class="reference internal" href="#convolutions"><span class="std std-ref">Convolutions and Fourier transforms</span></a> (extra information on the Fourier transforms used in XMDS2, how this applies to convolutions)</p>
+<p><a class="reference internal" href="#dimensionaliases"><span class="std std-ref">Dimension aliases</span></a> (dimensions which are declared to be identical, useful for correlation functions)</p>
+<div class="section" id="importing-data">
+<span id="importing"></span><span id="index-1"></span><h2>Importing data<a class="headerlink" href="#importing-data" title="Permalink to this headline">¶</a></h2>
+<p>There are many cases where it is advantageous to import previously acquired data into XMDS2. For example, the differential equation you wish to solve may depend on a complicated functional form, which is more easily obtained via an analytical package such as Mathematica or Maple. Furthermore, importing data from another source can be quicker than needlessly performing calculations in XMDS2. In this tutorial, we shall consider an example of importing into XMDS2 a function generated in Mathematica, version 6.0. Note, however, that in order to do this it is required that hdf5 is installed (see <a class="reference external" href="http://www.hdfgroup.org/HDF5/">http://www.hdfgroup.org/HDF5/</a>).</p>
+<p>Suppose we want to import the following function into XMDS2:</p>
+<div class="math notranslate nohighlight">
+\[f(x) = x^2.\]</div>
+<p>The first step is to create an hdf5 file, from XMDS2, which specifies the dimensions of the grid for the x dimension. Create and save a new XMDS2 file. For the purposes of this tutorial we shall call it “grid_specifier.xmds” with name “grid_specifier”. Within this file, enter the following “dummy” vector - which we shall call “gen_dummy” - which depends on the x dimension:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;vector</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">name=</span><span class="s">&quot;gen_dummy&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span>dummy<span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;initialisation&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">dummy</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/initialisation&gt;</span>
+<span class="nt">&lt;/vector&gt;</span>
+</pre></div>
+</div>
+<p>What “dummy” is is not actually important. It is only necessary that it is a function of <span class="math notranslate nohighlight">\(x\)</span>. However, it is important that the domain and lattice for the <span class="math notranslate nohighlight">\(x\)</span> dimension are identical to those in the XMDS2 you plan to import the function into. We output the following xsil file (in hdf5 format) by placing a breakpoint in the sequence block as follows:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sequence&gt;</span>
+  <span class="nt">&lt;breakpoint</span> <span class="na">filename=</span><span class="s">&quot;grid.xsil&quot;</span> <span class="na">format=</span><span class="s">&quot;hdf5&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>
+        gen_dummy
+      <span class="nt">&lt;/dependencies&gt;</span>
+  <span class="nt">&lt;/breakpoint&gt;</span>
+</pre></div>
+</div>
+<p>In terminal, compile the file “grid_specifier.xmds” in XMDS2 and run the C code as usual. This creates two files - “grid.xsil” and “grid.h5”. The file “grid.h5” contains the list of points which make up the grids for the x dimensions. This data can now be used to ensure that the function <span class="math notranslate nohighlight">\(f(x)\)</span> which we will import into XMDS2 is compatible with the the specified grid in your primary XMDS2 file.</p>
+<p>In order to read the “grid.h5” data into Mathematica version 6.0, type the following command into terminal:.. code-block:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>xsil2graphics2 -e grid.xsil
+</pre></div>
+</div>
+<p>This creates the Mathematica notebook “grid.nb”. Open this notebook in Mathematica and evaluate the first set of cells. This has loaded the grid information into Mathematica. For example, suppose you have specified that the <span class="math notranslate nohighlight">\(x\)</span> dimension has a lattice of 128 points and a domain of (-32, 32). Then calling “x1” in Mathematica should return the following list:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{-32., -31.5, -31., -30.5, -30., -29.5, -29., -28.5, -28., -27.5,
+-27., -26.5, -26., -25.5, -25., -24.5, -24., -23.5, -23., -22.5,
+-22., -21.5, -21., -20.5, -20., -19.5, -19., -18.5, -18., -17.5,
+-17., -16.5, -16., -15.5, -15., -14.5, -14., -13.5, -13., -12.5,
+-12., -11.5, -11., -10.5, -10., -9.5, -9., -8.5, -8., -7.5, -7.,
+-6.5, -6., -5.5, -5., -4.5, -4., -3.5, -3., -2.5, -2., -1.5, -1.,
+-0.5, 0., 0.5, 1., 1.5, 2., 2.5, 3., 3.5, 4., 4.5, 5., 5.5, 6., 6.5,
+7., 7.5, 8., 8.5, 9., 9.5, 10., 10.5, 11., 11.5, 12., 12.5, 13.,
+13.5, 14., 14.5, 15., 15.5, 16., 16.5, 17., 17.5, 18., 18.5, 19.,
+19.5, 20., 20.5, 21., 21.5, 22., 22.5, 23., 23.5, 24., 24.5, 25.,
+25.5, 26., 26.5, 27., 27.5, 28., 28.5, 29., 29.5, 30., 30.5, 31.,
+31.5}
+</pre></div>
+</div>
+<p>This is, of course, the list of points which define our grid.</p>
+<p>We are now in a position to define the function <span class="math notranslate nohighlight">\(f(x)\)</span> in Mathematica. Type the following command into a cell in the Mathematica notebook “grid.nb”:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>f[x_]:= x^2
+</pre></div>
+</div>
+<p>At this stage this is an abstract mathematical function as defined in Mathematica. What we need is a list of values for <span class="math notranslate nohighlight">\(f(x)\)</span> corresponding to the specified grid points. We will call this list “func”. This achieved by simply acting the function on the list of grid points “x1”:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>func := f[x1]
+</pre></div>
+</div>
+<p>For the example grid mentioned above, calling “func” gives the following list:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>{1024., 992.25, 961., 930.25, 900., 870.25, 841., 812.25, 784.,
+756.25, 729., 702.25, 676., 650.25, 625., 600.25, 576., 552.25, 529.,
+506.25, 484., 462.25, 441., 420.25, 400., 380.25, 361., 342.25, 324.,
+306.25, 289., 272.25, 256., 240.25, 225., 210.25, 196., 182.25, 169.,
+156.25, 144., 132.25, 121., 110.25, 100., 90.25, 81., 72.25, 64.,
+56.25, 49., 42.25, 36., 30.25, 25., 20.25, 16., 12.25, 9., 6.25, 4.,
+2.25, 1., 0.25, 0., 0.25, 1., 2.25, 4., 6.25, 9., 12.25, 16., 20.25,
+25., 30.25, 36., 42.25, 49., 56.25, 64., 72.25, 81., 90.25, 100.,
+110.25, 121., 132.25, 144., 156.25, 169., 182.25, 196., 210.25, 225.,
+240.25, 256., 272.25, 289., 306.25, 324., 342.25, 361., 380.25, 400.,
+420.25, 441., 462.25, 484., 506.25, 529., 552.25, 576., 600.25, 625.,
+650.25, 676., 702.25, 729., 756.25, 784., 812.25, 841., 870.25, 900.,
+930.25, 961., 992.25}
+</pre></div>
+</div>
+<p>The next step is to export the list “func” as an h5 file that XMDS2 can read. This is done by typing the following command into a Mathematica cell:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SetDirectory[NotebookDirectory[]];
+Export[&quot;func.h5&quot;, {func, x1}, {&quot;Datasets&quot;, { &quot;function_x&quot;, &quot;x&quot;}}]
+</pre></div>
+</div>
+<p>In the directory containing the notebook “grid.nb” you should now see the file “func.h5”. This file essentially contains the list <code class="docutils literal notranslate"><span class="pre">{func,</span> <span class="pre">x1}</span></code>. However, the hdf5 format stores func and x1 as separate entities called “Datasets”. For importation into XMDS2 it is necessary that these datasets are named. This is precisely what the segment <code class="docutils literal notranslate"><span class="pre">{&quot;Datasets&quot;,</span> <span class="pre">{</span> <span class="pre">&quot;function_x&quot;,</span> <span class="pre">&quot;x&quot;}}</span></code> in the above Mathematica command does. The dataset corresponding to the grid x1 needs to be given the name of the dimension that will be used in XMDS2 - in our case this is “x”. It does not matter what the name of the dataset corresponding to the list “func” is; in our case it is “function_x”.</p>
+<p>The final step is to import the file “func.h5” into your primary XMDS2 file. This data will be stored as a vector called “gen_function_x”, in component “function_x”.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;vector</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">name=</span><span class="s">&quot;gen_function_x&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span>function_x<span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;initialisation</span> <span class="na">kind=</span><span class="s">&quot;hdf5&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;filename&gt;</span> function_x.h5 <span class="nt">&lt;/filename&gt;</span>
+  <span class="nt">&lt;/initialisation&gt;</span>
+<span class="nt">&lt;/vector&gt;</span>
+</pre></div>
+</div>
+<p>You’re now done. Anytime you want to use <span class="math notranslate nohighlight">\(f(x)\)</span> you can simply refer to “function_x” in the vector “gen_function_x”.</p>
+<p>The situation is slightly more complicated if the function you wish to import depends on more than one dimension. For example, consider</p>
+<div class="math notranslate nohighlight">
+\[g(x,y) = x \sin(y)\]</div>
+<p>As for the single dimensional case, we need to export an hdf5 file from XMDS2 which specifies the dimensions of the grid. As in the one dimensional case, this is done by creating a dummy vector which depends on all the relevant dimensions:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;vector</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">name=</span><span class="s">&quot;gen_dummy&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x y&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span>dummy<span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;initialisation&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">dummy</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/initialisation&gt;</span>
+<span class="nt">&lt;/vector&gt;</span>
+</pre></div>
+</div>
+<p>and exporting it as shown above.</p>
+<p>After importing the grid data into Mathematica, define the multi-dimensional function which you wish to import into XMDS2:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>g[x_,y_]:= x*Sin[y]
+</pre></div>
+</div>
+<p>We need to create a 2x2 array of data which depends upon the imported lists x1 and y1. This can be done by using the Table function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>func := Table[g[x, p], {x, x1}, {p, p1}]
+</pre></div>
+</div>
+<p>This function can be exported as an h5 file,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SetDirectory[NotebookDirectory[]];
+Export[&quot;func.h5&quot;, {func, x1, y1}, {&quot;Datasets&quot;, { &quot;function_x&quot;, &quot;x&quot;, &quot;y&quot;}}]
+</pre></div>
+</div>
+<p>and imported into XMDS2 as outlined above.</p>
+</div>
+<div class="section" id="convolutions-and-fourier-transforms">
+<span id="convolutions"></span><span id="index-2"></span><h2>Convolutions and Fourier transforms<a class="headerlink" href="#convolutions-and-fourier-transforms" title="Permalink to this headline">¶</a></h2>
+<p>When evaluating a numerical Fourier transform, XMDS2 doesn’t behave as expected. While many simulations have ranges in their spatial coordinate (here assumed to be x) that range from some negative value <span class="math notranslate nohighlight">\(x_\text{min}\)</span> to some positive value <span class="math notranslate nohighlight">\(x_\text{max}\)</span>, the Fourier transform used in XMDS2 treats all spatial coordinates as starting at zero. The result of this is that a phase factor of the form <span class="math notranslate nohighlight">\(e^{-i x_\text{min} k}\)</span> is applied to the Fourier space functions after all forward (from real space to Fourier space) Fourier transforms, and its conjugate is applied to the Fourier space functions before all backward (from Fourier space to real space) Fourier transforms.</p>
+<p>The standard Fourier transform is</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}\left[f(x)\right](k) = \frac{1}{\sqrt{2\pi}}\int_{x_\text{min}}^{x_\text{max}} f(x) e^{-i x k} dx\]</div>
+<p>The XMDS2 Fourier transform is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\tilde{\mathcal{F}}\left[f(x)\right](k) &amp;= \frac{1}{\sqrt{2\pi}}\int_{x_\text{min}}^{x_\text{max}} f(x) e^{-i (x+ x_\text{min}) k} dx \\
+&amp;= e^{-i x_\text{min} k} \mathcal{F}\left[f(x)\right](k)\end{split}\]</div>
+<p>When the number of forward Fourier transforms and backwards Fourier transforms are unequal a phase factor is required. Some examples of using Fourier transforms in XMDS2 are shown below.</p>
+<div class="section" id="example-1">
+<h3>Example 1<a class="headerlink" href="#example-1" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/FourierTransformEx1.png" class="align-center" src="_images/FourierTransformEx1.png" />
+<p>When data is input in Fourier space and output in real space there is one backwards Fourier transform is required. Therefore the Fourier space data must be multiplied by a phase factor before the backwards Fourier transform is applied.</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}^{-1}[F(k)](x) = \tilde{\mathcal{F}}[e^{i x_\text{min} k} F(k)](x)\]</div>
+</div>
+<div class="section" id="example-2">
+<h3>Example 2<a class="headerlink" href="#example-2" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/FourierTransformEx2.png" class="align-center" src="_images/FourierTransformEx2.png" />
+<p>Functions of the form <span class="math notranslate nohighlight">\(h(x) = \int f(x') g(x-x') dx'\)</span> can be evaluated using the convolution theorem:</p>
+<div class="math notranslate nohighlight">
+\[\mathcal{F}[h(x)](k) = \mathcal{F}[f(x)](k) \times \mathcal{F}[g(x)](k)\]</div>
+<p>This requires two forward Fourier transforms to get the two functions f and g into Fourier space, and one backwards Fourier transform to get the resulting product back into real space. Thus in Fourier space the product needs to be multiplied by a phase factor <span class="math notranslate nohighlight">\(e^{-i x_\text{min} k}\)</span></p>
+</div>
+<div class="section" id="example-3">
+<h3>Example 3<a class="headerlink" href="#example-3" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/FourierTransformEx3.png" class="align-center" src="_images/FourierTransformEx3.png" />
+<p>Sometimes when the convolution theorem is used one of the forward Fourier transforms is calculated analytically and input in Fourier space. In this case only one forward numerical Fourier transform and one backward numerical Fourier transform is used. The number of forward and backward transforms are equal, so no phase factor is required.</p>
+</div>
+</div>
+<div class="section" id="loose-geometry-matching-mode">
+<span id="loosegeometrymatchingmode"></span><span id="index-3"></span><h2>‘Loose’ <code class="docutils literal notranslate"><span class="pre">geometry_matching_mode</span></code><a class="headerlink" href="#loose-geometry-matching-mode" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="dimension-aliases">
+<span id="dimensionaliases"></span><span id="index-4"></span><h2>Dimension aliases<a class="headerlink" href="#dimension-aliases" title="Permalink to this headline">¶</a></h2>
+<p>Dimension aliases specify that two or more dimensions have exactly the same <code class="docutils literal notranslate"><span class="pre">lattice</span></code>, <code class="docutils literal notranslate"><span class="pre">domain</span></code> and <code class="docutils literal notranslate"><span class="pre">transform</span></code>.  This can be useful in situations where the problem enforces this, for example when computing correlation functions or representing square matrices.</p>
+<p>Dimension aliases are not just a short-hand for defining an additional dimension, they also permit dimensions to be accessed <a class="reference internal" href="reference_elements.html#referencingnonlocal"><span class="std std-ref">non-locally</span></a>, which is essential when computing spatial correlation functions.</p>
+<p>Here is how to compute a spatial correlation function <span class="math notranslate nohighlight">\(g^{(1)}(x, x') = \psi^*(x) \psi(x')\)</span> of the quantity <code class="docutils literal notranslate"><span class="pre">psi</span></code>:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+
+  <span class="c">&lt;!-- name, features block --&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;1024&quot;</span> <span class="na">domain=</span><span class="s">&quot;(-1.0, 1.0)&quot;</span> <span class="na">aliases=</span><span class="s">&quot;xp&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> psi <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="c">&lt;!-- initialisation code --&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;correlation&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x xp&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> g1 <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;evaluation&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span> wavefunction <span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">g1</span> <span class="o">=</span> <span class="nf">conj</span><span class="p">(</span><span class="n">psi</span><span class="p">(</span><span class="n">x</span> <span class="o">=&gt;</span> <span class="n">x</span><span class="p">))</span> <span class="o">*</span> <span class="n">psi</span><span class="p">(</span><span class="n">x</span> <span class="o">=&gt;</span> <span class="n">xp</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/evaluation&gt;</span>
+  <span class="nt">&lt;/computed_vector&gt;</span>
+
+  <span class="c">&lt;!-- integration and sampling code --&gt;</span>
+
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>In this simulation note that the vector <code class="docutils literal notranslate"><span class="pre">wavefunction</span></code> defaults to only having the dimension “x” even though “xp” is also a dimension (implicitly declared through the <code class="docutils literal notranslate"><span class="pre">aliases</span></code> attribute).  <code class="docutils literal notranslate"><span class="pre">vector</span></code>’s without an explicit <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> attribute will only have the dimensions that are explicitly listed in the <code class="docutils literal notranslate"><span class="pre">transverse_dimensions</span></code> block, i.e. this will not include aliases.</p>
+<p>See the example <code class="docutils literal notranslate"><span class="pre">groundstate_gaussian.xmds</span></code> for a complete example.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Advanced Topics</a><ul>
+<li><a class="reference internal" href="#importing-data">Importing data</a></li>
+<li><a class="reference internal" href="#convolutions-and-fourier-transforms">Convolutions and Fourier transforms</a><ul>
+<li><a class="reference internal" href="#example-1">Example 1</a></li>
+<li><a class="reference internal" href="#example-2">Example 2</a></li>
+<li><a class="reference internal" href="#example-3">Example 3</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#loose-geometry-matching-mode">‘Loose’ <code class="docutils literal notranslate"><span class="pre">geometry_matching_mode</span></code></a></li>
+<li><a class="reference internal" href="#dimension-aliases">Dimension aliases</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="faq.html" title="Frequently Asked Questions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="bulirschStoer.html" title="Modified Midpoint Method"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Advanced Topics</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

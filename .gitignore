@@ -1,0 +1,37 @@
+# Local dependency bundles and test homes
+.conda-xmds-libs/
+.xmds-test-home/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Native build outputs
+*.exe
+*.obj
+*.o
+*.a
+*.lib
+*.dll
+*.exp
+*.pdb
+*.manifest
+
+# Local logs and transient outputs
+reconfig.out
+reconfig.err
+
+# Local test result artifacts
+testsuite_results/
+test_example/
+contrib/windows-native-release-kit/bundle/
+
+# Root-level validation artifacts generated during Windows bring-up
+cross_propagation.cc
+cross_propagation.cmd
+cross_propagation.exe
+lorenz.cc
+lorenz.cmd
+lorenz.exe
+lorenz.h5
+lorenz.xsil

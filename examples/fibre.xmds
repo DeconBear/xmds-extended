@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>fibre</name>
+  <author>Joe Hope and Graham Dennis</author>
+  <description>
+    Example fibre noise simulation
+  </description>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="64"  domain="(-5, 5)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <driver name="mpi-multi-path" paths="1024" />
+  
+  <features>
+    <auto_vectorise />
+    <benchmark />
+    <error_check />
+    <bing />
+    <globals>
+      <![CDATA[
+      const real ggamma = 1.0;
+      const real beta = sqrt(M_PI*ggamma/10.0);
+      ]]>
+    </globals>
+  </features>
+  
+  <noise_vector name="drivingNoise" dimensions="x" kind="wiener" type="complex" method="dsfmt" seed="314 159 276">
+    <components>Eta</components>
+  </noise_vector>
+  
+  <vector name="main" initial_basis="x" type="complex">
+    <components>phi</components>
+    <initialisation>
+      <![CDATA[
+        phi = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="SI" iterations="3" interval="2.5" steps="200000">
+      <samples>50</samples>
+      <operators>
+        <operator kind="ex">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -i*kx*kx;
+          ]]>
+        </operator>
+        <dependencies>drivingNoise</dependencies>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+          dphi_dt = L[phi] - ggamma*phi + beta*Eta;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="kx" initial_sample="yes">
+        <moments>pow_dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          pow_dens = mod2(phi);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

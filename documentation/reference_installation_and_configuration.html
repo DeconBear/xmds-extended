@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configuration, installation and runtime options &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Useful XML Syntax" href="reference_usefulXMLSyntax.html" />
+    <link rel="prev" title="Reference section" href="reference_index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="reference_usefulXMLSyntax.html" title="Useful XML Syntax"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="reference_index.html" title="Reference section"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="reference_index.html" accesskey="U">Reference section</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Configuration, installation and runtime options</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <p>:: index:: Configure, Reconfigure, XMDS2 runtime options</p>
+<div class="section" id="configuration-installation-and-runtime-options">
+<span id="referenceconfigurationinstallationruntime"></span><h1>Configuration, installation and runtime options<a class="headerlink" href="#configuration-installation-and-runtime-options" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>Running the ‘xmds2’ program with the option ‘–help’, gives several options that can change its behaviour at runtime.  These include:</dt><dd><ul class="simple">
+<li><p>‘-o’ or ‘–output’, which overrides the name of the output file to be generated</p></li>
+<li><p>‘-n’ or ‘–no-compile’, which generates the C code for the simulation, but does not try to compile it</p></li>
+<li><p>‘-v’ or ‘–verbose’, which gives verbose output about compilation flags.</p></li>
+<li><p>‘-g’ or ‘–debug’, which compiles the simulation in debug mode (compilation errors refer to lines in the source, not the .xmds file). This option implies ‘-v’. This option is mostly useful when debugging XMDS code generation.</p></li>
+<li><p>‘–waf-verbose’, which makes <code class="docutils literal notranslate"><span class="pre">waf</span></code> be very verbose when configuring XMDS or compiling simulations.  This option is intended for developer use only to aid in diagnosing problems with <code class="docutils literal notranslate"><span class="pre">waf</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p>It also has commands to configure XMDS2 and recheck the installation.  If your program requires extra paths to compile, you can configure XMDS2 to include those paths by default.  Simply use the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ xmds2 --configure --include-path /path/to/include --lib-path /path/to/lib
+</pre></div>
+</div>
+<p>Alternatively, you can set the <code class="docutils literal notranslate"><span class="pre">CXXFLAGS</span></code> or <code class="docutils literal notranslate"><span class="pre">LINKFLAGS</span></code> environment variables before calling <code class="docutils literal notranslate"><span class="pre">xmds2</span> <span class="pre">--reconfigure</span></code>.  For example, to pass the compiler flag <code class="docutils literal notranslate"><span class="pre">-pedantic</span></code> and the link flag <code class="docutils literal notranslate"><span class="pre">-lm</span></code> using the bash shell, use:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">export</span> <span class="nv">CXXFLAGS</span><span class="o">=</span><span class="s2">&quot;-pedantic&quot;</span>
+$ <span class="nb">export</span> <span class="nv">LINKFLAGS</span><span class="o">=</span><span class="s2">&quot;-lm&quot;</span>
+$ xmds2 --reconfigure<span class="sb">``</span>
+</pre></div>
+</div>
+<p>This method can also be used to change the default compilers for standard and parallel processing, using the CXX and MPICXX flags respectively.</p>
+<p>Running XMDS2 with the ‘–configure’ option also searches for packages that have been installed since you last installed or configured XMDS2.  If you wish to run ‘xmds2 –configure’ with the same extra options as last time, simply use the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$ xmds2 --reconfigure
+</pre></div>
+</div>
+<p>A detailed log of the checks is saved in the file ‘~/.xmds/waf_configure/config.log’.  This can be used to identify issues with packages that XMDS2 is not recognised, but you think that you have successfully installed on your system.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="reference_usefulXMLSyntax.html" title="Useful XML Syntax"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="reference_index.html" title="Reference section"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="reference_index.html" >Reference section</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Configuration, installation and runtime options</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

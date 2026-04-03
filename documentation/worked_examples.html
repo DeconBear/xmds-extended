@@ -1,0 +1,1303 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Worked Examples &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML,http://www.xmds.org/_static/mathjax-use-tex-fonts.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference section" href="reference_index.html" />
+    <link rel="prev" title="Quickstart Tutorial" href="tutorial.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="reference_index.html" title="Reference section"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quickstart Tutorial"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Worked Examples</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="worked-examples">
+<span id="workedexamples"></span><span id="index-0"></span><h1>Worked Examples<a class="headerlink" href="#worked-examples" title="Permalink to this headline">¶</a></h1>
+<p>One of the best ways to learn XMDS2 is to see several illustrative examples.  Here are a set of example scripts and explanations of the code, which will be a good way to get started.  As an instructional aid, they are meant to be read sequentially, but the adventurous could try starting with one that looked like a simulation they wanted to run, and adapt for their own purposes.</p>
+<blockquote>
+<div><p><a class="reference internal" href="#nonlinearschrodingerequation"><span class="std std-ref">The nonlinear Schrödinger equation</span></a> (partial differential equation)</p>
+<p><a class="reference internal" href="#kubo"><span class="std std-ref">Kubo Oscillator</span></a> (stochastic differential equations)</p>
+<p><a class="reference internal" href="#fibre"><span class="std std-ref">Fibre Noise</span></a> (stochastic partial differential equation using parallel processing)</p>
+<p><a class="reference internal" href="#integerdimensionexample"><span class="std std-ref">Integer Dimensions</span></a> (integer dimensions)</p>
+<p><a class="reference internal" href="#wignerarguments"><span class="std std-ref">Wigner Function</span></a> (two dimensional PDE using parallel processing, passing arguments in at run time)</p>
+<p><a class="reference internal" href="#groundstatebec"><span class="std std-ref">Finding the Ground State of a BEC (continuous renormalisation)</span></a> (PDE with continual renormalisation - computed vectors, filters, breakpoints)</p>
+<p><a class="reference internal" href="#hermitegaussgroundstatebec"><span class="std std-ref">Finding the Ground State of a BEC again</span></a> (Hermite-Gaussian basis)</p>
+<p><a class="reference internal" href="#dmultistatese"><span class="std std-ref">Multi-component Schrödinger equation</span></a> (combined integer and continuous dimensions with matrix multiplication, aliases)</p>
+</div></blockquote>
+<p>All of these scripts are available in the included “examples” folder, along with more examples that demonstrate other tricks.  Together, they provide starting points for a huge range of different simulations. (Note that if you used the Mac installer you may not have the examples folder, in which case all the examples can be found <a class="reference external" href="https://sourceforge.net/p/xmds/code/HEAD/tree/trunk/xpdeint/examples/">here</a>.</p>
+<div class="section" id="the-nonlinear-schrodinger-equation">
+<span id="nonlinearschrodingerequation"></span><span id="index-1"></span><h2>The nonlinear Schrödinger equation<a class="headerlink" href="#the-nonlinear-schrodinger-equation" title="Permalink to this headline">¶</a></h2>
+<p>This worked example will show a range of new features that can be used in an <strong>XMDS2</strong> script, and we will also examine our first partial differential equation.  We will take the one dimensional nonlinear Schrödinger equation, which is a common nonlinear wave equation.  The equation describing this problem is:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \phi}{\partial \xi} = \frac{i}{2}\frac{\partial^2 \phi}{\partial \tau^2} - \Gamma(\tau)\phi+i|\phi|^2 \phi\]</div>
+<p>where <span class="math notranslate nohighlight">\(\phi\)</span> is a complex-valued field, and <span class="math notranslate nohighlight">\(\Gamma(\tau)\)</span> is a <span class="math notranslate nohighlight">\(\tau\)</span>-dependent damping term.  Let us look at an XMDS2 script that integrates this equation, and then examine it in detail.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>nlse<span class="nt">&lt;/name&gt;</span>
+
+  <span class="nt">&lt;author&gt;</span>Joe Hope<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    The nonlinear Schrodinger equation in one dimension,
+    which is a simple partial differential equation.
+    We introduce several new features in this script.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+      <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;fftw</span> <span class="na">plan=</span><span class="s">&quot;patient&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;openmp</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;auto_vectorise</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;globals&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+          <span class="k">const</span> <span class="kt">double</span> <span class="n">energy</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+          <span class="k">const</span> <span class="kt">double</span> <span class="n">vel</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">;</span>
+          <span class="k">const</span> <span class="kt">double</span> <span class="n">hwhm</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+       <span class="nt">&lt;/globals&gt;</span>
+     <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+      <span class="nt">&lt;propagation_dimension&gt;</span> xi <span class="nt">&lt;/propagation_dimension&gt;</span>
+      <span class="nt">&lt;transverse_dimensions&gt;</span>
+        <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;tau&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/transverse_dimensions&gt;</span>
+   <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;tau&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="k">const</span> <span class="kt">double</span> <span class="n">w0</span> <span class="o">=</span> <span class="n">hwhm</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">));</span>
+      <span class="k">const</span> <span class="kt">double</span> <span class="n">amp</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">energy</span><span class="o">/</span><span class="n">w0</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="n">M_PI</span><span class="o">/</span><span class="mi">2</span><span class="p">));</span>
+      <span class="n">phi</span> <span class="o">=</span> <span class="n">amp</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">tau</span><span class="o">*</span><span class="n">tau</span><span class="o">/</span><span class="n">w0</span><span class="o">/</span><span class="n">w0</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="kc">i</span><span class="o">*</span><span class="n">vel</span><span class="o">*</span><span class="n">tau</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;dampingVector&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> Gamma <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">Gamma</span><span class="o">=</span><span class="mf">1.0</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">pow</span><span class="p">(</span><span class="n">tau</span><span class="o">*</span><span class="n">tau</span><span class="o">/</span><span class="mf">4.0</span><span class="o">/</span><span class="mf">4.0</span><span class="p">,</span><span class="mi">10</span><span class="p">)));</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;20.0&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>10 100 10<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>Ltt<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">Ltt</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">ktau</span><span class="o">*</span><span class="n">ktau</span><span class="o">*</span><span class="mf">0.5</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="n">dphi_dxi</span> <span class="o">=</span> <span class="n">Ltt</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="n">phi</span><span class="o">*</span><span class="n">Gamma</span> <span class="o">+</span> <span class="kc">i</span><span class="o">*</span><span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">*</span><span class="n">phi</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>dampingVector<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;tau&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>density<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;tau(0)&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>normalisation<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">normalisation</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;ktau(32)&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>densityK<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">densityK</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>Let us examine the new items in the <code class="docutils literal notranslate"><span class="pre">&lt;features&gt;</span></code> element that we have demonstrated here.  The existence of the <code class="docutils literal notranslate"><span class="pre">&lt;benchmark&gt;</span></code> element causes the simulation to be timed.  The <code class="docutils literal notranslate"><span class="pre">&lt;bing&gt;</span></code> element causes the computer to make a sound upon the conclusion of the simulation.  The <code class="docutils literal notranslate"><span class="pre">&lt;fftw&gt;</span></code> element is used to pass options to the <a class="reference external" href="http://fftw.org">FFTW libraries for fast Fourier transforms</a>, which are needed to do spectral derivatives for the partial differential equation.  Here we used the option <cite>plan=”patient”</cite>, which makes the simulation test carefully to find the fastest method for doing the FFTs.  More information on possible choices can be found in the <a class="reference external" href="http://fftw.org">FFTW documentation</a>.</p>
+<p>Finally, we use two tags to make the simulation run faster.  The <code class="docutils literal notranslate"><span class="pre">&lt;auto_vectorise&gt;</span></code> element switches on several loop optimisations that exist in later versions of the GCC compiler.  The <code class="docutils literal notranslate"><span class="pre">&lt;openmp&gt;</span></code> element turns on threaded parallel processing using the OpenMP standard where possible.  These options are not activated by default as they only exist on certain compilers.  If your code compiles with them on, then they are recommended.</p>
+<p>Let us examine the <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> xi <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;tau&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+ <span class="nt">&lt;/geometry&gt;</span>
+</pre></div>
+</div>
+<p>This is the first example that includes a transverse dimension.  We have only one dimension, and we have labelled it “tau”.  It is a continuous dimension, but only defined on a grid containing 128 points (defined with the lattice variable), and on a domain from -6 to 6.  The default is that transforms in continuous dimensions are fast Fourier transforms, which means that this dimension is effectively defined on a loop, and the “tau=-6” and “tau=6” positions are in fact the same.  Other transforms are possible, as are discrete dimensions such as an integer-valued index, but we will leave these advanced possibilities to later examples.</p>
+<p>Two vector elements have been defined in this simulation.  One defines the complex-valued wavefunction “phi” that we wish to evolve.  We define the transverse dimensions over which this vector is defined by the <code class="docutils literal notranslate"><span class="pre">dimensions</span></code> tag in the description.  By default, it is defined over all of the transverse dimensions in the <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element, so even though we have omitted this tag for the second vector, it also assumes that the vector is defined over all of tau.</p>
+<p>The second vector element contains the component “Gamma” which is a function of the transverse variable tau, as specified in the equation of motion for the field.  This second vector could have been avoided in two ways.  First, the function could have been written explicitly in the integrate block where it is required, but calculating it once and then recalling it from memory is far more efficient.  Second, it could have been included in the “wavefunction” vector as another component, but then it would have been unnecessarily complex-valued, it would have needed an explicit derivative in the equations of motion (presumably <code class="docutils literal notranslate"><span class="pre">dGamma_dxi</span> <span class="pre">=</span> <span class="pre">0;</span></code>), and it would have been Fourier transformed whenever the phi component was transformed.  So separating it as its own vector is far more efficient.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element for a partial differential equation has some new features:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;20.0&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;samples&gt;</span>10 100 10<span class="nt">&lt;/samples&gt;</span>
+  <span class="nt">&lt;operators&gt;</span>
+    <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+    <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;operator_names&gt;</span>Ltt<span class="nt">&lt;/operator_names&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">Ltt</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">ktau</span><span class="o">*</span><span class="n">ktau</span><span class="o">*</span><span class="mf">0.5</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/operator&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+    <span class="n">dphi_dxi</span> <span class="o">=</span> <span class="n">Ltt</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="n">phi</span><span class="o">*</span><span class="n">Gamma</span> <span class="o">+</span> <span class="kc">i</span><span class="o">*</span><span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">*</span><span class="n">phi</span><span class="p">;</span>
+    <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>dampingVector<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="nt">&lt;/operators&gt;</span>
+<span class="nt">&lt;/integrate&gt;</span>
+</pre></div>
+</div>
+<p>There are some trivial changes from the tutorial script, such as the fact that we are using the ARK45 algorithm rather than ARK89.  Higher order algorithms are often better, but not always.  Also, since this script has multiple output groups, we have to specify how many times each of these output groups are sampled in the <code class="docutils literal notranslate"><span class="pre">&lt;samples&gt;</span></code> element, so there are three numbers there.  Besides the vectors that are to be integrated, we also specify that we want to use the vector “dampingVector” during this integration.  This is achieved by including the <code class="docutils literal notranslate"><span class="pre">&lt;dependencies&gt;</span></code> element inside the <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> element.</p>
+<p>The equation of motion as written in the CDATA block looks almost identical to our desired equation of motion, except for the term based on the second derivative, which introduces an important new concept.  Inside the <code class="docutils literal notranslate"><span class="pre">&lt;operators&gt;</span></code> element, we can define any number of operators.  Operators are used to define functions in the transformed space of each dimension, which in this case is Fourier space.  The derivative of a function is equivalent to multiplying by <span class="math notranslate nohighlight">\(i*k\)</span> in Fourier space, so the <span class="math notranslate nohighlight">\(\frac{i}{2}\frac{\partial^2 \phi}{\partial \tau^2}\)</span> term in our equation of motion is equivalent to multiplying by <span class="math notranslate nohighlight">\(-\frac{i}{2}k_\tau^2\)</span> in Fourier space.  In this example we define “Ltt” as an operator of exactly that form, and in the equation of motion it is applied to the field “phi”.</p>
+<p>Operators can be explicit (<code class="docutils literal notranslate"><span class="pre">kind=&quot;ex&quot;</span></code>) or in the interaction picture (<code class="docutils literal notranslate"><span class="pre">kind=&quot;ip&quot;</span></code>).  The interaction picture can be more efficient, but it restricts the possible syntax of the equation of motion.  Safe utilisation of interaction picture operators will be described later, but for now let us emphasise that <strong>explicit operators should be used</strong> unless the user is clear what they are doing.  That said, <strong>XMDS2</strong> will generate an error if the user tries to use interaction picture operators incorrectly.  The <code class="docutils literal notranslate"><span class="pre">constant=&quot;yes&quot;</span></code> option in the operator block means that the operator is not a function of the propagation dimension “xi”, and therefore only needs to be calculated once at the start of the simulation.</p>
+<p>The output of a partial differential equation offers more possibilities than an ordinary differential equation, and we examine some in this example.</p>
+<p>For vectors with transverse dimensions, we can sample functions of the vectors on the full lattice or a subset of the points.  In the <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> element, we must add a string called “basis” that determines the space in which each transverse dimension is to be sampled, optionally followed by the number of points to be sampled in parentheses.  If the number of points is not specified, it will default to a complete sampling of all points in that dimension.  If a non-zero number of points is specified, it must be a factor of the lattice size for that dimension.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;tau&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;moments&gt;</span>density<span class="nt">&lt;/moments&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">density</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/sampling_group&gt;</span>
+</pre></div>
+</div>
+<p>The first output group samples the mod square of the vector “phi” over the full lattice of 128 points.</p>
+<p>If the lattice parameter is set to zero points, then the corresponding dimension is integrated.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;tau(0)&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;moments&gt;</span>normalisation<span class="nt">&lt;/moments&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">normalisation</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/sampling_group&gt;</span>
+</pre></div>
+</div>
+<p>This second output group samples the normalisation of the wavefunction <span class="math notranslate nohighlight">\(\int d\tau |\phi(\tau)|^2\)</span> over the domain of <span class="math notranslate nohighlight">\(\tau\)</span>.  This output requires only a single real number per sample, so in the integrate element we have chosen to sample it many more times than the vectors themselves.</p>
+<p>Finally, functions of the vectors can be sampled with their dimensions in Fourier space.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;ktau(32)&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;moments&gt;</span>densityK<span class="nt">&lt;/moments&gt;</span>
+  <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">densityK</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/sampling_group&gt;</span>
+</pre></div>
+</div>
+<p>The final output group above samples the mod square of the Fourier-space wavefunction phi on a sample of 32 points.</p>
+</div>
+<div class="section" id="kubo-oscillator">
+<span id="kubo"></span><span id="index-2"></span><h2>Kubo Oscillator<a class="headerlink" href="#kubo-oscillator" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates the integration of a stochastic differential equation.  We examine the Kubo oscillator, which is a complex variable whose phase is evolving according to a Wiener noise.  In a suitable rotating frame, the equation of motion for the variable is</p>
+<div class="math notranslate nohighlight">
+\[\frac{dz}{dt} = i z \;\eta\]</div>
+<p>where <span class="math notranslate nohighlight">\(\eta(t)\)</span> is the Wiener differential, and we interpret this as a Stratonovich equation.  In other common notation, this is sometimes written:</p>
+<div class="math notranslate nohighlight">
+\[dz = i z \;\circ dW\]</div>
+<p>Most algorithms employed by XMDS require the equations to be input in the Stratonovich form.  Ito differential equations can always be transformed into Stratonovich equations, and in this case the difference is equivalent to the choice of rotating frame.  This equation is solved by the following XMDS2 script:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>kubo<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis and Joe Hope<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Example Kubo oscillator simulation
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;multi-path&quot;</span> <span class="na">paths=</span><span class="s">&quot;10000&quot;</span> <span class="nt">/&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;error_check</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;drivingNoise&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">kind=</span><span class="s">&quot;wiener&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">method=</span><span class="s">&quot;dsfmt&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>eta<span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;/noise_vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;main&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> z <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;SI&quot;</span> <span class="na">interval=</span><span class="s">&quot;10&quot;</span> <span class="na">steps=</span><span class="s">&quot;1000&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>100<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>main<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>drivingNoise<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">dz_dt</span> <span class="o">=</span> <span class="kc">i</span><span class="o">*</span><span class="n">z</span><span class="o">*</span><span class="n">eta</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>zR zI<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>main<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">zR</span> <span class="o">=</span> <span class="n">z</span><span class="p">.</span><span class="n">Re</span><span class="p">();</span>
+        <span class="n">zI</span> <span class="o">=</span> <span class="n">z</span><span class="p">.</span><span class="n">Im</span><span class="p">();</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p id="index-3">The first new item in this script is the <code class="docutils literal notranslate"><span class="pre">&lt;driver&gt;</span></code> element.  This element enables us to change top level management of the simulation.  Without this element, XMDS2 will integrate the stochastic equation as described.  With this element and the option <code class="docutils literal notranslate"><span class="pre">name=&quot;multi-path&quot;</span></code>, it will integrate it multiple times, using different random numbers each time.  The output will then contain the mean values and standard errors of your output variables.  The number of integrations included in the averages is set with the <code class="docutils literal notranslate"><span class="pre">paths</span></code> variable.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">&lt;features&gt;</span></code> element we have included the <code class="docutils literal notranslate"><span class="pre">&lt;error_check&gt;</span></code> element.  This performs the integration first with the specified number of steps (or with the specified tolerance), and then with twice the number of steps (or equivalently reduced tolerance).  The output then includes the difference between the output variables on the coarse and the fine grids as the ‘error’ in the output variables.  This error is particularly useful for stochastic integrations, where algorithms with adaptive step-sizes are less safe, so the number of integration steps must be user-specified.</p>
+<p id="index-4">We define the stochastic elements in a simulation with the <code class="docutils literal notranslate"><span class="pre">&lt;noise_vector&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;drivingNoise&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">kind=</span><span class="s">&quot;wiener&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">method=</span><span class="s">&quot;dsfmt&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+ <span class="nt">&lt;components&gt;</span>eta<span class="nt">&lt;/components&gt;</span>
+<span class="nt">&lt;/noise_vector&gt;</span>
+</pre></div>
+</div>
+<p>This defines a vector that is used like any other, but it will be randomly generated with particular statistics and characteristics rather than initialised.  The name, dimensions and type tags are defined just as for normal vectors.  The names of the components are also defined in the same way.  The noise is defined as a Wiener noise here (<code class="docutils literal notranslate"><span class="pre">kind</span> <span class="pre">=</span> <span class="pre">&quot;wiener&quot;</span></code>), which is a zero-mean Gaussian random noise with an average variance equal to the discretisation volume (here it is just the step size in the propagation dimension, as it is not defined over transverse dimensions).  Other noise types are possible, including uniform and Poissonian noises, but we will not describe them in detail here.</p>
+<p>We may also define a noise method to choose a non-default pseudo random number generator, and a seed for the random number generator.  Using a seed can be very useful when debugging the behaviour of a simulation, and many compilers have pseudo-random number generators that are superior to the default option (posix).</p>
+<p>The integrate block is using the semi-implicit algorithm (<code class="docutils literal notranslate"><span class="pre">algorithm=&quot;SI&quot;</span></code>), which is a good default choice for stochastic problems, even though it is only second order convergent for deterministic equations.  More will be said about algorithm choice later, but for now we should note that adaptive algorithms based on Runge-Kutta methods are not guaranteed to converge safely for stochastic equations.  This can be particularly deceptive as they often succeed, particularly for almost any problem for which there is a known analytic solution.</p>
+<p>We include elements from the noise vector in the equation of motion just as we do for any other vector.  The default SI and Runge-Kutta algorithms converge to the <em>Stratonovich</em> integral.  Ito stochastic equations can be converted to Stratonovich form and vice versa.</p>
+<p>Executing the generated program ‘kubo’ gives slightly different output due to the “multi-path” driver.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./kubo
+Beginning full step integration ...
+Starting path 1
+Starting path 2
+
+... many lines omitted ...
+
+Starting path 9999
+Starting path 10000
+Beginning half step integration ...
+Starting path 1
+Starting path 2
+
+... many lines omitted ...
+
+Starting path 9999
+Starting path 10000
+Generating output for kubo
+Maximum step error in moment group 1 was 4.942549e-04
+Time elapsed for simulation is: 2.71 seconds
+</pre></div>
+</div>
+<p>The maximum step error in each moment group is given in absolute terms.  This is the largest difference between the full step integration and the half step integration.  While a single path might be very stochastic:</p>
+<div class="figure align-center" id="id1">
+<img alt="_images/kuboSingle.png" src="_images/kuboSingle.png" />
+<p class="caption"><span class="caption-text">The mean value of the real and imaginary components of the z variable for a single path of the simulation.</span><a class="headerlink" href="#id1" title="Permalink to this image">¶</a></p>
+</div>
+<p>The average over multiple paths can be increasingly smooth.</p>
+<div class="figure align-center" id="id2">
+<img alt="_images/kubo10000.png" src="_images/kubo10000.png" />
+<p class="caption"><span class="caption-text">The mean and standard error of the z variable averaged over 10000 paths, as given by this simulation.  It agrees within the standard error with the expected result of <span class="math notranslate nohighlight">\(\exp(-t/2)\)</span>.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+<div class="section" id="fibre-noise">
+<span id="fibre"></span><span id="index-5"></span><h2>Fibre Noise<a class="headerlink" href="#fibre-noise" title="Permalink to this headline">¶</a></h2>
+<p>This simulation is a stochastic partial differential equation, in which a one-dimensional damped field is subject to a complex noise. This script can be found in <code class="docutils literal notranslate"><span class="pre">examples/fibre.xmds</span></code>.</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \psi}{\partial t} = -i \frac{\partial^2 \psi}{\partial x^2} -\gamma \psi+\beta \frac{1}{\sqrt{2}}\left(\eta_1(x)+i\eta_2(x)\right)\]</div>
+<p>where the noise terms <span class="math notranslate nohighlight">\(\eta_j(x,t)\)</span> are Wiener differentials and the equation is interpreted as a Stratonovich differential equation.  On a finite grid, these increments have variance <span class="math notranslate nohighlight">\(\frac{1}{\Delta x \Delta t}\)</span>.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>fibre<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Joe Hope and Graham Dennis<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Example fibre noise simulation
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;64&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-5, 5)&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;mpi-multi-path&quot;</span> <span class="na">paths=</span><span class="s">&quot;8&quot;</span> <span class="nt">/&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;auto_vectorise</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;error_check</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;globals&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="k">const</span> <span class="nf">real</span> <span class="n">ggamma</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="k">const</span> <span class="nf">real</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">M_PI</span><span class="o">*</span><span class="n">ggamma</span><span class="o">/</span><span class="mf">10.0</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/globals&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;noise_vector</span> <span class="na">name=</span><span class="s">&quot;drivingNoise&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span> <span class="na">kind=</span><span class="s">&quot;wiener&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="na">method=</span><span class="s">&quot;dsfmt&quot;</span> <span class="na">seed=</span><span class="s">&quot;314 159 276&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>Eta<span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;/noise_vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;main&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>phi<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;SI&quot;</span> <span class="na">iterations=</span><span class="s">&quot;3&quot;</span> <span class="na">interval=</span><span class="s">&quot;2.5&quot;</span> <span class="na">steps=</span><span class="s">&quot;200000&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>50<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>L<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>drivingNoise<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>main<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="n">ggamma</span><span class="o">*</span><span class="n">phi</span> <span class="o">+</span> <span class="n">beta</span><span class="o">*</span><span class="n">Eta</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;kx&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>pow_dens<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>main<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">pow_dens</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>Note that the noise vector used in this example is complex-valued, and has the argument <code class="docutils literal notranslate"><span class="pre">dimensions=&quot;x&quot;</span></code> to define it as a field of delta-correlated noises along the x-dimension.</p>
+<span class="target" id="index-6"></span><p id="index-7">This simulation demonstrates the ease with which XMDS2 can be used in a parallel processing environment.  Instead of using the stochastic driver “multi-path”, we simply replace it with “mpi-multi-path”.  This instructs XMDS2 to write a parallel version of the program based on the widespread <a class="reference external" href="http://www.open-mpi.org/">MPI standard</a>.  This protocol allows multiple processors or clusters of computers to work simultaneously on the same problem.  Free open source libraries implementing this standard can be installed on a linux machine, and come standard on Mac OS X.  They are also common on many supercomputer architectures.  Parallel processing can also be used with deterministic problems to great effect, as discussed in the later example <a class="reference internal" href="#wignerarguments"><span class="std std-ref">Wigner Function</span></a>.</p>
+<p>Executing this program is slightly different with the MPI option.  The details can change between MPI implementations, but as an example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$xmds2 fibre.xmds
+xmds2 version 2.1 &quot;Happy Mollusc&quot; (r2543)
+Copyright 2000-2012 Graham Dennis, Joseph Hope, Mattias Johnsson
+                    and the xmds team
+Generating source code...
+... done
+Compiling simulation...
+... done. Type &#39;./fibre&#39; to run.
+</pre></div>
+</div>
+<p>Note that different compile options (and potentially a different compiler) are used by XMDS2, but this is transparent to the user.  MPI simulations will have to be run using syntax that will depend on the MPI implementation.  Here we show the version based on the popular open source <a class="reference external" href="http://www.open-mpi.org/">Open-MPI</a> implementation.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ mpirun -np 4 ./fibre
+Found enlightenment... (Importing wisdom)
+Planning for x &lt;---&gt; kx transform... done.
+Beginning full step integration ...
+Rank[0]: Starting path 1
+Rank[1]: Starting path 2
+Rank[2]: Starting path 3
+Rank[3]: Starting path 4
+Rank[3]: Starting path 8
+Rank[0]: Starting path 5
+Rank[1]: Starting path 6
+Rank[2]: Starting path 7
+Rank[3]: Starting path 4
+Beginning half step integration ...
+Rank[0]: Starting path 1
+Rank[2]: Starting path 3
+Rank[1]: Starting path 2
+Rank[3]: Starting path 8
+Rank[0]: Starting path 5
+Rank[2]: Starting path 7
+Rank[1]: Starting path 6
+Generating output for fibre
+Maximum step error in moment group 1 was 4.893437e-04
+Time elapsed for simulation is: 20.99 seconds
+</pre></div>
+</div>
+<p>In this example we used four processors.  The different processors are labelled by their “Rank”, starting at zero.  Because the processors are working independently, the output from the different processors can come in a randomised order.  In the end, however, the .xsil and data files are constructed identically to the single processor outputs.</p>
+<p>The analytic solution to the stochastic averages of this equation is given by</p>
+<div class="math notranslate nohighlight">
+\[\langle |\psi(k,t)|^2 \rangle = \exp(-2\gamma t)|\psi(k,0)|^2 +\frac{\beta^2 L_x}{4\pi \gamma} \left(1-\exp(-2\gamma t)\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(L_x\)</span> is the length of the x domain.  We see that a single integration of these equations is quite chaotic:</p>
+<div class="figure align-center" id="id3">
+<img alt="_images/fibreSingle.png" src="_images/fibreSingle.png" />
+<p class="caption"><span class="caption-text">The momentum space density of the field as a function of time for a single path realisation.</span><a class="headerlink" href="#id3" title="Permalink to this image">¶</a></p>
+</div>
+<p>while an average of 1024 paths (change <code class="docutils literal notranslate"><span class="pre">paths=&quot;8&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">paths=&quot;1024&quot;</span></code> in the <code class="docutils literal notranslate"><span class="pre">&lt;driver&gt;</span></code> element) converges nicely to the analytic solution:</p>
+<div class="figure align-center" id="id4">
+<img alt="_images/fibre1024.png" src="_images/fibre1024.png" />
+<p class="caption"><span class="caption-text">The momentum space density of the field as a function of time for an average of 1024 paths.</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+<div class="section" id="integer-dimensions">
+<span id="integerdimensionexample"></span><span id="index-8"></span><h2>Integer Dimensions<a class="headerlink" href="#integer-dimensions" title="Permalink to this headline">¶</a></h2>
+<p>This example shows how to handle systems with integer-valued transverse dimensions.  We will integrate the following set of equations</p>
+<div class="math notranslate nohighlight">
+\[\frac{dx_j}{dt} = x_j \left(x_{j-1}-x_{j+1}\right)\]</div>
+<p>where <span class="math notranslate nohighlight">\(x_j\)</span> are complex-valued variables defined on a ring, such that <span class="math notranslate nohighlight">\(j\in \{0,j_{max}\}\)</span> and the <span class="math notranslate nohighlight">\(x_{j_{max}+1}\)</span> variable is identified with the variable <span class="math notranslate nohighlight">\(x_{0}\)</span>, and the variable <span class="math notranslate nohighlight">\(x_{-1}\)</span> is identified with the variable <span class="math notranslate nohighlight">\(x_{j_{max}}\)</span>.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>integer_dimensions<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    XMDS2 script to test integer dimensions.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;error_check</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;diagnostics</span> <span class="nt">/&gt;</span> <span class="c">&lt;!-- This will make sure that all nonlocal accesses of dimensions are safe --&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;j&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">lattice=</span><span class="s">&quot;5&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0,4)&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;main&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> x <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">x</span> <span class="o">=</span> <span class="mf">1.0e-3</span><span class="p">;</span>
+      <span class="n">x</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;60&quot;</span> <span class="na">steps=</span><span class="s">&quot;25000&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1.0e-9&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>1000<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>main<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="kt">long</span> <span class="n">j_minus_one</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span><span class="mi">-1</span><span class="p">)</span> <span class="o">%</span> <span class="n">_lattice_j</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">j_minus_one</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+          <span class="n">j_minus_one</span> <span class="o">+=</span> <span class="n">_lattice_j</span><span class="p">;</span>
+        <span class="kt">long</span> <span class="n">j_plus_one</span>  <span class="o">=</span> <span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="n">_lattice_j</span><span class="p">;</span>
+        <span class="n">dx_dt</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">j</span><span class="p">)</span> <span class="o">=</span> <span class="n">x</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">j_minus_one</span><span class="p">)</span> <span class="o">-</span> <span class="n">x</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">j_plus_one</span><span class="p">));</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;j&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>xR<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>main<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">xR</span> <span class="o">=</span> <span class="n">x</span><span class="p">.</span><span class="n">Re</span><span class="p">();</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>The first extra feature we have used in this script is the <code class="docutils literal notranslate"><span class="pre">&lt;diagnostics&gt;</span></code> element.  It performs run-time checking that our generated code does not accidentally attempt to access a part of our vector that does not exist.  Removing this tag will increase the speed of the simulation, but its presence helps catch coding errors.</p>
+<p>The simulation defines a vector with a single transverse dimension labelled “j”, of type “integer” (“int” and “long” can also be used as synonyms for “integer”).  In the absence of an explicit type, the dimension is assumed to be real-valued.  The dimension has a “domain” argument as normal, defining the minimum and maximum values of the dimension’s range.  The lattice element, if specified, is used as a check on the size of the domain, and will create an error if the two do not match.</p>
+<p>Integer-valued dimensions can be called non-locally.  Real-valued dimensions are typically coupled non-locally only through local operations in the transformed space of the dimension, but can be called non-locally in certain other situations as described in <a class="reference internal" href="reference_elements.html#referencingnonlocal"><span class="std std-ref">the reference</span></a>.  The syntax for calling integer dimensions non-locally can be seen in the initialisation CDATA block:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span>x = 1.0e-3;
+x(j =&gt; 0) = 1.0;
+</pre></div>
+</div>
+<p>where the syntax <code class="docutils literal notranslate"><span class="pre">x(j</span> <span class="pre">=&gt;</span> <span class="pre">0)</span></code> is used to reference the variable <span class="math notranslate nohighlight">\(x_0\)</span> directly.  We see a more elaborate example in the integrate CDATA block:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span>dx_dt(j =&gt; j) = x(j =&gt; j)*(x(j =&gt; j_minus_one) - x(j =&gt; j_plus_one));
+</pre></div>
+</div>
+<p>where the vector “x” is called using locally defined variables.  This syntax is chosen so that multiple dimensions can be addressed non-locally with minimal possibility for confusion.</p>
+</div>
+<div class="section" id="wigner-function">
+<span id="wignerarguments"></span><h2>Wigner Function<a class="headerlink" href="#wigner-function" title="Permalink to this headline">¶</a></h2>
+<p>This example integrates the two-dimensional partial differential equation</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{split}
+\frac{\partial W}{\partial t} &amp;= \Bigg[ \left(\omega + \frac{U_{int}}{\hbar}\left(x^2+y^2-1\right)\right) \left(x \frac{\partial}{\partial y}
+- y \frac{\partial}{\partial x}\right)\\
+&amp;\phantom{=\Bigg[} - \frac{U_{int}}{16 \hbar}\left(x\left(\frac{\partial^3}{\partial x^2 \partial y}
++\frac{\partial^3}{\partial y^3}\right)-y\left(\frac{\partial^3}{\partial y^2 \partial x}+\frac{\partial^3}{\partial x^3}\right)\right)\Bigg]W(x,y,t)
+\end{split}\end{split}\]</div>
+<p>with the added restriction that the derivative is forced to zero outside a certain radius.  This extra condition helps maintain the long-term stability of the integration. The script can be found in <code class="docutils literal notranslate"><span class="pre">examples/wigner_arguments_mpi.xmds</span></code> under your XMDS2 installation directory.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>wigner<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis and Joe Hope<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Simulation of the Wigner function for an anharmonic oscillator with the initial state
+    being a coherent state.
+  <span class="nt">&lt;/description&gt;</span>
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;globals&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="nf">real</span> <span class="n">Uint_hbar_on16</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/globals&gt;</span>
+    <span class="nt">&lt;arguments&gt;</span>
+      <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;omega&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;0.0&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;alpha_0&quot;</span>     <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;3.0&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;absorb&quot;</span>     <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;8.0&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;width&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;0.3&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;Uint_hbar&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;1.0&quot;</span> <span class="nt">/&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="cm">/* derived constants */</span>
+        <span class="n">Uint_hbar_on16</span> <span class="o">=</span> <span class="n">Uint_hbar</span><span class="o">/</span><span class="mf">16.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/arguments&gt;</span>
+    <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;fftw</span> <span class="na">plan=</span><span class="s">&quot;patient&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;openmp</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;driver</span> <span class="na">name=</span><span class="s">&quot;distributed-mpi&quot;</span> <span class="nt">/&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;y&quot;</span> <span class="na">lattice=</span><span class="s">&quot;128&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;main&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x y&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> W <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">W</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">/</span><span class="n">M_PI</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">-2.0</span><span class="o">*</span><span class="p">(</span><span class="n">y</span><span class="o">*</span><span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">alpha_0</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">alpha_0</span><span class="p">)));</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;dampConstants&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x y&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>damping<span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_max_x</span><span class="o">-</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">damping</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+      <span class="k">else</span>
+        <span class="n">damping</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK89&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span> <span class="na">interval=</span><span class="s">&quot;7.0e-4&quot;</span> <span class="na">steps=</span><span class="s">&quot;100000&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>50<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ex&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>Lx Ly Lxxx Lxxy Lxyy Lyyy<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">Lx</span> <span class="o">=</span> <span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="p">;</span>
+            <span class="n">Ly</span> <span class="o">=</span> <span class="kc">i</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+            <span class="n">Lxxx</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="p">;</span>
+            <span class="n">Lxxy</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+            <span class="n">Lxyy</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+            <span class="n">Lyyy</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>main<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>dampConstants<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="nf">real</span> <span class="n">rotation</span> <span class="o">=</span> <span class="n">omega</span> <span class="o">+</span> <span class="n">Uint_hbar</span><span class="o">*</span><span class="p">(</span><span class="mf">-1.0</span> <span class="o">+</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">);</span>
+
+        <span class="n">dW_dt</span> <span class="o">=</span> <span class="n">damping</span> <span class="o">*</span> <span class="p">(</span> <span class="n">rotation</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">Ly</span><span class="p">[</span><span class="n">W</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="o">*</span><span class="n">Lx</span><span class="p">[</span><span class="n">W</span><span class="p">])</span>
+                    <span class="o">-</span> <span class="n">Uint_hbar_on16</span><span class="o">*</span><span class="p">(</span> <span class="n">x</span><span class="o">*</span><span class="p">(</span><span class="n">Lxxy</span><span class="p">[</span><span class="n">W</span><span class="p">]</span> <span class="o">+</span> <span class="n">Lyyy</span><span class="p">[</span><span class="n">W</span><span class="p">])</span> <span class="o">-</span> <span class="n">y</span><span class="o">*</span><span class="p">(</span><span class="n">Lxyy</span><span class="p">[</span><span class="n">W</span><span class="p">]</span> <span class="o">+</span> <span class="n">Lxxx</span><span class="p">[</span><span class="n">W</span><span class="p">])</span> <span class="p">)</span>
+                <span class="p">);</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;x y&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>WR WI<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>main<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">_SAMPLE_COMPLEX</span><span class="p">(</span><span class="n">W</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<span class="target" id="index-9"></span><p id="index-10">This example demonstrates two new features of XMDS2.  The first is the use of parallel processing for a deterministic problem.  The FFTW library only allows MPI processing of multidimensional vectors.  For multidimensional simulations, the generated program can be parallelised simply by adding the <code class="docutils literal notranslate"><span class="pre">name=&quot;distributed-mpi&quot;</span></code> argument to the <code class="docutils literal notranslate"><span class="pre">&lt;driver&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span>$ xmds2 wigner_argument_mpi.xmds
+xmds2 version 2.1 &quot;Happy Mollusc&quot; (r2680)
+Copyright 2000-2012 Graham Dennis, Joseph Hope, Mattias Johnsson
+                    and the xmds team
+Generating source code...
+... done
+Compiling simulation...
+... done. Type &#39;./wigner&#39; to run.
+</pre></div>
+</div>
+<p>To use multiple processors, the final program is then called using the (implementation specific) MPI wrapper:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span>$ mpirun -np 2 ./wigner
+Planning for (distributed x, y) <span class="nt">&lt;---&gt;</span> (distributed ky, kx) transform... done.
+Planning for (distributed x, y) <span class="nt">&lt;---&gt;</span> (distributed ky, kx) transform... done.
+Sampled field (for moment group #1) at t = 0.000000e+00
+Current timestep: 5.908361e-06
+Sampled field (for moment group #1) at t = 1.400000e-05
+Current timestep: 4.543131e-06
+
+...
+</pre></div>
+</div>
+<p>The possible acceleration achievable when parallelising a given simulation depends on a great many things including available memory and cache.  As a general rule, it will improve as the simulation size gets larger, but the easiest way to find out is to test.  The optimum speed up is obviously proportional to the number of available processing cores.</p>
+<p id="index-11">The second new feature in this simulation is the <code class="docutils literal notranslate"><span class="pre">&lt;arguments&gt;</span></code> element in the <code class="docutils literal notranslate"><span class="pre">&lt;features&gt;</span></code> block.  This is a way of specifying global variables with a given type that can then be input at run time.  The variables are specified in a self explanatory way</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;arguments&gt;</span>
+  <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;omega&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;0.0&quot;</span> <span class="nt">/&gt;</span>
+    ...
+  <span class="nt">&lt;argument</span> <span class="na">name=</span><span class="s">&quot;Uint_hbar&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">default_value=</span><span class="s">&quot;1.0&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/arguments&gt;</span>
+</pre></div>
+</div>
+<p>where the “default_value” is used as the valuable of the variable if no arguments are given.  In the absence of the generating script, the program can document its options with the <code class="docutils literal notranslate"><span class="pre">--help</span></code> argument:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./wigner --help
+Usage: wigner --omega &lt;real&gt; --alpha_0 &lt;real&gt; --absorb &lt;real&gt; --width &lt;real&gt; --Uint_hbar &lt;real&gt;
+
+Details:
+Option              Type            Default value
+-o,  --omega        real            0.0
+-a,  --alpha_0      real            3.0
+-b,  --absorb       real            8.0
+-w,  --width        real            0.3
+-U,  --Uint_hbar    real            1.0
+</pre></div>
+</div>
+<p>We can change one or more of these variables’ values in the simulation by passing it at run time.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ mpirun -np 2 ./wigner --omega 0.1 --alpha_0 2.5 --Uint_hbar 0
+Found enlightenment... (Importing wisdom)
+Planning for (distributed x, y) &lt;---&gt; (distributed ky, kx) transform... done.
+Planning for (distributed x, y) &lt;---&gt; (distributed ky, kx) transform... done.
+Sampled field (for moment group #1) at t = 0.000000e+00
+Current timestep: 1.916945e-04
+
+...
+</pre></div>
+</div>
+<p>The values that were used for the variables, whether default or passed in, are stored in the output file (wigner.xsil).</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;info&gt;</span>
+Script compiled with XMDS2 version 2.1 &quot;Happy Mollusc&quot; (r2680)
+See http://www.xmds.org for more information.
+
+Variables that can be specified on the command line:
+  Command line argument omega = 1.000000e-01
+  Command line argument alpha_0 = 2.500000e+00
+  Command line argument absorb = 8.000000e+00
+  Command line argument width = 3.000000e-01
+  Command line argument Uint_hbar = 0.000000e+00
+<span class="nt">&lt;/info&gt;</span>
+</pre></div>
+</div>
+<p id="index-12">Finally, note the shorthand used in the output group</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;![CDATA[</span>
+  <span class="n">_SAMPLE_COMPLEX</span><span class="p">(</span><span class="n">W</span><span class="p">);</span>
+<span class="cp">]]&gt;</span>
+</pre></div>
+</div>
+<p>which is short for</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="cp">&lt;![CDATA[</span>
+  <span class="n">WR</span> <span class="o">=</span> <span class="n">W</span><span class="p">.</span><span class="n">Re</span><span class="p">();</span>
+  <span class="n">WI</span> <span class="o">=</span> <span class="n">W</span><span class="p">.</span><span class="n">Im</span><span class="p">();</span>
+<span class="cp">]]&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="finding-the-ground-state-of-a-bec-continuous-renormalisation">
+<span id="groundstatebec"></span><h2>Finding the Ground State of a BEC (continuous renormalisation)<a class="headerlink" href="#finding-the-ground-state-of-a-bec-continuous-renormalisation" title="Permalink to this headline">¶</a></h2>
+<p>This simulation solves another partial differential equation, but introduces several powerful new features in XMDS2.  The nominal problem is the calculation of the lowest energy eigenstate of a non-linear Schrödinger equation:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \phi}{\partial t} = i \left[\frac{1}{2}\frac{\partial^2}{\partial y^2} - V(y) - U_{int}|\phi|^2\right]\phi\]</div>
+<p>which can be found by evolving the above equation in imaginary time while keeping the normalisation constant.  This causes eigenstates to exponentially decay at the rate of their eigenvalue, so after a short time only the state with the lowest eigenvalue remains.  The evolution equation is straightforward:</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \phi}{\partial t} = \left[\frac{1}{2}\frac{\partial^2}{\partial y^2} - V(y) - U_{int}|\phi|^2\right]\phi\]</div>
+<p>but we will need to use new XMDS2 features to manage the normalisation of the function <span class="math notranslate nohighlight">\(\phi(y,t)\)</span>.  The normalisation for a non-linear Schrödinger equation is given by <span class="math notranslate nohighlight">\(\int dy |\phi(y,t)|^2 = N_{particles}\)</span>, where <span class="math notranslate nohighlight">\(N_{particles}\)</span> is the number of particles described by the wavefunction.</p>
+<p>The code for this simulation can be found in <code class="docutils literal notranslate"><span class="pre">examples/groundstate_workedexamples.xmds</span></code>:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>groundstate<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Joe Hope<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Calculate the ground state of the non-linear Schrodinger equation in a harmonic magnetic trap.
+    This is done by evolving it in imaginary time while re-normalising each timestep.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;auto_vectorise</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;fftw</span> <span class="na">plan=</span><span class="s">&quot;exhaustive&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;globals&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">Uint</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">Nparticles</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/globals&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;y&quot;</span> <span class="na">lattice=</span><span class="s">&quot;256&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-15.0, 15.0)&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;potential&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;y&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> V1 <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">V1</span>  <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;y&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fabs</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">3.0</span><span class="p">)</span> <span class="p">{</span>
+          <span class="n">phi</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">;</span>
+          <span class="c1">// This will be automatically normalised later</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="n">phi</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+        <span class="p">}</span>
+            <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;normalisation&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> Ncalc <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;evaluation&gt;</span>
+      <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;y&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="c1">// Calculate the current normalisation of the wave function.</span>
+        <span class="n">Ncalc</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/evaluation&gt;</span>
+  <span class="nt">&lt;/computed_vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+      <span class="nt">&lt;filter&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello world from a filter segment!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/filter&gt;</span>
+
+    <span class="nt">&lt;filter&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>normalisation wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;1.0&quot;</span> <span class="na">steps=</span><span class="s">&quot;4000&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-10&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>25 4000<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;filters</span> <span class="na">where=</span><span class="s">&quot;step end&quot;</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;filter&gt;</span>
+          <span class="nt">&lt;dependencies&gt;</span>wavefunction normalisation<span class="nt">&lt;/dependencies&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="c1">// Correct normalisation of the wavefunction</span>
+            <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/filter&gt;</span>
+      <span class="nt">&lt;/filters&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>T<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">T</span> <span class="o">=</span> <span class="mf">-0.5</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>potential<span class="nt">&lt;/dependencies&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">T</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">V1</span> <span class="o">+</span> <span class="n">Uint</span><span class="o">*</span><span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">))</span><span class="o">*</span><span class="n">phi</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+
+    <span class="nt">&lt;breakpoint</span> <span class="na">filename=</span><span class="s">&quot;groundstate_break.xsil&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;ky&quot;</span><span class="nt">&gt;</span>wavefunction <span class="nt">&lt;/dependencies&gt;</span>
+    <span class="nt">&lt;/breakpoint&gt;</span>
+
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;y&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>norm_dens<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction normalisation<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">norm_dens</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+
+    <span class="nt">&lt;sampling_group</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>norm<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>normalisation<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">Ncalc</span><span class="p">;</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>We have used the <code class="docutils literal notranslate"><span class="pre">plan=&quot;exhaustive&quot;</span></code> option in the <code class="docutils literal notranslate"><span class="pre">&lt;fftw&gt;</span></code> element to ensure that the absolute fastest transform method is found.  Because the FFTW package stores the results of its tests (by default in the ~/.xmds/wisdom directory), this option does not cause significant computational overhead, except perhaps on the very first run of a new program.</p>
+<p id="index-13">This simulation introduces the first example of a very powerful feature in XMDS2: the <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> element.  This has syntax like any other vector, including possible dependencies on other vectors, and an ability to be used in any element that can use vectors.  The difference is that, much like noise vectors, computed vectors are recalculated each time they are required.  This means that a computed vector can never be used as an integration vector, as its values are not stored.  However, computed vectors allow a simple and efficient method of describing complicated functions of other vectors.  Computed vectors may depend on other computed vectors, allowing for spectral filtering and other advanced options.  See for example, the <a class="reference internal" href="advanced_topics.html#advancedtopics"><span class="std std-ref">Advanced Topics</span></a> section on <a class="reference internal" href="advanced_topics.html#convolutions"><span class="std std-ref">Convolutions and Fourier transforms</span></a>.</p>
+<p>The difference between a computed vector and a stored vector is emphasised by the replacement of the <code class="docutils literal notranslate"><span class="pre">&lt;initialisation&gt;</span></code> element with an <code class="docutils literal notranslate"><span class="pre">&lt;evaluation&gt;</span></code> element.  Apart from the name, they have virtually identical purpose and syntax.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;normalisation&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span> Ncalc <span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;evaluation&gt;</span>
+    <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;y&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="c1">// Calculate the current normalisation of the wave function.</span>
+      <span class="n">Ncalc</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/evaluation&gt;</span>
+<span class="nt">&lt;/computed_vector&gt;</span>
+</pre></div>
+</div>
+<p>Here, our computed vector has no transverse dimensions and depends on the components of “wavefunction”, so the extra transverse dimensions are integrated out.  This code therefore integrates the square modulus of the field, and returns it in the variable “Ncalc”.  This will be used below to renormalise the “phi” field.  Before we examine that process, we have to introduce the <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element can be placed in the <code class="docutils literal notranslate"><span class="pre">&lt;sequence&gt;</span></code> element, or inside <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> elements as we will see next.  Elements placed in the <code class="docutils literal notranslate"><span class="pre">&lt;sequence&gt;</span></code> element are executed in the order they are found in the .xmds file.  Filter elements place the included CDATA block directly into the generated program at the designated position.  If the element does not contain any dependencies, like in our first example, then the code is placed alone:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;filter&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Hello world from a filter segment!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/filter&gt;</span>
+</pre></div>
+</div>
+<p>This filter block merely prints a string into the output when the generated program is run.  If the <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element contains dependencies, then the variables defined in those vectors (or computed vectors, or noise vectors) will be available, and the CDATA block will be placed inside loops that run over all the transverse dimensions used by the included vectors.  The second filter block in this example depends on both the “wavefunction” and “normalisation” vectors:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;filter&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>normalisation wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/filter&gt;</span>
+</pre></div>
+</div>
+<p>Since this filter depends on a vector with the transverse dimension “y”, this filter will execute for each point in “y”.  This code multiplies the value of the field “phi” by the factor required to produce a normalised function in the sense that  <span class="math notranslate nohighlight">\(\int dy |\phi(y,t)|^2 = N_{particles}\)</span>.</p>
+<p>The next usage of a <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code> element in this program is inside the <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code> element, where all filters are placed inside a <code class="docutils literal notranslate"><span class="pre">&lt;filters&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;filters</span> <span class="na">where=</span><span class="s">&quot;step end&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;filter&gt;</span>
+    <span class="nt">&lt;dependencies&gt;</span>wavefunction normalisation<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="c1">// Correct normalisation of the wavefunction</span>
+      <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/filter&gt;</span>
+<span class="nt">&lt;/filters&gt;</span>
+</pre></div>
+</div>
+<p>Filters placed in an integration block are applied each integration step.  The “where” flag is used to determine whether the filter should be applied directly before or directly after each integration step.  The default value for the where flag is <code class="docutils literal notranslate"><span class="pre">where=&quot;step</span> <span class="pre">start&quot;</span></code>, but in this case we chose “step end” to make sure that the final output was normalised after the last integration step.</p>
+<p>At the end of the sequence element we introduce the <code class="docutils literal notranslate"><span class="pre">&lt;breakpoint&gt;</span></code> element.  This serves two purposes.  The first is a simple matter of convenience.  Often when we manage our input and output from a simulation, we are interested solely in storing the exact state of our integration vectors.  A breakpoint element does exactly that, storing the components of any vectors contained within, taking all the normal options of the <code class="docutils literal notranslate"><span class="pre">&lt;output&gt;</span></code> element but not requiring any <code class="docutils literal notranslate"><span class="pre">&lt;sampling_group&gt;</span></code> elements as that information is assumed.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;breakpoint</span> <span class="na">filename=</span><span class="s">&quot;groundstate_break.xsil&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;ky&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+<span class="nt">&lt;/breakpoint&gt;</span>
+</pre></div>
+</div>
+<p>If the filename argument is omitted, the output filenames are numbered sequentially.  Any given <code class="docutils literal notranslate"><span class="pre">&lt;breakpoint&gt;</span></code> element must only depend on vectors with identical dimensions.</p>
+<p>This program begins with a very crude guess to the ground state, but it rapidly converges to the lowest eigenstate.</p>
+<div class="figure align-center" id="id5">
+<img alt="_images/groundstateU2.png" src="_images/groundstateU2.png" />
+<p class="caption"><span class="caption-text">The shape of the ground state rapidly approaches the lowest eigenstate.  For weak nonlinearities, it is nearly Gaussian.</span><a class="headerlink" href="#id5" title="Permalink to this image">¶</a></p>
+</div>
+<div class="figure align-center" id="id6">
+<img alt="_images/groundstateU20.png" src="_images/groundstateU20.png" />
+<p class="caption"><span class="caption-text">When the nonlinear term is larger (<span class="math notranslate nohighlight">\(U=20\)</span>), the ground state is wider and more parabolic.</span><a class="headerlink" href="#id6" title="Permalink to this image">¶</a></p>
+</div>
+</div>
+<div class="section" id="finding-the-ground-state-of-a-bec-again">
+<span id="hermitegaussgroundstatebec"></span><h2>Finding the Ground State of a BEC again<a class="headerlink" href="#finding-the-ground-state-of-a-bec-again" title="Permalink to this headline">¶</a></h2>
+<p>Here we repeat the same simulation as in the <a class="reference internal" href="#groundstatebec"><span class="std std-ref">Finding the Ground State of a BEC (continuous renormalisation)</span></a> example, using a different transform basis.  While spectral methods are very effective, and Fourier transforms are typically very efficient due to the Fast Fourier transform algorithm, it is often desirable to describe nonlocal evolution in bases other than the Fourier basis.  The previous calculation was the Schrödinger equation with a harmonic potential and a nonlinear term.  The eigenstates of such a system are known analytically to be Gaussians multiplied by the Hermite polynomials.</p>
+<div class="math notranslate nohighlight">
+\[\left[-\frac{\hbar}{2 m}\frac{\partial^2}{\partial x^2} + \frac{1}{2}\omega^2 x^2\right]\phi_n(x) = E_n \phi_n(x)\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[\phi_n(x,t) = \sqrt{\frac{1}{2^n n!}} \left(\frac{m \omega}{\hbar \pi}\right)^\frac{1}{4} e^{-\frac{m \omega x^2}{2\hbar}} H_n\left(\sqrt{\frac{m \omega}{\hbar}x}\right),\;\;\;\;\;\;E_n = \left(n+\frac{1}{2}\right) \omega\]</div>
+<p>where <span class="math notranslate nohighlight">\(H_n(u)\)</span> are the physicist’s version of the Hermite polynomials.  Rather than describing the derivatives as diagonal terms in Fourier space, we therefore have the option of describing the entire <span class="math notranslate nohighlight">\(-\frac{\hbar}{2 m}\frac{\partial^2}{\partial x^2} + \frac{1}{2}\omega^2 x^2\)</span> term as a diagonal term in the Hermite-Gaussian basis.  Here is an XMDS2 simulation that performs the integration in this basis. The following is a simplified version of the <code class="docutils literal notranslate"><span class="pre">examples/hermitegauss_groundstate.xmds</span></code> script.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>hermitegauss_groundstate<span class="nt">&lt;/name&gt;</span>
+  <span class="nt">&lt;author&gt;</span>Graham Dennis<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Solve for the groundstate of the Gross-Pitaevskii equation using the Hermite-Gauss basis.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+    <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;validation</span> <span class="na">kind=</span><span class="s">&quot;run-time&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;globals&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">omegaz</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">M_PI</span><span class="o">*</span><span class="mi">20</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">omegarho</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">M_PI</span><span class="o">*</span><span class="mi">200</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">hbar</span> <span class="o">=</span> <span class="mf">1.05457148e-34</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">M</span> <span class="o">=</span> <span class="mf">1.409539200000000e-25</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">g</span> <span class="o">=</span> <span class="mf">9.8</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">scatteringLength</span> <span class="o">=</span> <span class="mf">5.57e-9</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">transverseLength</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">Uint</span> <span class="o">=</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">M_PI</span><span class="o">*</span><span class="n">hbar</span><span class="o">*</span><span class="n">hbar</span><span class="o">*</span><span class="n">scatteringLength</span><span class="o">/</span><span class="n">M</span><span class="o">/</span><span class="n">transverseLength</span><span class="o">/</span><span class="n">transverseLength</span><span class="p">;</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">Nparticles</span> <span class="o">=</span> <span class="mf">5.0e5</span><span class="p">;</span>
+
+        <span class="cm">/* offset constants */</span>
+        <span class="k">const</span> <span class="nf">real</span> <span class="n">EnergyOffset</span> <span class="o">=</span> <span class="mf">0.3</span><span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">pow</span><span class="p">(</span><span class="mf">3.0</span><span class="o">*</span><span class="n">Nparticles</span><span class="o">/</span><span class="mi">4</span><span class="o">*</span><span class="n">omegarho</span><span class="o">*</span><span class="n">Uint</span><span class="p">,</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">M</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span><span class="mi">1</span><span class="o">/</span><span class="mf">3.0</span><span class="p">);</span> <span class="c1">// 1D</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/globals&gt;</span>
+  <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+    <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+    <span class="nt">&lt;transverse_dimensions&gt;</span>
+      <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;100&quot;</span> <span class="na">length_scale=</span><span class="s">&quot;sqrt(hbar/(M*omegarho))&quot;</span> <span class="na">transform=</span><span class="s">&quot;hermite-gauss&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/transverse_dimensions&gt;</span>
+  <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">initial_basis=</span><span class="s">&quot;x&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">phi</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="p">)</span> <span class="o">*</span> <span class="n">pow</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">omegarho</span><span class="o">/</span><span class="p">(</span><span class="n">hbar</span><span class="o">*</span><span class="n">M_PI</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span> <span class="o">*</span> <span class="n">exp</span><span class="p">(</span><span class="mf">-0.5</span><span class="o">*</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">omegarho</span><span class="o">/</span><span class="n">hbar</span><span class="p">)</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;normalisation&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> Ncalc <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;evaluation&gt;</span>
+      <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;x&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="c1">// Calculate the current normalisation of the wave function.</span>
+        <span class="n">Ncalc</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/evaluation&gt;</span>
+  <span class="nt">&lt;/computed_vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;1.0e-2&quot;</span> <span class="na">steps=</span><span class="s">&quot;4000&quot;</span>  <span class="na">tolerance=</span><span class="s">&quot;1e-10&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>100 100<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;filters&gt;</span>
+        <span class="nt">&lt;filter&gt;</span>
+          <span class="nt">&lt;dependencies&gt;</span>wavefunction normalisation<span class="nt">&lt;/dependencies&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="c1">// Correct normalisation of the wavefunction</span>
+            <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/filter&gt;</span>
+      <span class="nt">&lt;/filters&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>L<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">L</span> <span class="o">=</span> <span class="n">EnergyOffset</span><span class="o">/</span><span class="n">hbar</span> <span class="o">-</span> <span class="p">(</span><span class="n">nx</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">*</span><span class="n">omegarho</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+          <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="n">Uint</span><span class="o">/</span><span class="n">hbar</span><span class="o">*</span><span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span><span class="o">*</span><span class="n">phi</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+
+    <span class="nt">&lt;filter&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>normalisation wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">phi</span> <span class="o">*=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">Nparticles</span><span class="o">/</span><span class="n">Ncalc</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/filter&gt;</span>
+
+    <span class="nt">&lt;breakpoint</span> <span class="na">filename=</span><span class="s">&quot;hermitegauss_groundstate_break.xsil&quot;</span> <span class="na">format=</span><span class="s">&quot;ascii&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;nx&quot;</span><span class="nt">&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="nt">&lt;/breakpoint&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;x&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>dens<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">dens</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;kx&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>dens<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">dens</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p>The major difference in this simulation code, aside from the switch back from dimensionless units, is the new transverse dimension type in the <code class="docutils literal notranslate"><span class="pre">&lt;geometry&gt;</span></code> element.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;100&quot;</span> <span class="na">length_scale=</span><span class="s">&quot;sqrt(hbar/(M*omegarho))&quot;</span> <span class="na">transform=</span><span class="s">&quot;hermite-gauss&quot;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>We have explicitly defined the “transform” option, which by default expects the Fourier transform.  The <code class="docutils literal notranslate"><span class="pre">transform=&quot;hermite-gauss&quot;</span></code> option requires the ‘mpmath’ package installed, just as Fourier transforms require the FFTW package to be installed.  The “lattice” option details the number of hermite-Gaussian eigenstates to include, and automatically starts from the zeroth order polynomial and increases.  The number of hermite-Gaussian modes fully determines the irregular spatial grid up to an overall scale given by the <code class="docutils literal notranslate"><span class="pre">length_scale</span></code> parameter.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">length_scale=&quot;sqrt(hbar/(M*omegarho))&quot;</span></code> option requires a real number, but since this script defines it in terms of variables, XMDS2 is unable to verify that the resulting function is real-valued at the time of generating the code.  XMDS2 will therefore fail to compile this program without the feature:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;validation</span> <span class="na">kind=</span><span class="s">&quot;run-time&quot;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>which disables many of these checks at the time of writing the C-code.</p>
+</div>
+<div class="section" id="multi-component-schrodinger-equation">
+<span id="dmultistatese"></span><h2>Multi-component Schrödinger equation<a class="headerlink" href="#multi-component-schrodinger-equation" title="Permalink to this headline">¶</a></h2>
+<p>This example demonstrates a simple method for doing matrix calculations in XMDS2.  We are solving the multi-component PDE</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \phi_j(x,y)}{\partial t} = \frac{i}{2}\left(\frac{\partial^2}{\partial x^2}+\frac{\partial^2}{\partial y^2}\right)\phi_j(x,y) - i U(x,y) \sum_k V_{j k}\phi_k(x,y)\]</div>
+<p>where the last term is more commonly written as a matrix multiplication.  Writing this term out explicitly is feasible for a small number of components, but when the number of components becomes large, or perhaps <span class="math notranslate nohighlight">\(V_{j k}\)</span> should be precomputed for efficiency reasons, it is useful to be able to perform this sum over the integer dimensions automatically.  This example show how this can be done naturally using a computed vector.  The XMDS2 script is as follows:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;simulation</span> <span class="na">xmds-version=</span><span class="s">&quot;2&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;name&gt;</span>2DMSse<span class="nt">&lt;/name&gt;</span>
+
+  <span class="nt">&lt;author&gt;</span>Joe Hope<span class="nt">&lt;/author&gt;</span>
+  <span class="nt">&lt;description&gt;</span>
+    Schroedinger equation for multiple internal states in two spatial dimensions.
+  <span class="nt">&lt;/description&gt;</span>
+
+  <span class="nt">&lt;features&gt;</span>
+      <span class="nt">&lt;benchmark</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;bing</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;fftw</span> <span class="na">plan=</span><span class="s">&quot;patient&quot;</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;openmp</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;auto_vectorise</span> <span class="nt">/&gt;</span>
+     <span class="nt">&lt;/features&gt;</span>
+
+  <span class="nt">&lt;geometry&gt;</span>
+      <span class="nt">&lt;propagation_dimension&gt;</span> t <span class="nt">&lt;/propagation_dimension&gt;</span>
+      <span class="nt">&lt;transverse_dimensions&gt;</span>
+          <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;x&quot;</span> <span class="na">lattice=</span><span class="s">&quot;32&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;y&quot;</span> <span class="na">lattice=</span><span class="s">&quot;32&quot;</span>  <span class="na">domain=</span><span class="s">&quot;(-6, 6)&quot;</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;j&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">lattice=</span><span class="s">&quot;2&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0,1)&quot;</span> <span class="na">aliases=</span><span class="s">&quot;k&quot;</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;/transverse_dimensions&gt;</span>
+   <span class="nt">&lt;/geometry&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;wavefunction&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x y j&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> phi <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">phi</span> <span class="o">=</span> <span class="n">j</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="n">M_PI</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="n">exp</span><span class="p">(</span><span class="kc">i</span><span class="o">*</span><span class="mf">0.1</span><span class="o">*</span><span class="n">x</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;spatialInteraction&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x y&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> U <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">U</span><span class="o">=</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">(</span><span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="n">y</span><span class="o">*</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">4</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;vector</span> <span class="na">name=</span><span class="s">&quot;internalInteraction&quot;</span> <span class="na">type=</span><span class="s">&quot;real&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;j k&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span> V <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;initialisation&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+      <span class="n">V</span><span class="o">=</span><span class="mi">3</span><span class="o">*</span><span class="p">(</span><span class="n">j</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">k</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">j</span><span class="p">)</span><span class="o">*</span><span class="n">k</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/initialisation&gt;</span>
+  <span class="nt">&lt;/vector&gt;</span>
+
+  <span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;coupling&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x y j&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;components&gt;</span>
+      VPhi
+    <span class="nt">&lt;/components&gt;</span>
+    <span class="nt">&lt;evaluation&gt;</span>
+      <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;x y j k&quot;</span><span class="nt">&gt;</span>internalInteraction wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="c1">// Calculate the current normalisation of the wave function.</span>
+        <span class="n">VPhi</span> <span class="o">=</span> <span class="n">V</span><span class="o">*</span><span class="n">phi</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">k</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/evaluation&gt;</span>
+  <span class="nt">&lt;/computed_vector&gt;</span>
+
+  <span class="nt">&lt;sequence&gt;</span>
+    <span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;ARK45&quot;</span> <span class="na">interval=</span><span class="s">&quot;2.0&quot;</span> <span class="na">tolerance=</span><span class="s">&quot;1e-7&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;samples&gt;</span>20 100<span class="nt">&lt;/samples&gt;</span>
+      <span class="nt">&lt;operators&gt;</span>
+        <span class="nt">&lt;integration_vectors&gt;</span>wavefunction<span class="nt">&lt;/integration_vectors&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>Lx<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">Lx</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span><span class="o">*</span><span class="mf">0.5</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;y&quot;</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;operator_names&gt;</span>Ly<span class="nt">&lt;/operator_names&gt;</span>
+          <span class="cp">&lt;![CDATA[</span>
+            <span class="n">Ly</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="o">*</span><span class="mf">0.5</span><span class="p">;</span>
+          <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;/operator&gt;</span>
+        <span class="cp">&lt;![CDATA[</span>
+        <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">Lx</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">+</span> <span class="n">Ly</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="n">U</span><span class="o">*</span><span class="n">VPhi</span><span class="p">;</span>
+        <span class="cp">]]&gt;</span>
+        <span class="nt">&lt;dependencies&gt;</span>spatialInteraction coupling<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="nt">&lt;/operators&gt;</span>
+    <span class="nt">&lt;/integrate&gt;</span>
+  <span class="nt">&lt;/sequence&gt;</span>
+
+  <span class="nt">&lt;output&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;x y j&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>density<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+    <span class="nt">&lt;sampling_group</span> <span class="na">basis=</span><span class="s">&quot;x(0) y(0) j&quot;</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;moments&gt;</span>normalisation<span class="nt">&lt;/moments&gt;</span>
+      <span class="nt">&lt;dependencies&gt;</span>wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+      <span class="cp">&lt;![CDATA[</span>
+        <span class="n">normalisation</span> <span class="o">=</span> <span class="nf">mod2</span><span class="p">(</span><span class="n">phi</span><span class="p">);</span>
+      <span class="cp">]]&gt;</span>
+    <span class="nt">&lt;/sampling_group&gt;</span>
+  <span class="nt">&lt;/output&gt;</span>
+<span class="nt">&lt;/simulation&gt;</span>
+</pre></div>
+</div>
+<p id="index-14">The only truly new feature in this script is the “aliases” option on a dimension.  The integer-valued dimension in this script indexes the components of the PDE (in this case only two).  The  <span class="math notranslate nohighlight">\(V_{j k}\)</span> term is required to be a square array of dimension of this number of components.  If we wrote the k-index of <span class="math notranslate nohighlight">\(V_{j k}\)</span> using a separate <code class="docutils literal notranslate"><span class="pre">&lt;dimension&gt;</span></code> element, then we would not be enforcing the requirement that the matrix be square.  Instead, we note that we will be using multiple ‘copies’ of the j-dimension by using the “aliases” tag.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;dimension</span> <span class="na">name=</span><span class="s">&quot;j&quot;</span> <span class="na">type=</span><span class="s">&quot;integer&quot;</span> <span class="na">lattice=</span><span class="s">&quot;2&quot;</span> <span class="na">domain=</span><span class="s">&quot;(0,1)&quot;</span> <span class="na">aliases=</span><span class="s">&quot;k&quot;</span><span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>This means that we can use the index “k”, which will have exactly the same properties as the “j” index.  This is used to define the “V” function in the “internalInteraction” vector.  Now, just as we use a computed vector to perform an integration over our fields, we use a computed vector to calculate the sum.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;computed_vector</span> <span class="na">name=</span><span class="s">&quot;coupling&quot;</span> <span class="na">dimensions=</span><span class="s">&quot;x y j&quot;</span> <span class="na">type=</span><span class="s">&quot;complex&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;components&gt;</span>
+    VPhi
+  <span class="nt">&lt;/components&gt;</span>
+  <span class="nt">&lt;evaluation&gt;</span>
+    <span class="nt">&lt;dependencies</span> <span class="na">basis=</span><span class="s">&quot;x y j k&quot;</span><span class="nt">&gt;</span>internalInteraction wavefunction<span class="nt">&lt;/dependencies&gt;</span>
+    <span class="cp">&lt;![CDATA[</span>
+      <span class="c1">// Calculate the current normalisation of the wave function.</span>
+      <span class="n">VPhi</span> <span class="o">=</span> <span class="n">V</span><span class="o">*</span><span class="n">phi</span><span class="p">(</span><span class="n">j</span> <span class="o">=&gt;</span> <span class="n">k</span><span class="p">);</span>
+    <span class="cp">]]&gt;</span>
+  <span class="nt">&lt;/evaluation&gt;</span>
+<span class="nt">&lt;/computed_vector&gt;</span>
+</pre></div>
+</div>
+<p>Since the output dimensions of the computed vector do not include a “k” index, this index is integrated.  The volume element for this summation is the spacing between neighbouring values of “j”, and since this spacing is one, this integration is just a sum over k, as required.</p>
+<p>This example also demonstrates an optimisation for the IP operators by separating the <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(y\)</span> parts of the operator (see <a class="reference internal" href="optimisation_hints.html#optimisingipoperators"><span class="std std-ref">Optimising with the Interaction Picture (IP) operator</span></a>).  This gives an approximately 30% speed improvement over the more straightforward implementation:</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;operator</span> <span class="na">kind=</span><span class="s">&quot;ip&quot;</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;operator_names&gt;</span>L<span class="nt">&lt;/operator_names&gt;</span>
+  <span class="cp">&lt;![CDATA[</span>
+    <span class="n">L</span> <span class="o">=</span> <span class="o">-</span><span class="kc">i</span><span class="o">*</span><span class="p">(</span><span class="n">kx</span><span class="o">*</span><span class="n">kx</span> <span class="o">+</span> <span class="n">ky</span><span class="o">*</span><span class="n">ky</span><span class="p">)</span><span class="o">*</span><span class="mf">0.5</span><span class="p">;</span>
+  <span class="cp">]]&gt;</span>
+<span class="nt">&lt;/operator&gt;</span>
+<span class="cp">&lt;![CDATA[</span>
+  <span class="n">dphi_dt</span> <span class="o">=</span> <span class="n">L</span><span class="p">[</span><span class="n">phi</span><span class="p">]</span> <span class="o">-</span> <span class="kc">i</span><span class="o">*</span><span class="n">U</span><span class="o">*</span><span class="n">VPhi</span><span class="p">;</span>
+<span class="cp">]]&gt;</span>
+</pre></div>
+</div>
+<p>By this point, we have introduced most of the important features in XMDS2.  More details on other transform options and rarely used features can be found in the <a class="reference internal" href="advanced_topics.html#advancedtopics"><span class="std std-ref">Advanced Topics</span></a> section.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Worked Examples</a><ul>
+<li><a class="reference internal" href="#the-nonlinear-schrodinger-equation">The nonlinear Schrödinger equation</a></li>
+<li><a class="reference internal" href="#kubo-oscillator">Kubo Oscillator</a></li>
+<li><a class="reference internal" href="#fibre-noise">Fibre Noise</a></li>
+<li><a class="reference internal" href="#integer-dimensions">Integer Dimensions</a></li>
+<li><a class="reference internal" href="#wigner-function">Wigner Function</a></li>
+<li><a class="reference internal" href="#finding-the-ground-state-of-a-bec-continuous-renormalisation">Finding the Ground State of a BEC (continuous renormalisation)</a></li>
+<li><a class="reference internal" href="#finding-the-ground-state-of-a-bec-again">Finding the Ground State of a BEC again</a></li>
+<li><a class="reference internal" href="#multi-component-schrodinger-equation">Multi-component Schrödinger equation</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="reference_index.html" title="Reference section"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tutorial.html" title="Quickstart Tutorial"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Worked Examples</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

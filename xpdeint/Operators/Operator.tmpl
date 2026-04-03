@@ -1,0 +1,166 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Operator.tmpl
+
+Created by Graham Dennis on 2007-10-13.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Operators._Operator
+
+@from xpdeint.Vectors.VectorElement import VectorElement
+@from xpdeint.CallOnceGuards import callOncePerInstanceGuard
+
+@def insideEvaluateOperatorLoops
+  @#
+  @# Content must be provided by a subclass
+  @assert 0
+  @#
+@end def
+
+@@callOncePerInstanceGuard
+@def initialise
+  @#
+  @super
+  @#
+  @if $operatorVector
+_${parent.id}_calculate_${name}_field();
+  @end if
+  @#
+@end def
+
+@def calculateOperatorFieldFunctionContents($function)
+  @#
+${codeBlocks['operatorDefinition'].loop(self.insideCalculateOperatorFieldLoops)}@slurp
+  @#
+@end def
+
+@def insideCalculateOperatorFieldLoopsBegin
+  @#
+  @for $operatorComponentName in $operatorComponents.keys()
+    @if $operatorVector and operatorComponentName in $operatorVector.components
+      @continue
+    @end if
+${operatorVector.type} $operatorComponentName;
+  @end for
+  @#
+@end def
+
+@attr $evaluateOperatorFunctionArgument = 'real _step'
+
+@def evaluateOperatorFunctionContents($function)
+  @#
+  @if not 'calculateOperatorField' in $functions
+${evaluateOperatorFunctionContentsWithCodeBlock(function)}@slurp
+  @else
+${evaluateOperatorFunctionContentsWithoutCodeBlock(function)}@slurp
+  @end if
+  @#
+@end def
+
+@def evaluateOperatorFunctionContentsWithCodeBlock($function)
+  @#
+${callEvaluateLoop}@slurp
+  @#
+  @if $resultVector and $resultVector.needsTransforms
+
+_${resultVector.id}_basis = $basisIndexForBasis($operatorBasis);
+  @end if
+  @#
+@end def
+
+@def callEvaluateLoop
+${codeBlocks['operatorDefinition'].loop(self.insideEvaluateOperatorLoops)}@slurp
+@end def
+
+@def insideEvaluateOperatorLoopsBegin
+  @#
+  @if not $operatorVector
+    @# If we don't have an operator vector, then we need to create
+    @# the component variables so that the user can set them inside
+    @# the loop
+    @for $operatorComponentName, $operatorComponentDictionary in $operatorComponents.items()
+      @set $typeNamesSet = set([vector.type for vector in operatorComponentDictionary.keys()])
+      @set $typeName = 'real'
+      @if 'complex' in typeNamesSet
+        @set $typeName = 'complex'
+      @end if
+${typeName} ${operatorComponentName};
+    @end for
+
+  @end if
+  @#
+@end def
+
+@def evaluateOperatorFunctionContentsWithoutCodeBlock($function)
+  @#
+  @# We need to loop over all of the vectors to which we are applying our operators.
+  @#
+${transformVectorsToBasis($targetVectors, $operatorBasis)}@slurp
+  @#
+
+  @# We have an operator vector and we will need to loop over it
+  @set $setOfVectorsToLoopOver = $targetVectors.copy()
+  @silent $setOfVectorsToLoopOver.add($operatorVector)
+  @if $resultVector
+    @silent $setOfVectorsToLoopOver.add($resultVector)
+  @end if
+  @#
+${evaluateOperatorLoop(setOfVectorsToLoopOver)}@slurp
+  @#
+  @if $resultVector and $resultVector.needsTransforms
+
+_${resultVector.id}_basis = $basisIndexForBasis($operatorBasis);
+  @end if
+  @#
+@end def
+
+@def optimisedOperatorCopyBegin
+  @# This optimisation only works in a restricted set of circumstances.  It's common enough, but not as general
+  @# as it could be.  Basically, you need a single operator name (e.g. L, not Lx and Ly) which is applied to all
+  @# components of a vector.
+  @if len($targetVectors) != 1 or not $resultVector or len($operatorNames) != 1
+    @return
+  @end if
+  @set targetVector = $anyObject($targetVectors)
+  @if $targetVector.nComponents != $resultVector.nComponents or not targetVector.needsTransforms
+    @return
+  @end if
+  @# For this operator, we don't modify the target vector, so if we just transform it, we'll have to transform it back again
+  @# Here, we copy the target vector into the result vector because it's the same size. This way we can avoid the second transform
+memcpy(_active_${resultVector.id}, _active_${targetVector.id}, ${targetVector.allocSize} * sizeof(${targetVector.type}));
+${targetVector.type} *__backup_ptr = _active_${targetVector.id};
+ptrdiff_t __backup_basis = _${targetVector.id}_basis;
+_active_${targetVector.id} = _active_${resultVector.id};
+
+  @#
+@end def
+
+@def optimisedOperatorCopyEnd
+  @if len($targetVectors) != 1 or not $resultVector or len($operatorNames) != 1
+    @return
+  @end if
+  @set targetVector = $anyObject($targetVectors)
+  @if $targetVector.nComponents != $resultVector.nComponents or not targetVector.needsTransforms
+    @return
+  @end if
+_active_${targetVector.id} = __backup_ptr;
+_${targetVector.id}_basis = __backup_basis;
+  @#
+@end def
+

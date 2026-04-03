@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <testing>
+    <input_xsil_file name="bessel_cosine_groundstate_breakpoint_expected.xsil" />
+    <xsil_file name="bessel_cosine_evolution.xsil" expected="bessel_cosine_evolution_expected.xsil" absolute_tolerance="1e10" relative_tolerance="8e-5" />
+  </testing>
+  
+  <name>bessel_cosine_evolution</name>
+  <author>Graham Dennis</author>
+  <description>
+    Evolve the 3D ground state of a Rubidium BEC in a harmonic magnetic trap assuming
+    cylindrical symmetry about the z axis and reflection symmetry about z=0.
+    This permits us to use the cylindrical bessel functions to expand the solution transverse
+    to z and a cosine series to expand the solution along z.
+    
+    This testcase tests using both Fourier transforms and Matrix transforms in a single simulation.
+    
+  </description>
+  
+  <features>
+    <auto_vectorise />
+    <benchmark />
+    <bing />
+    <globals>
+      <![CDATA[
+        const real omegaz = 2*M_PI*20;
+        const real omegarho = 2*M_PI*200;
+        const real hbar = 1.05457148e-34;
+        const real M = 1.409539200000000e-25;
+        const real g = 9.8;
+        const real scatteringLength = 5.57e-9;
+        const real Uint = 4.0*M_PI*hbar*hbar*scatteringLength/M;
+        const complex miUint_hbar = -i*Uint/hbar;
+        const real Nparticles = 5.0e5;
+
+        /* offset constants */
+        const real EnergyOffset = pow(15.0*Nparticles*Uint*omegaz*omegarho*omegarho/(8*M_PI), 2.0/5.0)
+                                    * pow(M/2.0, 3.0/5.0);
+
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="z" lattice="32"  domain="(0.0, 1.0e-4)" transform="dct" volume_prefactor="2.0" />
+      <dimension name="r" lattice="32"  domain="(0.0, 1.0e-5)" transform="bessel" volume_prefactor="2.0*M_PI"/>
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="potential" type="complex">
+    <components>
+      V1
+    </components>
+    <initialisation>
+      <![CDATA[
+        real Vtrap = 0.5*M*(omegarho*omegarho*r*r + omegaz*omegaz*z*z);
+      
+        V1  = -i/hbar*(Vtrap - EnergyOffset);
+      
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="wavefunction" type="complex">
+    <components>
+      phi
+    </components>
+    <initialisation kind="hdf5">
+      <filename>bessel_cosine_groundstate_breakpoint_expected.h5</filename>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="ARK45" tolerance="1e-6" interval="1e-3">
+      <samples>10</samples>
+      <operators>
+        <operator kind="ip" constant="yes" type="imaginary">
+          <operator_names>T</operator_names>
+          <![CDATA[
+            T = -i*0.5*hbar/M*(kr*kr + kz*kz);
+          ]]>
+        </operator>
+        <integration_vectors>wavefunction</integration_vectors>
+        <dependencies>potential</dependencies>
+        <![CDATA[
+          dphi_dt = T[phi] + (V1 + miUint_hbar*mod2(phi))*phi;
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  <output format="hdf5">
+      <sampling_group basis="r z" initial_sample="no">
+        <moments>dens</moments>
+        <dependencies>wavefunction</dependencies>
+        <![CDATA[
+          dens = mod2(phi);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

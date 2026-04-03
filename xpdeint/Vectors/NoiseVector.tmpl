@@ -1,0 +1,90 @@
+@shBang #!/usr/bin/env python3
+
+@*
+NoiseVector.tmpl
+
+Created by Joe Hope on 2009-08-17.
+
+Copyright (c) 2009-2012, Joe Hope
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors._NoiseVector
+
+@*
+  Description of template
+*@
+@def description: noise vector $name
+
+@def evaluateFunctionContents($function)
+@*doc:
+  This function returns the code for the calculated vector's ``evaluate()`` function.
+  
+  The ``evaluate()`` function executes the code that defines the calculated vector.
+*@
+  @# For distributed MPI drivers, we may need to share the noise if it is defined on a field
+  @#  that is not distributed.
+  @set $featureOrdering = ['Driver']
+  @set $featureDict = {'extraIndent': 0}
+${insertCodeForFeatures('evaluateNoiseVectorBegin', featureOrdering, featureDict)}@slurp
+  @set $extraIndent = featureDict['extraIndent']
+  @#
+${evaluateFunctionContentsInner(function), extraIndent=extraIndent}@slurp
+  @#
+${insertCodeForFeaturesInReverseOrder('evaluateNoiseVectorEnd', featureOrdering, featureDict)}@slurp
+  @#
+  @if $needsTransforms
+_${id}_basis = $basisIndexForBasis(self.initialBasis);
+  @end if
+  @#
+@end def
+
+@def evaluateFunctionContentsInner($function)
+  @#
+const ptrdiff_t _vector_size = ${sizeInBasisInReals(self.initialBasis)};
+${randomVariable.makeNoises}@slurp
+  @#
+@end def
+
+@def splitFunctionContents($function)
+@*doc:
+  This function is responsible for splitting the noise due to a failed step.
+  
+  As the implementation of this function is dependent on the random variable,
+  it is the responsibility of the random variable to implement this.
+*@
+  @# For distributed MPI drivers, we may need to share the split noise. So we perform the split
+  @# on only one of the nodes.
+  @set featureOrdering = ['Driver']
+  @set featureDict = {'extraIndent': 0}
+${insertCodeForFeatures('evaluateNoiseVectorBegin', featureOrdering, featureDict)}@slurp
+  @set $extraIndent = featureDict['extraIndent']
+  @#
+${splitFunctionContentsInner(function), extraIndent = extraIndent}@slurp
+  @#
+${insertCodeForFeaturesInReverseOrder('evaluateNoiseVectorEnd', featureOrdering, featureDict)}@slurp
+  @#
+  @if $needsTransforms
+_${id}_basis = ${basisIndexForBasis(self.initialBasis)};
+  @end if
+  @#
+@end def
+
+@def splitFunctionContentsInner($function)
+  @#
+const ptrdiff_t _vector_size = ${sizeInBasisInReals(self.initialBasis)};
+${randomVariable.splitNoise(function)}@slurp
+  @#
+@end def

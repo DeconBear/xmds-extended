@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>fibre_noisevectors</name>
+  <author>Joe Hope</author>
+  <description>
+    Example fibre noise simulation
+  </description>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="64"  domain="(-5, 5)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <driver name="mpi-multi-path" paths="2" />
+  
+  <features>
+    <auto_vectorise />
+    <validation kind="none"/>
+    <benchmark />
+    <error_check />
+    <bing />
+    <fftw />
+    <globals>
+      <![CDATA[
+      const real ggamma = 1.0;
+      const real beta = sqrt(2.0*M_PI*ggamma/10.0);
+      ]]>
+    </globals>
+  </features>
+  
+  <noise_vector name="fuzzyInitial" dimensions="x" kind="gaussian" type="real" method="dsfmt" seed="314 159 276">
+    <components>nn_1 nn_2</components>
+  </noise_vector>
+
+  <noise_vector name="noiseEvolution" dimensions="x" kind="wiener" type="real" method="dsfmt" seed="314 159 276">
+    <components>p_1 p_2</components>
+  </noise_vector>
+
+  <vector name="main" initial_basis="x" type="complex">
+    <components>phi psi</components>
+    <initialisation>
+        <dependencies>fuzzyInitial</dependencies>
+      <![CDATA[
+        phi = exp(-x*x)+nn_1;
+        psi = exp(-x*x)+nn_2;
+      ]]>
+    </initialisation>
+  </vector>
+
+  <sequence>
+    <integrate algorithm="SI" iterations="3" interval="0.25" steps="200000">
+      <samples>50</samples>
+      <operators>
+        <operator kind="ip">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -i*kx*kx;
+          ]]>
+        </operator>
+        <dependencies>noiseEvolution</dependencies>
+        <integration_vectors>main</integration_vectors>
+        <![CDATA[
+         dphi_dt = L[phi] - ggamma*phi;
+         dpsi_dt = L[psi] - ggamma*psi + psi*complex(p_1,p_2);
+        ]]>
+      </operators>
+    </integrate>
+  </sequence>
+  
+  <output>
+      <sampling_group basis="kx" initial_sample="yes">
+        <moments>kdensphi kdenspsi</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          kdensphi = mod2(phi);
+          kdenspsi = mod2(psi);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

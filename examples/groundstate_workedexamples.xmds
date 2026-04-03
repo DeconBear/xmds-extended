@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>groundstate</name>
+  <author>Joe Hope</author>
+  <description>
+    Calculate the ground state of the non-linear Schrodinger equation in a harmonic magnetic trap.
+    This is done by evolving it in imaginary time while re-normalising each timestep.
+  </description>
+  
+  <features>
+    <auto_vectorise />
+    <benchmark />
+    <bing />
+    <fftw plan="exhaustive" />
+    <globals>
+      <![CDATA[
+        const real Uint = 2.0;
+        const real Nparticles = 5.0;
+      ]]>
+    </globals>
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="y" lattice="256"  domain="(-15.0, 15.0)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <vector name="potential" initial_basis="y" type="real">
+    <components> V1 </components>
+    <initialisation>
+      <![CDATA[
+        V1  = 0.5*y*y;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <vector name="wavefunction" initial_basis="y" type="complex">
+    <components> phi </components>
+    <initialisation>
+      <![CDATA[
+        if (fabs(y) < 3.0) {
+          phi = 1.0;
+          // This will be automatically normalised later
+        } else {
+          phi = 0.0;
+        }
+            ]]>
+    </initialisation>
+  </vector>
+  
+  <computed_vector name="normalisation" dimensions="" type="real">
+    <components> Ncalc </components>
+    <evaluation>
+      <dependencies basis="y">wavefunction</dependencies>
+      <![CDATA[
+        // Calculate the current normalisation of the wave function.
+        Ncalc = mod2(phi);
+      ]]>
+    </evaluation>
+  </computed_vector>
+  
+  <sequence>
+      <filter>
+        <![CDATA[
+          printf("Hello world from a filter segment!\n");
+        ]]>
+      </filter>
+
+    <filter>
+        <dependencies>normalisation wavefunction</dependencies>
+      <![CDATA[
+        phi *= sqrt(Nparticles/Ncalc);
+      ]]>
+    </filter>
+
+    <integrate algorithm="ARK45" interval="1.0" steps="4000" tolerance="1e-10">
+      <samples>25 4000</samples>
+      <filters where="step end">
+        <filter>
+          <dependencies>wavefunction normalisation</dependencies>
+          <![CDATA[
+            // Correct normalisation of the wavefunction
+            phi *= sqrt(Nparticles/Ncalc);
+          ]]>
+        </filter>
+      </filters>
+      <operators>
+        <operator kind="ip">
+          <operator_names>T</operator_names>
+          <![CDATA[
+            T = -0.5*ky*ky;
+          ]]>
+        </operator>
+        <integration_vectors>wavefunction</integration_vectors>
+        <dependencies>potential</dependencies>
+        <![CDATA[
+          dphi_dt = T[phi] - (V1 + Uint*mod2(phi))*phi;
+        ]]>
+      </operators>
+    </integrate>
+
+    <breakpoint filename="groundstate_break.xsil" format="ascii">
+      <dependencies basis="ky">wavefunction </dependencies>
+    </breakpoint>
+
+  </sequence>
+
+  <output filename="groundstate.xsil">
+      <sampling_group basis="y" initial_sample="yes">
+        <moments>norm_dens</moments>
+        <dependencies>wavefunction normalisation</dependencies>
+        <![CDATA[
+          norm_dens = mod2(phi);
+        ]]>
+      </sampling_group>
+      <sampling_group initial_sample="yes">
+        <moments>norm</moments>
+        <dependencies>normalisation</dependencies>
+        <![CDATA[
+          norm = Ncalc;
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

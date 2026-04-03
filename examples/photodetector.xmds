@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>photodetector</name>
+  <author>Graham Dennis</author>
+  <description>
+    Example Poissonian noise simulation
+  </description>
+  
+  <features>
+    <benchmark />
+    <error_check />
+    <bing />
+    <!-- <fftw /> -->
+
+  </features>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+  </geometry>
+
+  <noise_vector name="noises" kind="jump" mean-rate="5.0" type="real" method="posix" seed="314 159 276">
+        <components>nn</components>
+  </noise_vector>
+  
+  <vector name="main" type="real">
+    <components> N </components>
+    <initialisation>
+      <![CDATA[
+        N = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <sequence>
+    <integrate algorithm="RK4" interval="10" steps="1000">
+      <samples>1000</samples>
+      <operators>
+        <dependencies>noises</dependencies>
+        <![CDATA[
+          dN_dt = nn;
+        ]]>
+        <integration_vectors>main</integration_vectors>
+      </operators>
+    </integrate>
+  </sequence>
+  <output>
+      <sampling_group initial_sample="yes">
+        <moments>Ndet</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          Ndet = N;
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>

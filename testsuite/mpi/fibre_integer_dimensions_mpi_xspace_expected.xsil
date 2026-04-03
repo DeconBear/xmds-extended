@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <testing>
+    <command_line>mpirun -n 3 ./fibre_integer_dimensions_mpi</command_line>
+    <xsil_file name="fibre_integer_dimensions_mpi.xsil" expected="fibre_integer_dimensions_mpi_expected.xsil" absolute_tolerance="5e-3" relative_tolerance="1e-2" />
+    <xsil_file name="fibre_integer_dimensions_mpi_xspace.xsil" expected="fibre_integer_dimensions_mpi_xspace_expected.xsil" absolute_tolerance="5e-3" relative_tolerance="1e-2" />
+    <xsil_file name="fibre_integer_dimensions_mpi_kspace.xsil" expected="fibre_integer_dimensions_mpi_kspace_expected.xsil" absolute_tolerance="5e-3" relative_tolerance="1e-2" />
+  </testing>
+  <name>fibre_integer_dimensions_mpi</name>
+  <author>Unknown author</author>
+  <description>
+    Example fibre noise simulation
+  </description>
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="j" lattice="4"   domain="(1, 4)" type="integer"/>
+      <dimension name="x" lattice="64"  domain="(-5, 5)" />
+    </transverse_dimensions>
+  </geometry>
+  
+  <driver name="distributed-mpi" />
+  
+  <features>
+    <auto_vectorise />
+    <error_check />
+    <globals>
+      <![CDATA[
+      const real ggamma = 1.0;
+      const real beta = sqrt(4.0*M_PI*ggamma/10.0);
+      ]]>
+    </globals>
+  </features>
+  
+  <vector name="main" initial_basis="j x" type="complex">
+    <components>phi</components>
+    <initialisation>
+      <![CDATA[
+        phi = 0.0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  <noise_vector name="noise" kind="wiener" method="solirte" type="complex" seed="293485">
+    <components>n_1</components>
+  </noise_vector>
+  
+  <sequence>
+    <integrate algorithm="RK4" interval="2.5" steps="200000">
+      <samples>50</samples>
+      <operators>
+        <operator kind="ip" constant="yes">
+          <operator_names>L</operator_names>
+          <![CDATA[
+            L = -i*kx*kx;
+          ]]>
+        </operator>
+        <integration_vectors>main</integration_vectors>
+        <dependencies>noise</dependencies>
+        <![CDATA[
+          dphi_dt = L[phi] - ggamma*phi + beta*n_1;
+        ]]>
+      </operators>
+    </integrate>
+    <breakpoint filename="fibre_integer_dimensions_mpi_xspace_hdf5.xsil" format='hdf5'>
+      <dependencies>main</dependencies>
+    </breakpoint>
+    <breakpoint filename="fibre_integer_dimensions_mpi_xspace.xsil" format='binary'>
+      <dependencies>main</dependencies>
+    </breakpoint>
+    <breakpoint filename="fibre_integer_dimensions_mpi_kspace_hdf5.xsil" format='hdf5'>
+      <dependencies basis="j kx">main</dependencies>
+    </breakpoint>
+    <breakpoint filename="fibre_integer_dimensions_mpi_kspace.xsil" format='binary'>
+      <dependencies basis="j kx">main</dependencies>
+    </breakpoint>
+  </sequence>
+  
+  <output format="binary">
+      <sampling_group basis="j(0) kx" initial_sample="yes">
+        <moments>pow_dens</moments>
+        <dependencies>main</dependencies>
+        <![CDATA[
+          pow_dens = mod2(phi);
+        ]]>
+      </sampling_group>
+  </output>
+
+<info>
+Script compiled with XMDS2 version VERSION_PLACEHOLDER (SUBVERSION_REVISION_PLACEHOLDER)
+See http://www.xmds.org for more information.
+</info>
+
+<XSIL Name="breakpoint">
+  <Param Name="n_independent">2</Param>
+  <Array Name="variables" Type="Text">
+    <Dim>4</Dim>
+    <Stream><Metalink Format="Text" Delimiter=" \n"/>
+j x phiR phiI 
+    </Stream>
+  </Array>
+  <Array Name="data" Type="double">
+    <Dim>4</Dim>
+    <Dim>64</Dim>
+    <Dim>4</Dim>
+    <Stream><Metalink Format="Binary" UnsignedLong="uint64" precision="double" Type="Remote" Encoding="LittleEndian"/>
+fibre_integer_dimensions_mpi_xspace_expected.dat
+    </Stream>
+  </Array>
+</XSIL>
+</simulation>

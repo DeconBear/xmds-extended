@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Developer Documentation &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Licensing" href="licensing.html" />
+    <link rel="prev" title="xsil2graphics2" href="xsil2graphics2.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="licensing.html" title="Licensing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="xsil2graphics2.html" title="xsil2graphics2"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-documentation">
+<span id="developerdocumentation"></span><h1>Developer Documentation<a class="headerlink" href="#developer-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Developers need to know more than users.  For example, they need to know about the test suite, and writing test cases.  They need to know how to perform a developer installation.  They need to know how to edit and compile this documentation.  They need a step-by-step release process.</p>
+<div class="section" id="generating-reproducible-c-code">
+<span id="reproducibleccode"></span><span id="index-0"></span><h2>Generating reproducible C++ code<a class="headerlink" href="#generating-reproducible-c-code" title="Permalink to this headline">¶</a></h2>
+<p>Since moving to Python 3, the C++ code that XMDS2 generates can vary from invocation to invocation. That means you can run “xmds2 testscript.xmds”, look at the generated C++ code, run “xmds2 testscript.xmds” again and obtain slightly different C++ code. The reason for this is that XMDS2 uses sets internally to store a number of object types such as vectors and transforms. In Python 2, when you iterate over a set, the ordering was in principle not guaranteed, but in practice is almost always was. Python 3, however, randomizes its hash seeds on every run, so that the order you get things out of a set really won’t be same run to run.</p>
+<p>This means that the C++ code that XMDS2 generates will differ run-to-run, but when compiled and executed will still produce the same result. When working on XMDS it is often easier to debug things if the C++ code doesn’t change. To make this happen you have to tell Python not to randomize its hash table seeds, which you can do by setting an environment variable via</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>export PYTHONHASHSEED=0
+</pre></div>
+</div>
+<p>This ensures any Python programs launched in that terminal will produce reproducible code.</p>
+</div>
+<div class="section" id="test-scripts">
+<span id="testscripts"></span><span id="index-1"></span><h2>Test scripts<a class="headerlink" href="#test-scripts" title="Permalink to this headline">¶</a></h2>
+<p>Every time you add a new feature and/or fix a new and exciting bug, it is a great idea to make sure that the new feature works and/or the bug stays fixed.  Fortunately, it is pleasantly easy to add a test case to the testing suite.</p>
+<ol class="arabic simple">
+<li><p>Write normal XMDS script that behaves as you expect.</p></li>
+<li><p>Add a <code class="docutils literal notranslate"><span class="pre">&lt;testing&gt;</span></code> element to your script.  You can read the description of this element and its contents below, and have a look at other testcases for examples, but the basic structure is simple:.</p></li>
+</ol>
+<pre class="literal-block">&lt;<a class="reference internal" href="#testingelement"><span class="std std-ref">testing</span></a>&gt;
+  &lt;<a class="reference internal" href="#commandlineelement"><span class="std std-ref">command_line</span></a>&gt; &lt;<a class="reference internal" href="#commandlineelement"><span class="std std-ref">/command_line</span></a>&gt;
+  &lt;<a class="reference internal" href="reference_elements.html#argumentselement"><span class="std std-ref">arguments</span></a>&gt;
+    &lt;<a class="reference internal" href="reference_elements.html#argumentelement"><span class="std std-ref">argument</span></a> /&gt;
+    &lt;<a class="reference internal" href="reference_elements.html#argumentelement"><span class="std std-ref">argument</span></a> /&gt;
+    ...
+  &lt;<a class="reference internal" href="reference_elements.html#argumentselement"><span class="std std-ref">/arguments</span></a>&gt;
+  &lt;<a class="reference internal" href="#inputxsilfileelement"><span class="std std-ref">input_xsil_file</span></a> /&gt;
+  &lt;<a class="reference internal" href="#xsilfileelement"><span class="std std-ref">xsil_file</span></a>&gt;
+    &lt;<a class="reference internal" href="#momentgroupelement"><span class="std std-ref">moment_group</span></a> /&gt;
+    &lt;<a class="reference internal" href="#momentgroupelement"><span class="std std-ref">moment_group</span></a> /&gt;
+    ...
+  &lt;<a class="reference internal" href="#xsilfileelement"><span class="std std-ref">/xsil_file</span></a>&gt;
+&lt;<a class="reference internal" href="#testingelement"><span class="std std-ref">/testing</span></a>&gt;</pre>
+<ol class="arabic simple" start="3">
+<li><p>Put into the appropriate <code class="docutils literal notranslate"><span class="pre">testsuite/</span></code> directory.</p></li>
+<li><p>run <code class="docutils literal notranslate"><span class="pre">./run_tests.py</span></code> This will automatically generate your <code class="docutils literal notranslate"><span class="pre">_expected</span></code> files.</p></li>
+<li><p>Commit the <code class="docutils literal notranslate"><span class="pre">.xmds</span></code>, <code class="docutils literal notranslate"><span class="pre">*_expected.xsil</span></code> file and any <code class="docutils literal notranslate"><span class="pre">*_expected*</span></code> data files.</p></li>
+</ol>
+<p>There are examples of test cases in the testsuite directory. Feel free to add to them! Ideally a testcase should run quickly (a second or less, unless it’s specifically testing a huge number of dimensions or something similar), and not produce very much data (since we have to bundle test results with the XMDS2 code, resulting in larger downloads). This is because there are a <em>lot</em> of test cases and running the full testsuite is taking an increasing amount of time.</p>
+<div class="section" id="testing-element">
+<span id="testingelement"></span><h3>&lt;testing&gt; element<a class="headerlink" href="#testing-element" title="Permalink to this headline">¶</a></h3>
+<p>The element that wraps everything, e.g.</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+   ...
+<span class="nt">&lt;/testing&gt;</span>
+</pre></div>
+</div>
+<p>This element is required for a test case script.</p>
+</div>
+<div class="section" id="command-line-element">
+<span id="commandlineelement"></span><h3>&lt;command_line&gt; element<a class="headerlink" href="#command-line-element" title="Permalink to this headline">¶</a></h3>
+<p>The test runner assumes it can fire off your test script by just using the filename (without the .xmds extension). So if you have a test case script called MyTest.xmds, it assumes that it can be run via</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>xmds2 MyTest.xmds
+./MyTest
+</pre></div>
+</div>
+<p>If the command to run your executable isn’t “./MyTest” you can override it with the &lt;command_line&gt; element. For example, if you need your script to be run as an MPI job with 8 processors, you could specify</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+   <span class="nt">&lt;command_line&gt;</span> mpirun -n 8 ./MyTest <span class="nt">&lt;/command_line&gt;</span>
+   ...
+<span class="nt">&lt;/testing&gt;</span>
+</pre></div>
+</div>
+<p>This element is optional.</p>
+</div>
+<div class="section" id="arguments-element">
+<h3>&lt;arguments&gt; element<a class="headerlink" href="#arguments-element" title="Permalink to this headline">¶</a></h3>
+<p>This can be used to add additional arguments to the command used to run the executable. So, for example, if you wanted to pass lattice sizes to the script, you could use</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+  <span class="nt">&lt;arguments&gt;</span> --latticesize_x 10 --latticesize_y 10 <span class="nt">&lt;/arguments&gt;</span>
+  <span class="nt">&lt;command_line&gt;</span> mpirun -n 8 ./MyTest <span class="nt">&lt;/command_line&gt;</span>
+  ...
+<span class="nt">&lt;/testing&gt;</span>
+</pre></div>
+</div>
+<p>which would get the test runner to execute your test case with</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span>mpirun -n 8 ./MyTest --latticesize_x 10 --latticesize_y 10
+</pre></div>
+</div>
+<p>This element is optional.</p>
+</div>
+<div class="section" id="input-xsil-file-element">
+<span id="inputxsilfileelement"></span><h3>&lt;input_xsil_file&gt; element<a class="headerlink" href="#input-xsil-file-element" title="Permalink to this headline">¶</a></h3>
+<p>This is a list of all .xsil files used by your testcase as input, e.g. if you are using a file to initialise your vectors. So, for example, if you had previously output the files “input_file_breakpoint.xsil” and the associated “input_file_breakpoint.h” and your test case script needs to load them for vector intialisation, you’d need to inform the test runner of this fact via</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+  <span class="nt">&lt;input_xsil_file</span> <span class="na">name=</span><span class="s">&quot;input_file_breakpoint.xsil&quot;</span> <span class="nt">/&gt;</span>
+  ...
+<span class="nt">&lt;/testing&gt;</span>
+</pre></div>
+</div>
+<p>This element is optional.</p>
+</div>
+<div class="section" id="xsil-file-element">
+<span id="xsilfileelement"></span><h3>&lt;xsil_file&gt; element<a class="headerlink" href="#xsil-file-element" title="Permalink to this headline">¶</a></h3>
+<p>This element is used to compare the results of the test with some previously generated expected results. An example would be</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+  <span class="nt">&lt;xsil_file</span> <span class="na">name=</span><span class="s">&quot;MyTest.xsil&quot;</span> <span class="na">expected=</span><span class="s">&quot;MyTest_expected.xsil&quot;</span> <span class="na">absolute_tolerance=</span><span class="s">&quot;1e-6&quot;</span> <span class="na">relative_tolerance=</span><span class="s">&quot;1e-5&quot;</span> <span class="nt">/&gt;</span>
+  ...
+</pre></div>
+</div>
+<p>The “name” attribute specifies the filename of the source data. Generally speaking it will be name of the output file that your test case creates when it runs. The “expected” attribute specifies the filename of the canonical correct data against which you wish to compare.</p>
+<p>You can specify the “absolute_tolerance” attribute or the “relative_tolerance” attribute or both. If the comparison between the generated data and expected data exceeds these specifications the test will be counted as failed.</p>
+<p>This element is optional but recommended. If you don’t specify it, the only way the test will fail is if it fails to compile and link, or crashes for some other reason (division by zero etc).</p>
+</div>
+<div class="section" id="moment-group-element">
+<span id="momentgroupelement"></span><h3>&lt;moment_group&gt; element<a class="headerlink" href="#moment-group-element" title="Permalink to this headline">¶</a></h3>
+<p>This element is used if you want to specify the tolerances per moment group, rather than having the same tolerance for all moment groups. Tolerances specified per moment group override the tolerances specified in the &lt;xsil_file_name&gt; element. The syntax is</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;testing&gt;</span>
+    <span class="nt">&lt;xsil_file</span> <span class="na">name=</span><span class="s">&quot;MyTest.xsil&quot;</span> <span class="na">expected=</span><span class="s">&quot;MyTest_expected.xsil&quot;</span> <span class="na">absolute_tolerance=</span><span class="s">&quot;1e-6&quot;</span> <span class="na">relative_tolerance=</span><span class="s">&quot;1e-5&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;moment_group</span> <span class="na">number=</span><span class="s">&quot;1&quot;</span> <span class="na">absolute_tolerance=</span><span class="s">&quot;1e-7&quot;</span> <span class="na">relative_tolerance=</span><span class="s">&quot;1e-6&quot;</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;moment_group</span> <span class="na">number=</span><span class="s">&quot;2&quot;</span> <span class="na">absolute_tolerance=</span><span class="s">&quot;1e-3&quot;</span> <span class="na">relative_tolerance=</span><span class="s">&quot;1e-6&quot;</span> <span class="nt">/&gt;</span>
+    ...
+</pre></div>
+</div>
+<p>This element is optional.</p>
+</div>
+</div>
+<div class="section" id="xmds-documentation">
+<span id="userdocumentation"></span><span id="index-2"></span><h2>XMDS Documentation<a class="headerlink" href="#xmds-documentation" title="Permalink to this headline">¶</a></h2>
+<p>Documentation in XMDS is written as reStructuredText files (.rst), which are then parsed into HTML files to be displayed on their website.</p>
+<p>You can find the user documentation folder located <code class="docutils literal notranslate"><span class="pre">admin/userdoc-source</span></code>. This is where all of the .rst files are kept. If you’re wanting to add documentation to the site, you’ll need to create your own .rst file, with the name of the webpage as the filename.</p>
+<p>RST is a relatively simple language, which is basically simplified HTML markup. For documentation on how to make Lists, Href Links, Embed images etc, you should check here;</p>
+<p><a class="reference external" href="http://docutils.sourceforge.net/docs/user/rst/quickref.html">http://docutils.sourceforge.net/docs/user/rst/quickref.html</a>
+<a class="reference external" href="http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html">http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html</a></p>
+<p>However, you should easily be able to use some of the pre-existing .rst files in the project as a template to create yours.</p>
+<p>Once your documentation is in this folder, it should be deployed along with the project to their website when you run create_release_version.sh, which can be found in the /Trunk/xpdeint/admin folder. If you would like to test to see what your rst file generates without running this shell script, you can use the Makefile in the userdoc-source folder, by running “make html”.</p>
+<p>NOTE: Before you can run the create_release_version.sh file, there are a few packages you will need. This command uses latex to generate the XMDS2 pdf, so you’ll be needing the following packages; <code class="docutils literal notranslate"><span class="pre">texlive-fonts-recommended</span></code>, <code class="docutils literal notranslate"><span class="pre">texlive-lang-cjk</span></code>, <code class="docutils literal notranslate"><span class="pre">texlive-latex-base</span></code>.</p>
+</div>
+<div class="section" id="how-to-update-xmds2-script-validator-xml-schema">
+<span id="howtoaddelementtovalidator"></span><span id="index-3"></span><h2>How to update <code class="docutils literal notranslate"><span class="pre">XMDS2</span></code> script validator (XML schema)<a class="headerlink" href="#how-to-update-xmds2-script-validator-xml-schema" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/IntroduceNewElement.png" class="align-right" src="_images/IntroduceNewElement.png" />
+<p>This is a short guide to adding an element to XMDS2, so that it can be validated by the XMDS2 script validator. In this guide, the example being used will be the addition of a matrix element to the validator.  The matrix will have a  ‘name’ and a ‘type’ (so it can be called later, and the type is known for future reference). Each matrix will also need a ‘row’ component, and possibly an initialisation value.</p>
+<p>Navigate to <code class="docutils literal notranslate"><span class="pre">xpdeint/support/xpdeint.rnc</span></code>. This is a RelaxNG compact file, which specifies the XML schema which is only used for issuing warnings to users about missing or extraneous XML tags / attributes. Add the following lines to the end of the file (so that it is outside all other brackets in the file):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Matrix = element matrix {
+    attribute name { text }
+    , attribute type { text }?
+    , element components { text }
+    , element initialisation {
+        attribute kind { text }?
+    }?
+}
+</pre></div>
+</div>
+<p>Save this file, and then in the terminal navigate to the folder <code class="docutils literal notranslate"><span class="pre">xpdeint/support/</span></code> and run <code class="docutils literal notranslate"><span class="pre">make</span></code>. This updates the XML based file <code class="docutils literal notranslate"><span class="pre">xpdeint/support/xpdeint.rng</span></code>, which is the file the parser uses to validate elements in XMDS2. This file which is  used is in RelaxNG format, but RelaxNG compact is easier to read and edit.</p>
+<p>Commit both <code class="docutils literal notranslate"><span class="pre">xpdeint/support/xpdeint.rnc</span></code> and <code class="docutils literal notranslate"><span class="pre">xpdeint/support/xpdeint.rng</span></code> to the code repository.</p>
+</div>
+<div class="section" id="how-to-introduce-a-new-integrator-stepper-into-the-xmds2-environment">
+<span id="howtoaddintegrator"></span><span id="index-4"></span><h2>How to introduce a new integrator Stepper into the XMDS2 environment<a class="headerlink" href="#how-to-introduce-a-new-integrator-stepper-into-the-xmds2-environment" title="Permalink to this headline">¶</a></h2>
+<img alt="_images/IntroduceNewIntegrationTechnique.png" class="align-right" src="_images/IntroduceNewIntegrationTechnique.png" />
+<p>This is a short guide to adding a new stepper containing a new mathematical technique to XMDS2, which can then be used by to integrate equations. This guide describes the logistics of introducing a new stepper and as such, the code inside the stepper template is outside the scope of this document. The new stepper which will be used in this guide will be called ‘IntegrateMethodStepper’.</p>
+<p>Navigate to the <code class="docutils literal notranslate"><span class="pre">xpdeint/Segments/Integrators</span></code> directory. Create a file called <code class="docutils literal notranslate"><span class="pre">IntegrateMethodStepper.tmpl</span></code> in this directory. In this file, implement the new integration algorithm (follow the convention of existing steppers in that folder). In this same folder, open the file named <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> and add the following line to the bottom of the file and save it:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>import IntegrateMethodStepper
+</pre></div>
+</div>
+<p>Navigate up until you are in the <code class="docutils literal notranslate"><span class="pre">xpdeint</span></code> directory. Open the file <code class="docutils literal notranslate"><span class="pre">XMDS2Parser.py</span></code>, and ‘find’ the algorithm map (Ctrl+F &gt; algorithmMap works for most text editors). The mnemonic ‘IM’ will be used for our Stepper. If the stepper uses fixed step sizes, then add the following line to the algorithm map:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;IM&#39;:   (Integrators.FixedStep.FixedStep, Integrators.IntegrateMethodStepper.IntegrateMethodStepper),
+</pre></div>
+</div>
+<p>Otherwise, if your stepper is an adaptive Stepper, add the following line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&#39;IM&#39;:   (Integrators.AdaptiveStep.AdaptiveStep, Integrators.IntegrateMethodStepper.IntegrateMethodStepper),
+</pre></div>
+</div>
+<p>In the terminal, navigate to the <code class="docutils literal notranslate"><span class="pre">xpdeint</span></code> directory, and run make over the entire directory. ‘IM’ can now be used to specify the new Stepper as your integration algorithm inside your .xmds files, e.g.</p>
+<div class="highlight-xpdeint notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;integrate</span> <span class="na">algorithm=</span><span class="s">&quot;IM&quot;</span> <span class="na">interval=</span><span class="s">&quot;5.0&quot;</span> <span class="na">steps=</span><span class="s">&quot;2000&quot;</span><span class="nt">&gt;</span>
+    ...
+<span class="nt">&lt;/integrate&gt;</span>
+</pre></div>
+</div>
+<span class="target" id="logicalbreakdownparsingprocess"></span></div>
+<div class="section" id="logical-breakdown-of-xmds2-parsing-process">
+<span id="index-5"></span><h2>Logical breakdown of XMDS2 Parsing Process<a class="headerlink" href="#logical-breakdown-of-xmds2-parsing-process" title="Permalink to this headline">¶</a></h2>
+<p>The following information is intended to assist developers in understanding the logical process undertaken by the XMDS2 system when parsing an .xmds file. The documentation was not designed to be exhaustive, but rather to help paint a picture of part of the way XMDS2 works.</p>
+<p>The flowcharts have been created in open source diagram drawing program Dia, and compiled into .png files which are displayed below. This page contains links to the original .dia files, so if you find any error in the information below (or you’d like to extend it, by adding in more information), please update the .dia files and commit them (and their compiled versions) to svn.</p>
+<div class="section" id="overall-process-for-parsing-xml-file-in-xmds2">
+<h3>Overall process for parsing XML file in XMDS2<a class="headerlink" href="#overall-process-for-parsing-xml-file-in-xmds2" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/Overall_Flowchart.png" class="align-center" src="_images/Overall_Flowchart.png" />
+<p>The original .dia file can be downloaded <a class="reference external" href="_images/Overall_Flowchart.dia">here</a>.</p>
+</div>
+<div class="section" id="parser2-py-parses-xml-file-sub-process-3">
+<h3>parser2.py parses XML file (Sub process 3)<a class="headerlink" href="#parser2-py-parses-xml-file-sub-process-3" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/Subprocess3_ParsingXMLFile.png" class="align-center" src="_images/Subprocess3_ParsingXMLFile.png" />
+<p>You can download the original dia file <a class="reference external" href="_images/Subprocess3_ParsingXMLFile.dia">here</a>.</p>
+</div>
+<div class="section" id="pass-file-to-xmds2parser-to-parse-xmldocument-with-parsexmldocument-sub-process-3-4">
+<h3>Pass file to XMDS2Parser to parse xmlDocument with parseXMLDocument() (Sub process 3.4)<a class="headerlink" href="#pass-file-to-xmds2parser-to-parse-xmldocument-with-parsexmldocument-sub-process-3-4" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/Subprocess3_4_parseXMLDocument.png" class="align-center" src="_images/Subprocess3_4_parseXMLDocument.png" />
+<p>You can download the original dia file <a class="reference external" href="_images/Subprocess3_4_parseXMLDocument.dia">here</a>.</p>
+</div>
+<div class="section" id="parse-top-level-sequence-elements-sub-process-3-4-11">
+<h3>Parse Top Level Sequence elements (Sub process 3.4.11)<a class="headerlink" href="#parse-top-level-sequence-elements-sub-process-3-4-11" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/Subprocess3_4_11_ParseTopLvlSeqElements.png" class="align-center" src="_images/Subprocess3_4_11_ParseTopLvlSeqElements.png" />
+<p>You can download the original dia file <a class="reference external" href="_images/Subprocess3_4_11_ParseTopLvlSeqElements.dia">here</a>.</p>
+</div>
+<div class="section" id="parse-integrate-element-sub-process-3-4-11-2">
+<h3>Parse Integrate Element (Sub process 3.4.11.2)<a class="headerlink" href="#parse-integrate-element-sub-process-3-4-11-2" title="Permalink to this headline">¶</a></h3>
+<img alt="_images/Subprocess3_4_11_2_ParseIntegrateElement.png" class="align-center" src="_images/Subprocess3_4_11_2_ParseIntegrateElement.png" />
+<p>You can download the original dia file <a class="reference external" href="_images/Subprocess3_4_11_2_ParseIntegrateElement.dia">here</a>.</p>
+</div>
+</div>
+<div class="section" id="directory-layout">
+<span id="index-6"></span><h2>Directory layout<a class="headerlink" href="#directory-layout" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="xmds2-s-code-and-templates">
+<h3>XMDS2’s code and templates<a class="headerlink" href="#xmds2-s-code-and-templates" title="Permalink to this headline">¶</a></h3>
+<p>All <code class="docutils literal notranslate"><span class="pre">.tmpl</span></code> files are Cheetah template files.  These are used to generate C++ code.  These templates are compiled as part of the XMDS2 build process to <code class="docutils literal notranslate"><span class="pre">.py</span></code> files of the same name.  Do not edit the generated <code class="docutils literal notranslate"><span class="pre">.py</span></code> files, always edit the <code class="docutils literal notranslate"><span class="pre">.tmpl</span></code> files and regenerate the corresponding <code class="docutils literal notranslate"><span class="pre">.py</span></code> files with <code class="docutils literal notranslate"><span class="pre">make</span></code>.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">xpdeint/</span></code>:</dt><dd><ul>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Features/</span></code>: Code for all <code class="docutils literal notranslate"><span class="pre">&lt;feature&gt;</span></code> elements, such as <code class="docutils literal notranslate"><span class="pre">&lt;globals&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;auto_vectorise&gt;</span></code></dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Transforms/</span></code>: Code for the Fourier and matrix-based transforms (including MPI variants).</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Geometry/</span></code>: Code for describing the geometry of simulation dimensions and domains.  Includes code for <code class="docutils literal notranslate"><span class="pre">Geometry</span></code>, <code class="docutils literal notranslate"><span class="pre">Field</span></code> and all <code class="docutils literal notranslate"><span class="pre">DimensionRepresentations</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Operators/</span></code>: Code for all <code class="docutils literal notranslate"><span class="pre">&lt;operator&gt;</span></code> elements, including <code class="docutils literal notranslate"><span class="pre">IP</span></code>, <code class="docutils literal notranslate"><span class="pre">EX</span></code> and the temporal derivative operator <code class="docutils literal notranslate"><span class="pre">DeltaA</span></code>.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Segments/</span></code>: Code for all elements that can appear in a <code class="docutils literal notranslate"><span class="pre">&lt;segments&gt;</span></code> tag.  This includes <code class="docutils literal notranslate"><span class="pre">&lt;integrate&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;filter&gt;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&lt;breakpoint&gt;</span></code>.</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Integrators</span></code>: Code for fixed and adaptive integration schemes, and all steppers (e.g. <code class="docutils literal notranslate"><span class="pre">RK4</span></code>, <code class="docutils literal notranslate"><span class="pre">RK45</span></code>, <code class="docutils literal notranslate"><span class="pre">RK9</span></code>, etc.)</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Stochastic/</span></code>: Code for all random number generators and the random variables derived from them.</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Generators/</span></code>: Code for random number generators, includes <code class="docutils literal notranslate"><span class="pre">dSFMT</span></code>, <code class="docutils literal notranslate"><span class="pre">POSIX</span></code>, <code class="docutils literal notranslate"><span class="pre">Solirte</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RandomVariables/</span></code>: Code for the random variables derived from the random number generators.  These are the gaussian, poissonian and uniform random variables.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SimulationDrivers/</span></code>: Code for all <code class="docutils literal notranslate"><span class="pre">&lt;driver&gt;</span></code> elements.  In particular, this is where the location of MPI and multi-path code.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Vectors/</span></code>: Code for all <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> elements, and their initialisation.  This includes normal <code class="docutils literal notranslate"><span class="pre">&lt;vector&gt;</span></code> elements as well as <code class="docutils literal notranslate"><span class="pre">&lt;computed_vector&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;noise_vector&gt;</span></code> elements.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">includes/</span></code>: C++ header and sources files used by the generated simulations.</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">support/</span></code>: Support files</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">wscript</span></code>: <code class="docutils literal notranslate"><span class="pre">waf</span></code> build script for configuring and compiling generated simulations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xpdeint.rnc</span></code>: Compact RelaxNG XML validation for XMDS scripts.  This is the source file for the XML RelaxNG file <code class="docutils literal notranslate"><span class="pre">xpdeint.rng</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xpdeint.rng</span></code>: RelaxNG XML validation for XMDS scripts.  To regenerate this file from <code class="docutils literal notranslate"><span class="pre">xpdeint.rnc</span></code>, just run <code class="docutils literal notranslate"><span class="pre">make</span></code> in this directory.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">waf/</span></code>: Our included version of the Python configuration and build tool <code class="docutils literal notranslate"><span class="pre">waf</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">waf_extensions/</span></code>: <code class="docutils literal notranslate"><span class="pre">waf</span></code> tool for compiling Cheetah templates.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xsil2graphics2/</span></code>: Templates for the output formats supported by <code class="docutils literal notranslate"><span class="pre">xsil2graphics2</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wscript</span></code>: <code class="docutils literal notranslate"><span class="pre">waf</span></code> build script for XMDS2 itself.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">CodeParser.py</span></code>: Minimally parses included C++ code for handling nonlocal dimension access, IP/EX operators and IP operator validation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Configuration.py</span></code>: Manages configuration and building of generated simulations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">FriendlyPlusStyle.py</span></code>: Sphinx plug-in to improve formatting of XMDS scripts in user documentation.</p></li>
+<li><p>This directory also contains code for the input script parser, code blocks, code indentation, and the root <code class="docutils literal notranslate"><span class="pre">_ScriptElement</span></code> class.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="support-files">
+<h3>Support files<a class="headerlink" href="#support-files" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">admin/</span></code>: Documentation source, Linux installer and release scripts.</dt><dd><ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">developer-doc-source/</span></code>: source for epydoc python class documentation (generated from python code).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">userdoc-source/</span></code>: source for the user documentation (results visible at www.xmds.org and xmds2.readthedocs.org).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xpdeint.tmbundle/</span></code>: TextMate support bundle for Cheetah templates and XMDS scripts</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bin/</span></code>: Executable scripts to be installed as part of XMDS2 (includes <code class="docutils literal notranslate"><span class="pre">xmds2</span></code> and <code class="docutils literal notranslate"><span class="pre">xsil2graphics2</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">examples/</span></code>: Example XMDS2 input scripts demonstrating most of XMDS2’s features.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">testsuite/</span></code>: Testsuite of XMDS2 scripts.  Run the testsuite by executing <code class="docutils literal notranslate"><span class="pre">./run_tests.py</span></code></p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developer Documentation</a><ul>
+<li><a class="reference internal" href="#generating-reproducible-c-code">Generating reproducible C++ code</a></li>
+<li><a class="reference internal" href="#test-scripts">Test scripts</a><ul>
+<li><a class="reference internal" href="#testing-element">&lt;testing&gt; element</a></li>
+<li><a class="reference internal" href="#command-line-element">&lt;command_line&gt; element</a></li>
+<li><a class="reference internal" href="#arguments-element">&lt;arguments&gt; element</a></li>
+<li><a class="reference internal" href="#input-xsil-file-element">&lt;input_xsil_file&gt; element</a></li>
+<li><a class="reference internal" href="#xsil-file-element">&lt;xsil_file&gt; element</a></li>
+<li><a class="reference internal" href="#moment-group-element">&lt;moment_group&gt; element</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#xmds-documentation">XMDS Documentation</a></li>
+<li><a class="reference internal" href="#how-to-update-xmds2-script-validator-xml-schema">How to update <code class="docutils literal notranslate"><span class="pre">XMDS2</span></code> script validator (XML schema)</a></li>
+<li><a class="reference internal" href="#how-to-introduce-a-new-integrator-stepper-into-the-xmds2-environment">How to introduce a new integrator Stepper into the XMDS2 environment</a></li>
+<li><a class="reference internal" href="#logical-breakdown-of-xmds2-parsing-process">Logical breakdown of XMDS2 Parsing Process</a><ul>
+<li><a class="reference internal" href="#overall-process-for-parsing-xml-file-in-xmds2">Overall process for parsing XML file in XMDS2</a></li>
+<li><a class="reference internal" href="#parser2-py-parses-xml-file-sub-process-3">parser2.py parses XML file (Sub process 3)</a></li>
+<li><a class="reference internal" href="#pass-file-to-xmds2parser-to-parse-xmldocument-with-parsexmldocument-sub-process-3-4">Pass file to XMDS2Parser to parse xmlDocument with parseXMLDocument() (Sub process 3.4)</a></li>
+<li><a class="reference internal" href="#parse-top-level-sequence-elements-sub-process-3-4-11">Parse Top Level Sequence elements (Sub process 3.4.11)</a></li>
+<li><a class="reference internal" href="#parse-integrate-element-sub-process-3-4-11-2">Parse Integrate Element (Sub process 3.4.11.2)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#directory-layout">Directory layout</a><ul>
+<li><a class="reference internal" href="#xmds2-s-code-and-templates">XMDS2’s code and templates</a></li>
+<li><a class="reference internal" href="#support-files">Support files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="licensing.html" title="Licensing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="xsil2graphics2.html" title="xsil2graphics2"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

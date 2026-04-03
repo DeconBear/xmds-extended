@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name> nlse_minimal </name>
+
+  <author> Mattias Johnsson </author>
+  <description>
+    The nonlinear Schrodinger equation in one dimension, 
+    RK4 algorithm. So no adaptive stepping. The idea is to take the
+    generated C code and try to make it use the GPU for more
+    and more parts until it looks like it's working.
+
+    Then we can try to reproduce that C code in the Cheetah templating.
+
+    And then we can move on to more complex scripts.
+  </description>
+
+  <features>
+      <benchmark />
+      <bing />
+      <fftw plan="patient" />
+
+      <!-- <auto_vectorise /> -->
+      <globals>
+          <![CDATA[
+          const double sigma = 2.0;
+          ]]>
+       </globals>
+     </features>
+
+  <geometry>
+      <propagation_dimension> tau </propagation_dimension>
+      <transverse_dimensions>
+        <dimension name="x" lattice="128"  domain="(-10, 10)" />
+      </transverse_dimensions>
+   </geometry>
+
+  <vector name="wavefunction" type="complex" dimensions="x">
+    <components> phi </components>
+    <initialisation>
+      <![CDATA[
+        phi = exp(-0.5 * x*x/sigma/sigma);
+      ]]>
+    </initialisation>
+  </vector>
+
+  <sequence>
+    <integrate algorithm="RK4" interval="2.0" steps="1000">
+      <samples> 10 </samples>
+      <operators>
+        <integration_vectors> wavefunction </integration_vectors>
+        <operator kind="ex">
+          <operator_names> Ltt </operator_names>
+          <![CDATA[
+            Ltt = -i*kx*kx*0.5;
+          ]]>
+        </operator>
+        <![CDATA[
+          dphi_dtau = Ltt[phi] + i*mod2(phi)*phi;
+        ]]>
+
+      </operators>
+    </integrate>
+  </sequence>
+
+  <output>
+      <sampling_group basis="x" initial_sample="yes">
+        <moments> density </moments>
+        <dependencies> wavefunction </dependencies>
+        <![CDATA[
+          density = mod2(phi);
+        ]]>
+      </sampling_group>
+  </output>
+</simulation>
+

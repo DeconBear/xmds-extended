@@ -1,0 +1,107 @@
+@shBang #!/usr/bin/env python3
+
+@*
+NonUniformDimensionRepresentation.tmpl
+
+Created by Graham Dennis on 2008-07-30.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Geometry._NonUniformDimensionRepresentation
+
+@def defines
+  @#
+  @if $silent
+    @stop
+  @end if
+  @if $runtimeLattice
+    @super
+#define ${minimum}     (${arrayName}[0])
+#define ${maximum}     (${arrayName}[${globalLattice}-1])
+    @if not $stepSizeArray
+#define ${stepSize}        (${arrayName}[${loopIndex}+1]-${arrayName}[${loopIndex}])
+    @end if
+  @end if
+  @#
+@end def
+
+@def globals
+  @#
+  @if $silent
+    @stop
+  @end if
+  @#
+  @super
+  @#
+  @if $runtimeLattice
+    @if $stepSizeArray
+${type}* ${stepSizeArrayName} = (${type}*) xmds_malloc(sizeof(${type}) * (${globalLattice}));
+    @else
+unsigned long ${index} = 0;
+    @end if
+  @end if
+  @#
+@end def
+
+@def openLoopAscending
+  @#
+#define ${name} ${arrayName}[${loopIndex} + ${localOffset}]
+  @if $stepSizeArray
+#define d${name} (${stepSizeArrayName}[${loopIndex} + ${localOffset}] * (${volumePrefactor}))
+  @end if
+
+for (long ${loopIndex} = 0; ${loopIndex} < ${localLattice}; ${loopIndex}++) {
+@end def
+
+@def closeLoopAscending
+  @#
+}
+#undef ${name}
+  @if $stepSizeArray
+#undef d${name}
+  @end if
+  @#
+@end def
+
+@def localIndexFromIndexForDimensionRep($dimRep)
+  @#
+(${dimRep.loopIndex} + ${dimRep.localOffset}) * (${globalLattice}/${dimRep.globalLattice}) - ${localOffset}@slurp
+  @#
+@end def
+
+@def strictlyAscendingGlobalIndex
+  @#
+${loopIndex} + ${localOffset}@slurp
+  @#
+@end def
+
+@def initialiseArray
+  @#
+  @if $stepSizeArray
+for (long ${loopIndex} = 0; ${loopIndex} < ${globalLattice}; ${loopIndex}++) {
+  ${gridAndStepAtIndex(self.loopIndex), autoIndent=True}@slurp
+}
+  @end if
+  @#
+@end def
+
+@def gridAndStepAtIndex($index)
+  @#
+${arrayName}[$index] = ${gridAtIndex(index)};
+${stepSizeArrayName}[$index] = ${stepWeightAtIndex(index)};
+  @#
+@end def

@@ -1,0 +1,53 @@
+@shBang #!/usr/bin/env python3
+
+@*
+HermiteGaussDimensionRepresentation.tmpl
+
+Created by Graham Dennis on 2009-08-12.
+
+Copyright (c) 2009-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Geometry.NonUniformDimensionRepresentation
+
+@attr $instanceAttributes = ['_maximum', 'fieldCount']
+@attr $instanceDefaults = {'fieldCount': 2.0}
+
+@def gridAtIndex($index)
+  @#
+_hermite_zeros_${parent.name}[$index] * ${_maximum} / sqrt(${fieldCount / 2.0})@slurp
+  @#
+@end def
+
+@def stepWeightAtIndex($index)
+  @#
+_hermite_gauss_weights_${parent.name}[$index] * ${_maximum} / sqrt(${fieldCount / 2.0})@slurp
+  @#
+@end def
+
+@def indexForSinglePointSample
+  @#
+  @# Take the middle point, which is in the middle of the array
+${globalLattice}/2@slurp
+  @#
+@end def
+
+@def createCoordinateVariableForSinglePointSample
+  @#
+${type} ${name} = ${arrayName}[${globalLattice}/2];
+#define d${name} (${stepSizeArrayName}[${globalLattice}/2]  * (${volumePrefactor}))
+  @#
+@end def

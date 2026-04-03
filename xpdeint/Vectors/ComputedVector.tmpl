@@ -1,0 +1,70 @@
+@shBang #!/usr/bin/env python3
+
+@*
+ComputedVector.tmpl
+
+Created by Graham Dennis on 2008-03-12.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Vectors._ComputedVector
+
+@*
+  Description of template
+*@
+@def description: computed vector $name
+
+@def evaluateFunctionContents($function)
+@*doc:
+  This function returns the code for the calculated vector's ``evaluate()`` function.
+  
+  The ``evaluate()`` function executes the code that defines the calculated vector.
+*@
+  @#
+  @if $integratingComponents
+    @# If this vector is constructed through an integral, then we first
+    @# need to initialise ourselves to zero.
+${initialise}@slurp
+
+  @end if
+  @#
+  @set $featureOrdering = ['Stochastic']
+  @set $featureDict = {'codeBlock': $codeBlocks['evaluation']}
+  @#
+  @set $vectorOverrides = []
+  @if $integratingComponents
+    @silent vectorOverrides.append(self)
+  @end if
+  @#
+${insertCodeForFeatures('computedVectorEvaluationBegin', $featureOrdering, featureDict)}@slurp
+${codeBlocks['evaluation'].loop(self.insideEvaluationLoops, vectorOverrides=vectorOverrides)}@slurp
+${insertCodeForFeaturesInReverseOrder('computedVectorEvaluationEnd', $featureOrdering, featureDict)}@slurp
+  @#
+  @if $needsTransforms
+
+_${id}_basis = $basisIndexForBasis(self.initialBasis);
+  @end if
+  @#
+@end def
+
+@def insideEvaluationLoops(codeString)
+  @#
+// ************* Evaluation code ****************
+${codeString}@slurp
+// **********************************************
+  @#
+@end def

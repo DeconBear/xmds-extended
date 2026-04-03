@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>News &#8212; XMDS2 3.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="shortcut icon" href="_static/xmds_favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Licensing" href="licensing.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="licensing.html" title="Licensing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">News</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="news">
+<span id="index-0"></span><span id="id1"></span><h1>News<a class="headerlink" href="#news" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="xmds-3-1-0-my-kingdom-for-a-tentacle-october-24-2021">
+<h2>XMDS 3.1.0 “My kingdom for a tentacle” (October 24, 2021)<a class="headerlink" href="#xmds-3-1-0-my-kingdom-for-a-tentacle-october-24-2021" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 3.1.0 contains a number of new features, as well as bugfixes and updates. Specifically</p>
+<ul class="simple">
+<li><p>Added 2-field and 3-field bases for the Hermite-Gauss transforms</p></li>
+<li><p>Added the “export_all_paths” attribute to the “sampling_group” element. This allows the moment groups to be output for every path when using the multipath driver. Warning: This can require a lot of disk space in general cases, and signficant additional memory in MPI cases.</p></li>
+<li><p>Miscellaneous bugfixes and improvements to the quality of the generated C code</p></li>
+<li><p>Documentation improvements</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-3-0-0-release-the-kraken-may-17-2019">
+<h2>XMDS 3.0.0 “Release the Kraken” (May 17, 2019)<a class="headerlink" href="#xmds-3-0-0-release-the-kraken-may-17-2019" title="Permalink to this headline">¶</a></h2>
+<p>Main features for this release: XMDS2 has been moved from Python 2 to Python 3, and the Mac installer has been brought up to date with the current codebase.</p>
+<p>Note that even though the version number has now hit 3.0, the program is still invoked by the command “xmds2” - partly for backward compatibility, and partly as this is a continuation of the XMDS2 project, which replaced XMDS1. Also note that this version is completely compatible with previous scripts written for XMDS2.</p>
+<p>In detail:</p>
+<ul class="simple">
+<li><p>XMDS2 has been moved from Python 2 to Python 3</p></li>
+<li><p>The Mac installer is now up to date and is a Homebrew package (check <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> for details!)</p></li>
+<li><p>Better error reporting of script and compile errors</p></li>
+<li><p>Minor performance improvements</p></li>
+<li><p>Miscellaneous bugfixes</p></li>
+<li><p>Documentation improvements</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-2-3-it-came-from-the-deep-january-20-2017">
+<h2>XMDS 2.2.3 “It came from the deep” (January 20, 2017)<a class="headerlink" href="#xmds-2-2-3-it-came-from-the-deep-january-20-2017" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 2.2.3 is primarily a maintenance release consolidating various bug fixes and small improvements that have been made. Specifically</p>
+<ul class="simple">
+<li><p>A number of bugs have been fixed</p></li>
+<li><p>Remove requirement that samples must divide into steps when using an adaptive stepper</p></li>
+<li><p>Make initial step size more robust when using adaptive stepper</p></li>
+<li><p>Improved debug mode</p></li>
+<li><p>Added extra examples</p></li>
+<li><p>Documentation improvements</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-2-2-xmds2-is-a-game-of-two-halves-october-13-2014">
+<h2>XMDS 2.2.2 “XMDS2 is a game of two halves” (October 13, 2014)<a class="headerlink" href="#xmds-2-2-2-xmds2-is-a-game-of-two-halves-october-13-2014" title="Permalink to this headline">¶</a></h2>
+<p>High priority bug fixes to the previous release.</p>
+</div>
+<div class="section" id="xmds-2-2-1-xmds2-is-a-game-of-two-halves-september-30-2014">
+<h2>XMDS 2.2.1 “XMDS2 is a game of two halves” (September 30, 2014)<a class="headerlink" href="#xmds-2-2-1-xmds2-is-a-game-of-two-halves-september-30-2014" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 2.2.1 contains minor bugfixes and updates. This includes documentation improvements, superior handling of external packages and more informative errors.</p>
+</div>
+<div class="section" id="xmds-2-2-0-out-of-cheese-error-january-13-2014">
+<h2>XMDS 2.2.0 “Out of cheese error” (January 13, 2014)<a class="headerlink" href="#xmds-2-2-0-out-of-cheese-error-january-13-2014" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 2.2.0 contains a number of new features, as well as bugfixes and updates. Specifically</p>
+<ul class="simple">
+<li><p>Separated IP operators.  This is a significant performance optimisation (~30%) for problems with two or more dimensions.  It requires separating IP operators of the form “f(kx) + g(ky)” (e.g. kinetic energy for quantum physics) into <em>two</em> IP operators and explicitly setting the dimensions=”x” and dimensions=”y” attributes on each.  See <a class="reference internal" href="optimisation_hints.html#optimisationhints"><span class="std std-ref">Optimisation hints</span></a> for details.</p></li>
+<li><p>Significant speed optimisations for adaptive integrators with IP operators (past IP operator calculations are re-used if the time-step hasn’t changed).</p></li>
+<li><p>The “constant” attribute for IP/EX operators is now unnecessary and considered advanced usage.  If you don’t know whether to specify constant=”yes” or constant=”no”, don’t specify either.</p></li>
+<li><p>The xsil2graphics2 data exporter now supports Matlab, Octave, Mathematica and Python in all output formats, as well as R (HDF5 only).  The Matlab/Octave scripts are now identical.  A script generated for one will work for the other.</p></li>
+<li><p>Bessel-Neumann transforms have been implemented.  Set transform=”bessel-neumann” if you want a Bessel (Hankel) transform but have zero derivative at the boundary (Neumann boundary conditions) instead of zero function value (Dirichlet boundary conditions).  If you don’t care about your boundary condition, stick with the “bessel” transform.</p></li>
+<li><p>A Bulirisch-Stoer integrator.  This can be useful for problems which are very smooth as you can use an arbitrarily high order algorithm.  Specify algorithm=”RE” and extrapolations=”5” to have a 10th order integrator.  Currently this is fixed-step only.</p></li>
+<li><p>“adaptive-mpi-multipath” driver.  This implements a load scheduler that better spreads the work across different CPUs when different paths can take very different amounts of time. Also useful in heterogeneous clusters.</p></li>
+<li><p>XMDS2 is currently undergoing acceptance into Debian linux and will soon be able to be installed via the package manager. In the meantime you can find it in the private APT repository at <a class="reference external" href="http://xmds.laboissiere.net">http://xmds.laboissiere.net</a>.</p></li>
+<li><p>A number of bug fixes.</p></li>
+<li><p>Expanded and improved documentation.</p></li>
+</ul>
+<p>Many thanks to all who contributed to this release!</p>
+</div>
+<div class="section" id="xmds-2-1-4-well-if-this-isn-t-nice-i-don-t-know-what-is-september-27-2013">
+<h2>XMDS 2.1.4 “Well if this isn’t nice, I don’t know what is” (September 27, 2013)<a class="headerlink" href="#xmds-2-1-4-well-if-this-isn-t-nice-i-don-t-know-what-is-september-27-2013" title="Permalink to this headline">¶</a></h2>
+<p>The XMDS 2.1.4 update contains many new improvements and bugfixes:</p>
+<ul class="simple">
+<li><p><em>xsil2graphics2</em> now supports all output formats for MATLAB, Octave and Python.  The scripts generated for MATLAB/Octave are compatible with both.</p></li>
+<li><p>Fix a bug when <a class="reference internal" href="reference_elements.html#referencingnonlocal"><span class="std std-ref">nonlocally</span></a> referencing a <a class="reference internal" href="advanced_topics.html#dimensionaliases"><span class="std std-ref">dimension alias</span></a> with subsampling in <em>sampling_group</em> blocks or in some situations when MPI is used.  This bug caused incorrect elements of the vector to be accessed.</p></li>
+<li><p>Correct the Fourier basis for dimensions using Hermite-Gauss transforms.  Previously ‘kx’ was effectively behaving as ‘-kx’.</p></li>
+<li><p>Improve the performance of ‘nx’ &lt;–&gt; ‘kx’ Hermite-Gauss transforms.</p></li>
+<li><p>Stochastic error checking with runtime noise generation now works correctly.  Previously different random numbers were generated for the full-step paths and the half-step paths.</p></li>
+<li><p>Documentation updates.</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-1-3-happy-mollusc-june-7-2013">
+<h2>XMDS 2.1.3 “Happy Mollusc” (June 7, 2013)<a class="headerlink" href="#xmds-2-1-3-happy-mollusc-june-7-2013" title="Permalink to this headline">¶</a></h2>
+<p>The XMDS 2.1.3 update is a bugfix release that includes the following improvements:</p>
+<ul class="simple">
+<li><p>XMDS will work when MPI isn’t installed (but only for single-process simulations).</p></li>
+<li><p>Support for GCC 4.8</p></li>
+<li><p>The number of paths used by the multi-path driver can now be specified at run-time (using <em>&lt;validation kind=”run-time”&gt;</em>)</p></li>
+<li><p>Other bug fixes</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-1-2-happy-mollusc-october-15-2012">
+<h2>XMDS 2.1.2 “Happy Mollusc” (October 15, 2012)<a class="headerlink" href="#xmds-2-1-2-happy-mollusc-october-15-2012" title="Permalink to this headline">¶</a></h2>
+<p>The XMDS 2.1.2 update has many improvements:</p>
+<ul class="simple">
+<li><p>Named filters.  You can now specify a name for a filter block and call it like a function if you need to execute it conditionally.  See the documentation for the <em>&lt;filter&gt;</em> block for more information.</p></li>
+<li><p>New <em>chunked_output</em> feature.  XMDS can now output simulation results as it goes, reducing the memory requirement for simulations that generate significant amounts of output.  See the documentation for more details.</p></li>
+<li><p>Improved OpenMP support</p></li>
+<li><p>The EX operator is now faster in the common case (but you should still prefer IP when possible)</p></li>
+<li><p>If seeds are not provided for a <em>noise_vector</em>, they are now generated at simulation run-time, so different executions will give different results.  The generated noises can still be found in the output .xsil files enabling results to be reproduced if desired.</p></li>
+<li><p>Advanced feature: Dimensions can be accessed non-locally with the index of the lattice point.  This removes the need in hacks to manually access XMDS’s underlying C arrays.  This is an advanced feature and requires a little knowledge of XMDS’s internal grid representation.  See the advanced topics documentation for further details.</p></li>
+<li><p>Fixed adaptive integrator order when noises were used in vector initialisation</p></li>
+<li><p>Fix the Spherical Bessel basis.  There were errors in the definition of this basis which made it previously unreliable.</p></li>
+<li><p>Other bug fixes</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-1-happy-mollusc-june-14-2012">
+<h2>XMDS 2.1 “Happy Mollusc” (June 14, 2012)<a class="headerlink" href="#xmds-2-1-happy-mollusc-june-14-2012" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 2.1 is a significant upgrade with many improvements and bug fixes since 2.0. We also now have installers for Linux and Mac OS X, so you no longer have to build XMDS from source! See <a class="reference internal" href="installation.html#installation"><span class="std std-ref">here</span></a> for details about the installers.</p>
+<p>Existing users should note that this release introduces a more concise syntax for moment groups.  You can now use:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;sampling_group</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span> <span class="na">basis=</span><span class="s">&quot;x y z&quot;</span><span class="nt">&gt;</span>
+    ...
+<span class="nt">&lt;/sampling_group&gt;</span>
+</pre></div>
+</div>
+<p>Instead of:</p>
+<div class="highlight-xmds2 notranslate"><div class="highlight"><pre><span></span><span class="nt">&lt;group&gt;</span>
+    <span class="nt">&lt;sampling</span> <span class="na">initial_sample=</span><span class="s">&quot;yes&quot;</span> <span class="na">basis=</span><span class="s">&quot;x y z&quot;</span><span class="nt">&gt;</span>
+        ...
+    <span class="nt">&lt;/sampling&gt;</span>
+<span class="nt">&lt;/group&gt;</span>
+</pre></div>
+</div>
+<p>Another syntax change is that the initial basis of a vector should be specified with <em>initial_basis</em> instead of <em>initial_space</em>.</p>
+<p>In both cases, although the old syntax is not described in the documentation, it is still supported, so existing scripts will work without any changes.</p>
+<p>Other changes in XMDS 2.1 include:</p>
+<ul class="simple">
+<li><p>The <em>lattice</em> attribute for dimensions can now be specified at run-time.  Previously only the minimum and maximum values of the domain could be specified at run-time.  See <a class="reference internal" href="reference_elements.html#validation"><span class="std std-ref">here</span></a> for details.</p></li>
+<li><p><em>noise_vectors</em> can now be used in non-uniform dimensions (e.g. dimensions using the Bessel transform for cylindrical symmetry).</p></li>
+<li><p>“loose” <em>geometry_matching_mode</em> for HDF5 vector initialisation.  This enables extending the simulation grid from one simulation to the next, or coarsening or refining a grid when importing.</p></li>
+<li><p><em>vectors</em> can now be initialised by integrating over dimensions of other vectors.  <em>computed_vectors</em> always supported this, now <em>vectors</em> do too.</p></li>
+<li><p>Update to latest version of waf, which is used for compiling simulations and detecting FFTW, HDF5, etc. This should lead to fewer waf-related problems.</p></li>
+<li><p>Bug fixes.</p></li>
+</ul>
+</div>
+<div class="section" id="xmds-2-0-shiny-september-13-2010">
+<h2>XMDS 2.0 “Shiny!” (September 13, 2010)<a class="headerlink" href="#xmds-2-0-shiny-september-13-2010" title="Permalink to this headline">¶</a></h2>
+<p>XMDS 2.0 is a major upgrade which has been rewritten from the ground up to make it easier for us to apply new features. And there are many. XMDS 2.0 is faster and far more versatile than previous versions, allowing the efficient integration of almost any initial value problem on regular domains.</p>
+<p>The feature list includes:</p>
+<ul class="simple">
+<li><p>Quantities of different dimensionalities. So you can have a 1D potential and a 3D wavefunction.</p></li>
+<li><p>Integrate more than one vector (in more than one geometry), so you can now simultaneously integrate a PDE and a coupled ODE (or coupled PDEs of different dimensions).</p></li>
+<li><p>Non-Fourier transformations including the Bessel basis, Spherical Bessel basis and the Hermite-Gauss (harmonic oscillator) basis.</p></li>
+<li><p>The ability to have more than one kind of noise (gaussian, poissonian, etc) in a simulation.</p></li>
+<li><p>Integer-valued dimensions with non-local access. You can have an array of variables and access different elements of that array.</p></li>
+<li><p>Significantly better error reporting. When errors are found when compiling the script they will almost always be reported with the corresponding line of your script, instead of the generated source.</p></li>
+<li><p><em>IP</em>/<em>EX</em> operators are separate from the integration algorithm, so you can have both <em>IP</em> and <em>EX</em> operators in a single integrate block. Also, <em>EX</em> operators can act on arbitrary code, not just vector components. (e.g. <em>L[phi*phi]</em>).</p></li>
+<li><p>Cross propagation in the increasing direction of a given dimension or in the decreasing dimension. And you can have more than one cross-propagator in a given integrator (going in different directions or dimensions).</p></li>
+<li><p>Faster Gaussian noises.</p></li>
+<li><p>The ability to calculate spatial correlation functions.</p></li>
+<li><p>OpenMP support.</p></li>
+<li><p>MPI support.</p></li>
+<li><p>Output moment groups use less memory when there isn’t a <em>post_processing</em> element.</p></li>
+<li><p>Generated source is indented correctly.</p></li>
+<li><p>An <em>xmds1</em>-like script file format.</p></li>
+<li><p><em>xmds1</em>-like generated source.</p></li>
+<li><p>All of the integrators from <em>xmds1</em> (<em>SI</em>, <em>RK4</em>, <em>ARK45</em>, <em>RK9</em>, <em>ARK89</em>).</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/xmds_logo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">News</a><ul>
+<li><a class="reference internal" href="#xmds-3-1-0-my-kingdom-for-a-tentacle-october-24-2021">XMDS 3.1.0 “My kingdom for a tentacle” (October 24, 2021)</a></li>
+<li><a class="reference internal" href="#xmds-3-0-0-release-the-kraken-may-17-2019">XMDS 3.0.0 “Release the Kraken” (May 17, 2019)</a></li>
+<li><a class="reference internal" href="#xmds-2-2-3-it-came-from-the-deep-january-20-2017">XMDS 2.2.3 “It came from the deep” (January 20, 2017)</a></li>
+<li><a class="reference internal" href="#xmds-2-2-2-xmds2-is-a-game-of-two-halves-october-13-2014">XMDS 2.2.2 “XMDS2 is a game of two halves” (October 13, 2014)</a></li>
+<li><a class="reference internal" href="#xmds-2-2-1-xmds2-is-a-game-of-two-halves-september-30-2014">XMDS 2.2.1 “XMDS2 is a game of two halves” (September 30, 2014)</a></li>
+<li><a class="reference internal" href="#xmds-2-2-0-out-of-cheese-error-january-13-2014">XMDS 2.2.0 “Out of cheese error” (January 13, 2014)</a></li>
+<li><a class="reference internal" href="#xmds-2-1-4-well-if-this-isn-t-nice-i-don-t-know-what-is-september-27-2013">XMDS 2.1.4 “Well if this isn’t nice, I don’t know what is” (September 27, 2013)</a></li>
+<li><a class="reference internal" href="#xmds-2-1-3-happy-mollusc-june-7-2013">XMDS 2.1.3 “Happy Mollusc” (June 7, 2013)</a></li>
+<li><a class="reference internal" href="#xmds-2-1-2-happy-mollusc-october-15-2012">XMDS 2.1.2 “Happy Mollusc” (October 15, 2012)</a></li>
+<li><a class="reference internal" href="#xmds-2-1-happy-mollusc-june-14-2012">XMDS 2.1 “Happy Mollusc” (June 14, 2012)</a></li>
+<li><a class="reference internal" href="#xmds-2-0-shiny-september-13-2010">XMDS 2.0 “Shiny!” (September 13, 2010)</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="licensing.html" title="Licensing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">XMDS2 3.1.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">News</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2008-2019, Graham Dennis, Joe Hope and Mattias Johnsson. Licensed under the GNU FDL.
+      Last updated on Oct 23, 2021.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.4.
+    </div>
+  </body>
+</html>

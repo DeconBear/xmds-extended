@@ -1,0 +1,72 @@
+@shBang #!/usr/bin/env python3
+
+@*
+FixedStepWithCross.tmpl
+
+Created by Graham Dennis on 2008-11-12.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Segments.Integrators._FixedStepWithCross
+
+@def leftRightDeltaAFunctionBody($function, $replacementOperatorContainer)
+  @#
+  @# First evaluate any computed vector that any of our operators may depend on
+${evaluateComputedVectors($dynamicVectorsNeedingPrecalculationForOperatorContainers($intraStepOperatorContainers), static = False)}@slurp
+  @#
+  @# Then loop over operators that come before the delta A operators in the order in which
+  @# they appear in the xmds script.
+  @#
+  @for $operatorContainer in $intraStepOperatorContainers
+
+${operatorContainer.evaluatePreDeltaAOperators(parentFunction = function)}@slurp
+  @end for
+  @#
+  @# Now loop over delta A operators
+  @# See the comment in _Integrator about why this needs to be done in
+  @# this particular order
+  @for $operatorContainer in $intraStepOperatorContainersInFieldDescendingOrder
+    @# Blank line for formatting
+
+    @if not operatorContainer == $operatorContainerToOverride
+${operatorContainer.evaluateDeltaAOperator(parentFunction = function)}@slurp
+    @else
+${replacementOperatorContainer.evaluateDeltaAOperator(parentFunction = function)}@slurp
+    @end if
+  @end for
+  @#
+  @# Lastly, loop over the operators that come after the delta a operators in the order in
+  @# which they appear in the xmds script.
+  @#
+  @for $operatorContainer in $intraStepOperatorContainers
+    @# Blank line for formatting
+
+${operatorContainer.evaluatePostDeltaAOperators(parentFunction = function)}@slurp
+  @end for
+  @#
+
+  @set $integrationVectorsNeedingUpdating = $integrationVectors
+  @silent integrationVectorsNeedingUpdating.difference_update(replacementOperatorContainer.deltaAOperator.integrationVectors)
+${transformVectorsToBasis($integrationVectorsNeedingUpdating, $homeBasis), autoIndent=True}@slurp
+
+${loopOverVectorsWithInnerContentTemplate($integrationVectorsNeedingUpdating,
+c"""// a = oldcopy + a
+_\${vector.id}[\$index] += _${name}_oldcopy_\${vector.id}[\$index];
+""", basis = $homeBasis)}@slurp
+  @#
+@end def
+

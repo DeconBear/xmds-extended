@@ -1,0 +1,214 @@
+@shBang #!/usr/bin/env python3
+
+@*
+OutputFormat.tmpl
+
+Created by Graham Dennis on 2009-01-24.
+
+Copyright (c) 2009-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.ScriptElement.ScriptElement
+@from xpdeint.PrintfSafeFilter import PrintfSafeFilter
+@from xpdeint.CallOnceGuards import callOnceGuard, callOncePerInstanceGuard
+
+@def description: Unnamed Output Format
+@attr $outputFormatClasses = {}
+@attr $outputFormat = False
+@attr $mpiSafe = False
+@attr $outputFilesTruncated = set()
+
+@@callOnceGuard
+@def functionPrototypes
+  @#
+  @super
+  @#
+FILE* _open_xsil_file(const char* _filename);
+void _close_xsil_file(FILE*& fp);
+void _write_xsil_header(FILE* fp);
+void _write_xsil_footer(FILE* fp);
+  @#
+@end def
+
+@@callOnceGuard
+@def functionImplementations
+  @#
+  @super
+  @#
+
+FILE* _open_xsil_file(const char* _filename)
+{
+  @set $featureOrdering = ['Driver']
+  ${insertCodeForFeatures('openXSILFile', featureOrdering), autoIndent=True}@slurp
+  
+  FILE* fp = fopen(_filename, "w");
+  
+  if (fp == NULL)
+    // _LOG will cause the simulation to exit
+    _LOG(_ERROR_LOG_LEVEL, "Unable to open output file '%s'.\n"
+                           "Exiting.\n", _filename);
+  
+  return fp;
+}
+
+void _close_xsil_file(FILE*& fp)
+{
+  if (fp)
+    fclose(fp);
+  fp = NULL;
+  
+  ${insertCodeForFeaturesInReverseOrder('closeXSILFile', featureOrdering), autoIndent=True}@slurp
+}
+
+${writeXSILHeaderFunctionImplementation}@slurp
+
+${writeXSILFooterFunctionImplementation}@slurp
+  @#
+@end def
+
+@def writeXSILHeaderFunctionImplementation
+void _write_xsil_header(FILE* fp)
+{
+  if (!fp)
+    return;
+  @# The input script may contain entity references to other documents.  The content of the XSIL is the full, expanded simulation
+  @# so that a simulation can be re-run even if the external references have changed.
+  @set $expandedInputScript = $xmlDocument.toxml()
+  @# Find the end tag in a case-insensitive way
+  @set $indexForEndTag = $expandedInputScript.lower().rfind('</simulation>')
+  @set $xsilOutputHeader = $expandedInputScript[0:$indexForEndTag]
+  @filter $PrintfSafeFilter
+    @for $line in $xsilOutputHeader.splitlines()
+  fprintf(fp, "${line}\n");
+    @end for
+  
+  fprintf(fp, "\n<info>\n");
+  fprintf(fp, "Script compiled with XMDS2 version ${xmds.versionString} (${xmds.subversionRevision})\n");
+  fprintf(fp, "See http://www.xmds.org for more information.\n");
+  @end filter
+  @#
+  @set $featureOrderingXSILInfo = ['Arguments', 'Stochastic']
+  ${insertCodeForFeatures('xsilOutputInfo', $featureOrderingXSILInfo, {'fp': 'fp'}), autoIndent=True}@slurp
+  fprintf(fp, "</info>\n");
+  
+}
+@end def
+
+@def writeXSILFooterFunctionImplementation
+  @#
+// In addition to writing the footer (if 'fp' is not NULL)
+// this function closes the fp file pointer.
+void _write_xsil_footer(FILE* fp)
+{
+  if (fp) {
+    fprintf(fp, "</simulation>\n");
+  }
+}
+  @#
+@end def
+
+@def writeOutSetup($filename, $caller)
+char *_xsilFilename = (char*)malloc(256);
+snprintf(_xsilFilename, 256, "%s.xsil", $filename);
+
+FILE* _outfile = _open_xsil_file(_xsilFilename);
+
+if (_outfile) {
+  _write_xsil_header(_outfile);
+  @if not caller in $outputFilesTruncated
+  ${truncateOutputFiles(filename), autoIndent=True}@slurp
+    @silent $outputFilesTruncated.add(caller)
+  @end if
+}
+@end def
+
+@def writeOutTearDown
+_write_xsil_footer(_outfile);
+_close_xsil_file(_outfile);
+free(_xsilFilename);
+_xsilFilename = NULL;
+_outfile = NULL;
+@end def
+
+@def truncateOutputFiles($baseFilename)
+@end def
+
+@def writeOutFunctionImplementationBegin($dict)
+  @#
+  @set $fp = dict['fp']
+  @set $xsilElementName = dict['xsilElementName']
+  @set $field = dict['field']
+  @set $basis = dict['basis']
+  @set $numIndependentVariables = len($field.dimensions)
+  @#
+  @set $dependentVariables = dict['dependentVariables']
+  @set $componentCount = 0
+  @for $variable in $dependentVariables
+    @set $componentCount += len($variable.vector.components)
+    @if $variable.vector.type == 'complex'
+      @set $componentCount += len($variable.vector.components)
+    @end if
+  @end for
+  @#
+if ($fp) {
+  fprintf($fp, "\n");
+  fprintf($fp, "<XSIL Name=\"${xsilElementName}\">\n");
+  fprintf($fp, "  <Param Name=\"n_independent\">${numIndependentVariables}</Param>\n");
+  fprintf($fp, "  <Array Name=\"variables\" Type=\"Text\">\n");
+  fprintf($fp, "    <Dim>${numIndependentVariables + componentCount}</Dim>\n");
+  fprintf($fp, "    <Stream><Metalink Format=\"Text\" Delimiter=\" \\n\"/>\n");
+  fprintf($fp, "@slurp
+  @# First loop over the dimensions (the independent variables)
+  @for $dimension in $field.dimensions
+${dimension.inBasis(basis).name} @slurp
+  @end for
+  @#
+  @# Now loop over the dependent variables
+  @for $variable in $dependentVariables
+    @for $componentName in $variable.components
+      @if $variable.vector.type == 'real'
+${componentName} @slurp
+      @else
+${componentName}R ${componentName}I @slurp
+      @end if
+    @end for
+  @end for
+\n");
+  fprintf($fp, "    </Stream>\n");
+  fprintf($fp, "  </Array>\n");
+  fprintf($fp, "  <Array Name=\"data\" Type=\"${precision}\">\n");
+  @#
+  @# Now loop over the dimensions
+  @for $dimension in $field.dimensions
+  fprintf($fp, "    <Dim>%i</Dim>\n", $dimension.inBasis(basis).globalLattice);
+  @end for
+  @# Now the variables dimension
+  fprintf($fp, "    <Dim>${numIndependentVariables + componentCount}</Dim>\n");
+}
+  @#
+@end def
+
+@def writeOutFunctionImplementationEnd($dict)
+  @#
+  @set $fp = dict['fp']
+  @#
+if ($fp) {
+  fprintf($fp, "  </Array>\n");
+  fprintf($fp, "</XSIL>\n");
+}
+  @#
+@end def
+

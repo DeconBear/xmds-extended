@@ -1,0 +1,43 @@
+@shBang #!/usr/bin/env python3
+
+@*
+Benchmark.tmpl
+
+Created by Graham Dennis on 2007-08-26.
+
+Copyright (c) 2007-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features._Feature
+
+@def description: benchmark
+@attr $featureName = 'Benchmark'
+
+@def mainBegin($dict)
+
+// Get the time at which the simulation started
+timeval _tim;
+gettimeofday(&_tim, NULL);
+double _startTime = _tim.tv_sec + (_tim.tv_usec/1e6);
+@end def
+
+@def mainEnd($dict)
+
+// Work out how long the simulation has run for
+gettimeofday(&_tim, NULL);
+double _endTime = _tim.tv_sec + (_tim.tv_usec/1e6);
+_LOG(_SIMULATION_LOG_LEVEL, "Time elapsed for simulation is: %.2f seconds\n", _endTime - _startTime);
+@end def

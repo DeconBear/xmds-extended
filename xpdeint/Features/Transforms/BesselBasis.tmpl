@@ -1,0 +1,44 @@
+@shBang #!/usr/bin/env python3
+
+@*
+BesselBasis.tmpl
+
+Created by Graham Dennis on 2008-12-14.
+
+Copyright (c) 2008-2012, Graham Dennis
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*@
+@extends xpdeint.Features.Transforms.Basis
+
+@def description: Bessel function basis
+
+@def transformMatricesForDimRepsAtIndices($forwardDimRep, $backwardDimRep, $forwardIndex, $backwardIndex)
+  @#
+  @set $order = forwardDimRep._order
+const real besselFactor = ${forwardDimRep.besselJFunctionCall($order, c'_besseljzeros_${forwardDimRep.parent.name}[${forwardIndex}] * _besseljzeros_${forwardDimRep.parent.name}[${backwardIndex}] / _besseljS_${forwardDimRep.parent.name}')};
+  @#
+  @super(forwardDimRep, backwardDimRep, forwardIndex, backwardIndex)
+  @#
+@end def
+
+@def forwardMatrixForDimAtIndices($forwardDimRep, $backwardDimRep, $forwardIndex, $backwardIndex)
+besselFactor * ${forwardDimRep.stepSizeArrayName}[$forwardIndex]@slurp
+@end def
+
+@def backwardMatrixForDimAtIndices($forwardDimRep, $backwardDimRep, $forwardIndex, $backwardIndex)
+besselFactor * ${backwardDimRep.stepSizeArrayName}[$backwardIndex]@slurp
+@end def
+
