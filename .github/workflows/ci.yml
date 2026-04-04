@@ -27,22 +27,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up MSYS2 toolchain on Windows
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW64
-          update: true
-          install: >-
-            mingw-w64-x86_64-toolchain
-            mingw-w64-x86_64-tools
-
       - name: Set up Conda environment
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
           activate-environment: xmds-ci
-          auto-activate: true
+          auto-activate: false
           channels: conda-forge
           conda-remove-defaults: true
           python-version: "3.11"
@@ -53,7 +43,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          mamba install -y \
+          mamba install -y -n xmds-ci \
             cheetah3 \
             "pyparsing!=2.0.0" \
             mpmath \
@@ -63,15 +53,15 @@ jobs:
             hdf5 \
             fftw \
             setuptools
-          python -V
+          conda run -n xmds-ci python -V
           c++ --version
-          which h5cc || true
+          conda run -n xmds-ci which h5cc || true
 
       - name: Install CI dependencies on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          conda install -y -c conda-forge `
+          conda install -y -n xmds-ci -c conda-forge `
             cheetah3 `
             'pyparsing!=2.0.0' `
             mpmath `
@@ -80,14 +70,15 @@ jobs:
             h5py `
             hdf5 `
             fftw `
-            setuptools
+            setuptools `
+            m2w64-toolchain
 
       - name: Resolve CI prefix on Linux and macOS
         if: runner.os != 'Windows'
         shell: bash
         run: |
           set -euxo pipefail
-          PREFIX="$(python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
           echo "CI_PREFIX=$PREFIX" >> "$GITHUB_ENV"
 
       - name: Reconfigure on Linux and macOS
@@ -96,7 +87,7 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          python bin/xmds2 --reconfigure \
+          conda run -n xmds-ci python bin/xmds2 --reconfigure \
             --include-path "$CI_PREFIX/include" \
             --lib-path "$CI_PREFIX/lib"
 
@@ -106,7 +97,7 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          python bin/xmds2 examples/lorenz.xmds
+          conda run -n xmds-ci python bin/xmds2 examples/lorenz.xmds
 
       - name: Run lorenz on Linux and macOS
         if: runner.os != 'Windows'
@@ -124,14 +115,12 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $prefix = (python -c "import sys; print(sys.prefix)").Trim()
+          $prefix = (conda run -n xmds-ci python -c "import sys; print(sys.prefix)").Trim()
           "CI_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "CI_PYTHON=$(Join-Path $prefix 'python.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           $includePath = Join-Path $prefix 'Library\include'
           $libPath = Join-Path $prefix 'Library\lib'
           $extraPaths = @(
-            'C:\msys64\mingw64\bin',
-            'C:\msys64\usr\bin',
+            (Join-Path $prefix 'Library\mingw-w64\bin'),
             (Join-Path $prefix 'Library\usr\bin'),
             (Join-Path $prefix 'Library\bin'),
             (Join-Path $prefix 'Scripts'),
@@ -188,10 +177,7 @@ jobs:
           $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
           $includePath = Join-Path $env:CI_PREFIX 'Library\include'
           $libPath = Join-Path $env:CI_PREFIX 'Library\lib'
-          & $env:CI_PYTHON bin\xmds2 --reconfigure --include-path $includePath --lib-path $libPath
-          if ($LASTEXITCODE -ne 0) {
-            throw "Windows reconfigure failed with exit code $LASTEXITCODE"
-          }
+          conda run -n xmds-ci python bin\xmds2 --reconfigure --include-path $includePath --lib-path $libPath
 
       - name: Compile lorenz on Windows
         if: runner.os == 'Windows'
@@ -199,11 +185,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
-          & $env:CI_PYTHON bin\xmds2 examples\lorenz.xmds
-          if ($LASTEXITCODE -ne 0) {
-            $entries = @(Get-ChildItem -LiteralPath . -Force | Select-Object -ExpandProperty Name)
-            throw "Windows compile smoke failed with exit code $LASTEXITCODE. Workspace entries: $($entries -join ', ')"
-          }
+          conda run -n xmds-ci python bin\xmds2 examples\lorenz.xmds
 
       - name: Run lorenz on Windows
         if: runner.os == 'Windows'
@@ -211,9 +193,6 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           .\lorenz.cmd
-          if ($LASTEXITCODE -ne 0) {
-            throw "Windows lorenz runtime smoke failed with exit code $LASTEXITCODE"
-          }
 
       - name: Geometry regression on Linux
         if: runner.os == 'Linux'
@@ -221,8 +200,8 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-test-home"
-          PREFIX="$(python -c 'import sys; print(sys.prefix)' | tail -n 1)"
-          python bin/xmds2 --reconfigure \
+          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          conda run -n xmds-ci python bin/xmds2 --reconfigure \
             --include-path "$PREFIX/include" \
             --lib-path "$PREFIX/lib"
-          python run_tests.py geometry
+          conda run -n xmds-ci python run_tests.py geometry
