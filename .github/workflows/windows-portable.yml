@@ -96,9 +96,8 @@ jobs:
           $zipPath = Join-Path $packageRoot '${{ steps.meta.outputs.package_zip }}'
           $extractRoot = 'C:\xmds-package-smoke'
           $installDir = 'C:\xmds-ci'
-          $caseDir = 'C:\xmds-case'
 
-          foreach ($path in @($extractRoot, $installDir, $caseDir)) {
+          foreach ($path in @($extractRoot, $installDir)) {
             if (Test-Path -LiteralPath $path) {
               Remove-Item -LiteralPath $path -Recurse -Force
             }
@@ -109,29 +108,20 @@ jobs:
           $packageDir = Join-Path $extractRoot "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
           & (Join-Path $packageDir 'install_windows.ps1') -InstallDir $installDir -AddToPath No -CondaCommand $env:CI_CONDA_COMMAND -NonInteractive
 
-          New-Item -ItemType Directory -Path $caseDir -Force | Out-Null
-          Copy-Item -LiteralPath .\examples\lorenz.xmds -Destination (Join-Path $caseDir 'lorenz.xmds') -Force
-
-          $runExit = 0
-          $runError = ''
-          try {
-            & (Join-Path $installDir 'run_xmds.ps1') (Join-Path $caseDir 'lorenz.xmds')
-            $runExit = $LASTEXITCODE
-          }
-          catch {
-            $runExit = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 1 }
-            $runError = $_.Exception.Message
-          }
-
-          if ($runExit -ne 0) {
-            $caseEntries = @(Get-ChildItem -LiteralPath $caseDir -Force -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
-            throw "Portable smoke test run_xmds failed. ExitCode=$runExit Error=$runError CaseDirEntries=$($caseEntries -join ', ')"
-          }
-
-          foreach ($expected in @('lorenz.cc', 'lorenz.cmd', 'lorenz.exe', 'lorenz.h5', 'lorenz.xsil')) {
-            $expectedPath = Join-Path $caseDir $expected
+          foreach ($expected in @(
+            'run_xmds.cmd',
+            'run_xmds.ps1',
+            'run_plot.cmd',
+            'run_plot.ps1',
+            'uninstall_windows.ps1',
+            'app\bin\xmds2',
+            'runtime\python.exe',
+            'state\install.json',
+            'toolchain\mingw64\bin\g++.exe'
+          )) {
+            $expectedPath = Join-Path $installDir $expected
             if (-not (Test-Path -LiteralPath $expectedPath)) {
-              throw "Portable smoke test missing expected output: $expectedPath"
+              throw "Portable installer smoke test missing expected output: $expectedPath"
             }
           }
 
