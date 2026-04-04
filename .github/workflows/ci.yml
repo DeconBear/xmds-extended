@@ -41,8 +41,8 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          activate-environment: xmds-ci
-          auto-activate: false
+          activate-environment: base
+          auto-activate: true
           channels: conda-forge
           conda-remove-defaults: true
           python-version: "3.11"
@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          mamba install -y -n xmds-ci \
+          mamba install -y \
             cheetah3 \
             "pyparsing!=2.0.0" \
             mpmath \
@@ -63,15 +63,15 @@ jobs:
             hdf5 \
             fftw \
             setuptools
-          conda run -n xmds-ci python -V
+          python -V
           c++ --version
-          conda run -n xmds-ci which h5cc || true
+          which h5cc || true
 
       - name: Install CI dependencies on Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          conda install -y -n xmds-ci -c conda-forge `
+          conda install -y -c conda-forge `
             cheetah3 `
             'pyparsing!=2.0.0' `
             mpmath `
@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          PREFIX="$(python -c 'import sys; print(sys.prefix)' | tail -n 1)"
           echo "CI_PREFIX=$PREFIX" >> "$GITHUB_ENV"
 
       - name: Reconfigure on Linux and macOS
@@ -96,7 +96,7 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          conda run -n xmds-ci python bin/xmds2 --reconfigure \
+          python bin/xmds2 --reconfigure \
             --include-path "$CI_PREFIX/include" \
             --lib-path "$CI_PREFIX/lib"
 
@@ -106,7 +106,7 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-ci-home"
-          conda run -n xmds-ci python bin/xmds2 examples/lorenz.xmds
+          python bin/xmds2 examples/lorenz.xmds
 
       - name: Run lorenz on Linux and macOS
         if: runner.os != 'Windows'
@@ -124,7 +124,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $prefix = (conda run -n xmds-ci python -c "import sys; print(sys.prefix)").Trim()
+          $prefix = (python -c "import sys; print(sys.prefix)").Trim()
           "CI_PREFIX=$prefix" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "CI_PYTHON=$(Join-Path $prefix 'python.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           $includePath = Join-Path $prefix 'Library\include'
@@ -189,6 +189,9 @@ jobs:
           $includePath = Join-Path $env:CI_PREFIX 'Library\include'
           $libPath = Join-Path $env:CI_PREFIX 'Library\lib'
           & $env:CI_PYTHON bin\xmds2 --reconfigure --include-path $includePath --lib-path $libPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Windows reconfigure failed with exit code $LASTEXITCODE"
+          }
 
       - name: Compile lorenz on Windows
         if: runner.os == 'Windows'
@@ -197,6 +200,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $env:XMDS_USER_DATA = Join-Path $PWD '.xmds-ci-home'
           & $env:CI_PYTHON bin\xmds2 examples\lorenz.xmds
+          if ($LASTEXITCODE -ne 0) {
+            $entries = @(Get-ChildItem -LiteralPath . -Force | Select-Object -ExpandProperty Name)
+            throw "Windows compile smoke failed with exit code $LASTEXITCODE. Workspace entries: $($entries -join ', ')"
+          }
 
       - name: Run lorenz on Windows
         if: runner.os == 'Windows'
@@ -204,6 +211,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           .\lorenz.cmd
+          if ($LASTEXITCODE -ne 0) {
+            throw "Windows lorenz runtime smoke failed with exit code $LASTEXITCODE"
+          }
 
       - name: Geometry regression on Linux
         if: runner.os == 'Linux'
@@ -211,8 +221,8 @@ jobs:
         run: |
           set -euxo pipefail
           export XMDS_USER_DATA="$PWD/.xmds-test-home"
-          PREFIX="$(conda run -n xmds-ci python -c 'import sys; print(sys.prefix)' | tail -n 1)"
-          conda run -n xmds-ci python bin/xmds2 --reconfigure \
+          PREFIX="$(python -c 'import sys; print(sys.prefix)' | tail -n 1)"
+          python bin/xmds2 --reconfigure \
             --include-path "$PREFIX/include" \
             --lib-path "$PREFIX/lib"
-          conda run -n xmds-ci python run_tests.py geometry
+          python run_tests.py geometry
