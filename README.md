@@ -30,9 +30,65 @@ The current codebase has already been validated on native Windows, including:
 - top-level regression groups executed individually from native PowerShell
 - rerun of a user-provided example with numerically consistent results relative to prior Linux output
 
+## Windows installation
+
+For end users on Windows, the recommended entry point is the GitHub Release asset rather than cloning the repository directly.
+
+Requirements:
+
+- an existing Conda or Miniforge installation on the target machine
+- a short install directory such as `D:\xmds` or `C:\XMDS-Extended`
+
+Portable install flow:
+
+1. Download the latest `xmds-extended-windows-portable-*.zip` asset from GitHub Releases.
+2. Extract the zip to a temporary directory.
+3. Open PowerShell in the extracted directory.
+4. Run:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\install_windows.ps1
+   ```
+
+5. Choose an install directory and whether to add `run_xmds` to `PATH`.
+
+After installation:
+
+- If you added the install directory to `PATH`, open a new terminal and run:
+
+  ```powershell
+  run_xmds C:\path\to\simulation.xmds
+  ```
+
+- If you did not add it to `PATH`, run:
+
+  ```powershell
+  <InstallDir>\run_xmds.cmd C:\path\to\simulation.xmds
+  ```
+
+For plotting helpers:
+
+```powershell
+<InstallDir>\run_plot.cmd C:\path\to\plot_script.py
+```
+
+The detailed Windows installer design and upgrade plan are documented in `docs/`.
+
+## Releases and automation
+
+This repository uses GitHub Actions for Windows packaging:
+
+- pushing to `main` runs CI and builds a Windows portable zip as a workflow artifact
+- pushing a tag matching `v*` builds the same zip again, runs a Windows installer smoke test, and publishes the zip as a GitHub Release asset
+
+The repository currently publishes Windows deliverables through GitHub Releases, not GitHub Packages.
+
 ## Documentation
 
 - Windows usage guide: `docs/windows-native-guide-zh.md`
+- Windows portable installer design: `docs/windows-portable-installer-design-zh.md`
+- Windows portable upgrade design: `docs/windows-portable-upgrade-design-zh.md`
+- GitHub release workflow notes: `docs/github-release-workflow-zh.md`
 - fork publishing material: `contrib/windows-native-release-kit/`
 
 ## Repository layout

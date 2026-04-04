@@ -304,7 +304,7 @@
 
 // Define UNREFERENCED_PARAMETER if it's not already done.
 #ifndef UNREFERENCED_PARAMETER
-  #ifndef _MSC_VER
+  #if !defined(_MSC_VER) && (CFG_PLATFORM != CFG_PLATFORM_WIN32)
     #define UNREFERENCED_PARAMETER(P) (void)(P)
   #endif
 #endif
@@ -517,8 +517,19 @@
   #ifndef NOMINMAX
     #define NOMINMAX
   #endif
+  #if (CFG_COMPILER == CFG_COMPILER_GCC) || (CFG_COMPILER == CFG_COMPILER_ICC)
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wattributes"
+  #endif
   #include <winsock2.h>
   #include <windows.h>
+  #if (CFG_COMPILER == CFG_COMPILER_GCC) || (CFG_COMPILER == CFG_COMPILER_ICC)
+    #pragma GCC diagnostic pop
+  #endif
+#endif
+
+#ifndef UNREFERENCED_PARAMETER
+  #define UNREFERENCED_PARAMETER(P) (void)(P)
 #endif
 
 #if CFG_OSAPI == CFG_OSAPI_POSIX

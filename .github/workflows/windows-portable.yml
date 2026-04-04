@@ -1,0 +1,121 @@
+name: Windows Portable Package
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-portable-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-portable:
+    name: Build Windows portable package
+    runs-on: windows-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set package metadata
+        id: meta
+        shell: pwsh
+        run: |
+          $sha = "${{ github.sha }}"
+          if ("${{ github.ref }}".StartsWith("refs/tags/")) {
+            $packageVersion = "${{ github.ref_name }}"
+          }
+          else {
+            $packageVersion = "main-$($sha.Substring(0, 7))"
+          }
+
+          $packageZip = "xmds-extended-windows-portable-$packageVersion.zip"
+
+          "package_version=$packageVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "package_zip=$packageZip" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Set up MSYS2 MinGW toolchain payload
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-tools
+
+      - name: Set up Conda for installer smoke test
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          activate-environment: xmds-portable-ci
+          auto-activate: false
+          channels: conda-forge
+          conda-remove-defaults: true
+          python-version: "3.11"
+          use-mamba: true
+
+      - name: Build portable zip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\packaging\windows-portable\export_windows_portable_zip.ps1 `
+            -PackageVersion '${{ steps.meta.outputs.package_version }}' `
+            -ToolchainSource 'C:\msys64\mingw64'
+
+      - name: Smoke test extracted package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $packageRoot = Join-Path $PWD 'dist'
+          $zipPath = Join-Path $packageRoot '${{ steps.meta.outputs.package_zip }}'
+          $extractRoot = 'C:\xmds-package-smoke'
+          $installDir = 'C:\xmds-ci'
+          $caseDir = 'C:\xmds-case'
+
+          foreach ($path in @($extractRoot, $installDir, $caseDir)) {
+            if (Test-Path -LiteralPath $path) {
+              Remove-Item -LiteralPath $path -Recurse -Force
+            }
+          }
+
+          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
+
+          $packageDir = Join-Path $extractRoot "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
+          & (Join-Path $packageDir 'install_windows.ps1') -InstallDir $installDir -AddToPath No -NonInteractive
+
+          New-Item -ItemType Directory -Path $caseDir -Force | Out-Null
+          Copy-Item -LiteralPath .\examples\lorenz.xmds -Destination (Join-Path $caseDir 'lorenz.xmds') -Force
+
+          & (Join-Path $installDir 'run_xmds.cmd') (Join-Path $caseDir 'lorenz.xmds')
+
+          foreach ($expected in @('lorenz.cc', 'lorenz.cmd', 'lorenz.exe', 'lorenz.h5', 'lorenz.xsil')) {
+            $expectedPath = Join-Path $caseDir $expected
+            if (-not (Test-Path -LiteralPath $expectedPath)) {
+              throw "Portable smoke test missing expected output: $expectedPath"
+            }
+          }
+
+      - name: Upload portable zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable-${{ steps.meta.outputs.package_version }}
+          path: dist/${{ steps.meta.outputs.package_zip }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ steps.meta.outputs.package_zip }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
