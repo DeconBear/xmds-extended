@@ -112,7 +112,21 @@ jobs:
           New-Item -ItemType Directory -Path $caseDir -Force | Out-Null
           Copy-Item -LiteralPath .\examples\lorenz.xmds -Destination (Join-Path $caseDir 'lorenz.xmds') -Force
 
-          & (Join-Path $installDir 'run_xmds.cmd') (Join-Path $caseDir 'lorenz.xmds')
+          $runExit = 0
+          $runError = ''
+          try {
+            & (Join-Path $installDir 'run_xmds.ps1') (Join-Path $caseDir 'lorenz.xmds')
+            $runExit = $LASTEXITCODE
+          }
+          catch {
+            $runExit = if (Test-Path variable:LASTEXITCODE) { $LASTEXITCODE } else { 1 }
+            $runError = $_.Exception.Message
+          }
+
+          if ($runExit -ne 0) {
+            $caseEntries = @(Get-ChildItem -LiteralPath $caseDir -Force -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+            throw "Portable smoke test run_xmds failed. ExitCode=$runExit Error=$runError CaseDirEntries=$($caseEntries -join ', ')"
+          }
 
           foreach ($expected in @('lorenz.cc', 'lorenz.cmd', 'lorenz.exe', 'lorenz.h5', 'lorenz.xsil')) {
             $expectedPath = Join-Path $caseDir $expected
