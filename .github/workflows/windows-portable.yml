@@ -59,34 +59,40 @@ jobs:
             -PackageVersion '${{ steps.meta.outputs.package_version }}' `
             -ToolchainSource 'C:\msys64\mingw64'
 
-      - name: Validate extracted package layout
+      - name: Validate packaged archive layout
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 
           $packageRoot = Join-Path $PWD 'dist'
           $zipPath = Join-Path $packageRoot '${{ steps.meta.outputs.package_zip }}'
-          $extractRoot = 'C:\xmds-package-smoke'
+          $packageDir = "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
 
-          if (Test-Path -LiteralPath $extractRoot) {
-            Remove-Item -LiteralPath $extractRoot -Recurse -Force
+          Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+          $archive = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
+          try {
+            $entryNames = @(
+              $archive.Entries |
+                ForEach-Object { $_.FullName.TrimEnd('\', '/').Replace('\', '/') } |
+                Where-Object { $_ }
+            )
+          }
+          finally {
+            $archive.Dispose()
           }
 
-          Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
-
-          $packageDir = Join-Path $extractRoot "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
-
           foreach ($expected in @(
-            'install_windows.ps1',
-            'README.txt',
-            'payload\app\bin\xmds2',
-            'payload\app\xpdeint\parser2.py',
-            'payload\manifests\install-manifest.json',
-            'payload\toolchain\mingw64\bin\g++.exe'
+            "$packageDir/install_windows.ps1",
+            "$packageDir/README.txt",
+            "$packageDir/payload/app/bin/xmds2",
+            "$packageDir/payload/app/xpdeint/parser2.py",
+            "$packageDir/payload/manifests/install-manifest.json",
+            "$packageDir/payload/toolchain/mingw64/bin/g++.exe"
           )) {
-            $expectedPath = Join-Path $packageDir $expected
-            if (-not (Test-Path -LiteralPath $expectedPath)) {
-              throw "Portable package is missing expected output: $expectedPath"
+            if ($expected -notin $entryNames) {
+              throw "Portable package archive is missing expected entry: $expected"
             }
           }
 
