@@ -30,6 +30,11 @@ testsuite_results/
 test_example/
 contrib/windows-native-release-kit/bundle/
 .ci-logs/
+dist/
+.portable-install-smoke/
+.portable-package-work/
+PortableSmokeCases/
+PortableSmokeInstall/
 
 # Root-level validation artifacts generated during Windows bring-up
 cross_propagation.cc

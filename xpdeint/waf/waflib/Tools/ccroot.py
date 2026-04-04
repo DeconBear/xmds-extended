@@ -121,7 +121,10 @@ def apply_incpaths(self):
 	lst = self.to_incnodes(self.to_list(getattr(self, 'includes', [])) + self.env.INCLUDES)
 	self.includes_nodes = lst
 	cwd = self.get_cwd()
-	self.env.INCPATHS = [x.path_from(cwd) for x in lst]
+	if Utils.unversioned_sys_platform() == 'win32':
+		self.env.INCPATHS = [x.abspath() for x in lst]
+	else:
+		self.env.INCPATHS = [x.path_from(cwd) for x in lst]
 
 class link_task(Task.Task):
 	"""
@@ -788,4 +791,3 @@ def set_full_paths_hpux(self):
 			else:
 				lst.append(os.path.normpath(os.path.join(base, x)))
 		self.env[var] = lst
-
