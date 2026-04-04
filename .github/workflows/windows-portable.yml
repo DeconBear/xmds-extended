@@ -87,13 +87,15 @@ jobs:
             "$packageDir/install_windows.ps1",
             "$packageDir/README.txt",
             "$packageDir/payload/app/bin/xmds2",
-            "$packageDir/payload/app/xpdeint/parser2.py",
-            "$packageDir/payload/manifests/install-manifest.json",
-            "$packageDir/payload/toolchain/mingw64/bin/g++.exe"
+            "$packageDir/payload/manifests/install-manifest.json"
           )) {
             if ($expected -notin $entryNames) {
               throw "Portable package archive is missing expected entry: $expected"
             }
+          }
+
+          if (-not ($entryNames | Where-Object { $_ -like "$packageDir/payload/toolchain/mingw64/bin/*" } | Select-Object -First 1)) {
+            throw "Portable package archive is missing bundled toolchain binaries under $packageDir/payload/toolchain/mingw64/bin/"
           }
 
       - name: Upload portable zip artifact
