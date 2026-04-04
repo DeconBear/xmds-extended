@@ -67,10 +67,30 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Resolve release notes
+        if: startsWith(github.ref, 'refs/tags/v')
+        id: notes
+        shell: pwsh
+        run: |
+          $versionNotes = Join-Path $PWD "release-notes\${{ github.ref_name }}.md"
+          $defaultNotes = Join-Path $PWD 'release-notes\default.md'
+
+          if (Test-Path -LiteralPath $versionNotes) {
+            $notesPath = $versionNotes
+          }
+          elseif (Test-Path -LiteralPath $defaultNotes) {
+            $notesPath = $defaultNotes
+          }
+          else {
+            throw 'No release notes file was found.'
+          }
+
+          "notes_path=$notesPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           files: dist/${{ steps.meta.outputs.package_zip }}
-          generate_release_notes: true
+          body_path: ${{ steps.notes.outputs.notes_path }}
           fail_on_unmatched_files: true

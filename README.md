@@ -72,6 +72,27 @@ For plotting helpers:
 <InstallDir>\run_plot.cmd C:\path\to\plot_script.py
 ```
 
+Upgrade an existing Windows install:
+
+1. Download the newer `xmds-extended-windows-portable-*.zip` asset.
+2. Extract it to a temporary directory.
+3. Run `install_windows.ps1` again.
+4. Choose the same install directory as the existing installation.
+
+Uninstall on Windows:
+
+- If the install directory is on `PATH`, open a new terminal and run:
+
+  ```powershell
+  uninstall_xmds
+  ```
+
+- Otherwise run:
+
+  ```powershell
+  <InstallDir>\uninstall_xmds.cmd
+  ```
+
 The detailed Windows installer design and upgrade plan are documented in `docs/`.
 
 ## Releases and automation
@@ -79,7 +100,8 @@ The detailed Windows installer design and upgrade plan are documented in `docs/`
 This repository uses GitHub Actions for Windows packaging:
 
 - pushing to `main` runs CI and builds a Windows portable zip as a workflow artifact
-- pushing a tag matching `v*` builds the same zip again, runs a Windows installer smoke test, and publishes the zip as a GitHub Release asset
+- pushing a tag matching `v*` builds the same zip again and publishes it as a GitHub Release asset
+- tag releases use curated release-note files from `release-notes/`
 
 The repository currently publishes Windows deliverables through GitHub Releases, not GitHub Packages.
 

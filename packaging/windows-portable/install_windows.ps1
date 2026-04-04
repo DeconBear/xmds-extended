@@ -109,6 +109,28 @@ function Ensure-Directory {
     }
 }
 
+function Copy-ItemTreeIfMissing {
+    param(
+        [string]$SourcePath,
+        [string]$TargetRoot
+    )
+
+    $item = Get-Item -LiteralPath $SourcePath -Force
+    $destination = Join-Path $TargetRoot $item.Name
+
+    if ($item.PSIsContainer) {
+        Ensure-Directory -Path $destination
+        foreach ($child in Get-ChildItem -LiteralPath $item.FullName -Force) {
+            Copy-ItemTreeIfMissing -SourcePath $child.FullName -TargetRoot $destination
+        }
+        return
+    }
+
+    if (-not (Test-Path -LiteralPath $destination)) {
+        Copy-Item -LiteralPath $item.FullName -Destination $destination -Force
+    }
+}
+
 function Assert-SafePortableInstallPath {
     param(
         [string]$Path,
@@ -149,13 +171,20 @@ function Ensure-RuntimeEnvironment {
     param(
         [string]$RuntimeDir,
         [string]$Executable,
-        [string[]]$PackageSpecs
+        [string[]]$PackageSpecs,
+        [ValidateSet('Create', 'Reuse', 'Rebuild')]
+        [string]$Mode = 'Create'
     )
 
     $pythonExe = Join-Path $RuntimeDir 'python.exe'
-    if (Test-Path -LiteralPath $pythonExe) {
+    if ($Mode -eq 'Reuse' -and (Test-Path -LiteralPath $pythonExe)) {
         Write-Host "Reusing existing runtime at $RuntimeDir"
         return
+    }
+
+    if ($Mode -eq 'Rebuild' -and (Test-Path -LiteralPath $RuntimeDir)) {
+        Write-Host "Rebuilding runtime at $RuntimeDir"
+        Remove-Item -LiteralPath $RuntimeDir -Recurse -Force
     }
 
     Write-Section "Creating runtime environment"
@@ -255,7 +284,7 @@ function Merge-ToolchainHeadersIntoRuntimeInclude {
     Ensure-Directory -Path $targetInclude
 
     foreach ($item in Get-ChildItem -LiteralPath $sourceInclude -Force) {
-        Copy-Item -LiteralPath $item.FullName -Destination $targetInclude -Recurse -Force
+        Copy-ItemTreeIfMissing -SourcePath $item.FullName -TargetRoot $targetInclude
     }
 }
 
@@ -306,13 +335,178 @@ public static class NativeMethods {
     [void][NativeMethods]::SendMessageTimeout([IntPtr]0xffff, 0x001A, [UIntPtr]::Zero, 'Environment', 0x0002, 5000, [ref]$result)
 }
 
-function Write-LauncherFiles {
+function Remove-InstallDirFromUserPath {
+    param([string]$PathEntry)
+
+    $entries = Get-UserPathEntries
+    $filteredEntries = @(
+        $entries | Where-Object {
+            -not [string]::Equals($_.TrimEnd('\'), $PathEntry.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)
+        }
+    )
+
+    Set-ItemProperty -Path 'HKCU:\Environment' -Name Path -Value ($filteredEntries -join ';')
+
+    $signature = @'
+using System;
+using System.Runtime.InteropServices;
+public static class NativeMethods {
+  [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
+  public static extern IntPtr SendMessageTimeout(
+    IntPtr hWnd,
+    uint Msg,
+    UIntPtr wParam,
+    string lParam,
+    uint fuFlags,
+    uint uTimeout,
+    out UIntPtr lpdwResult
+  );
+}
+'@
+
+    if (-not ([System.Management.Automation.PSTypeName]'NativeMethods').Type) {
+        Add-Type $signature
+    }
+
+    [UIntPtr]$result = [UIntPtr]::Zero
+    [void][NativeMethods]::SendMessageTimeout([IntPtr]0xffff, 0x001A, [UIntPtr]::Zero, 'Environment', 0x0002, 5000, [ref]$result)
+}
+
+function Get-StringHash {
+    param([string]$Value)
+
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Value)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hashBytes = $sha.ComputeHash($bytes)
+    }
+    finally {
+        $sha.Dispose()
+    }
+
+    return ([System.BitConverter]::ToString($hashBytes).Replace('-', '').ToLowerInvariant())
+}
+
+function Get-RuntimeSpecHash {
+    param([string[]]$PackageSpecs)
+
+    return (Get-StringHash -Value (($PackageSpecs | ForEach-Object { [string]$_ }) -join "`n"))
+}
+
+function Get-ExistingInstallState {
+    param([string]$StateFile)
+
+    if (-not (Test-Path -LiteralPath $StateFile)) {
+        return $null
+    }
+
+    return (Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json)
+}
+
+function Get-ManagedInstallItems {
     param([string]$InstallRoot)
+
+    return @(
+        (Join-Path $InstallRoot 'app'),
+        (Join-Path $InstallRoot 'toolchain'),
+        (Join-Path $InstallRoot 'runtime'),
+        (Join-Path $InstallRoot 'run_xmds.cmd'),
+        (Join-Path $InstallRoot 'run_xmds.ps1'),
+        (Join-Path $InstallRoot 'run_plot.cmd'),
+        (Join-Path $InstallRoot 'run_plot.ps1'),
+        (Join-Path $InstallRoot 'uninstall_xmds.cmd'),
+        (Join-Path $InstallRoot 'uninstall_windows.ps1')
+    )
+}
+
+function Move-ItemsToBackup {
+    param(
+        [string[]]$ItemPaths,
+        [string]$BackupRoot
+    )
+
+    $movedItems = @()
+    foreach ($itemPath in $ItemPaths) {
+        if (-not (Test-Path -LiteralPath $itemPath)) {
+            continue
+        }
+
+        $leafName = Split-Path -Leaf $itemPath
+        $destination = Join-Path $BackupRoot $leafName
+        Move-Item -LiteralPath $itemPath -Destination $destination -Force
+        $movedItems += [pscustomobject]@{
+            original_path = $itemPath
+            backup_path = $destination
+        }
+    }
+
+    return ,$movedItems
+}
+
+function Restore-BackupItems {
+    param([object[]]$MovedItems)
+
+    foreach ($item in @($MovedItems) | Sort-Object { $_.original_path.Length } -Descending) {
+        if (-not (Test-Path -LiteralPath $item.backup_path)) {
+            continue
+        }
+
+        if (Test-Path -LiteralPath $item.original_path) {
+            Remove-Item -LiteralPath $item.original_path -Recurse -Force
+        }
+
+        Move-Item -LiteralPath $item.backup_path -Destination $item.original_path -Force
+    }
+}
+
+function Get-RuntimeAction {
+    param(
+        [pscustomobject]$ExistingState,
+        [string]$RuntimeDir,
+        [string]$PythonVersion,
+        [string]$SpecHash
+    )
+
+    $pythonExe = Join-Path $RuntimeDir 'python.exe'
+    if (-not (Test-Path -LiteralPath $pythonExe)) {
+        return 'Create'
+    }
+
+    if (-not $ExistingState) {
+        return 'Rebuild'
+    }
+
+    if (-not ($ExistingState.PSObject.Properties.Name -contains 'runtime')) {
+        return 'Rebuild'
+    }
+
+    $existingRuntime = $ExistingState.runtime
+    if (-not $existingRuntime) {
+        return 'Rebuild'
+    }
+
+    if (-not [string]::Equals([string]$existingRuntime.python_version, $PythonVersion, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return 'Rebuild'
+    }
+
+    if (-not [string]::Equals([string]$existingRuntime.spec_hash, $SpecHash, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return 'Rebuild'
+    }
+
+    return 'Reuse'
+}
+
+function Write-LauncherFiles {
+    param(
+        [string]$InstallRoot,
+        [bool]$AddInstallDirToPath
+    )
 
     $runXmdsCmdPath = Join-Path $InstallRoot 'run_xmds.cmd'
     $runXmdsPs1Path = Join-Path $InstallRoot 'run_xmds.ps1'
     $runPlotCmdPath = Join-Path $InstallRoot 'run_plot.cmd'
     $runPlotPs1Path = Join-Path $InstallRoot 'run_plot.ps1'
+    $uninstallCmdPath = Join-Path $InstallRoot 'uninstall_xmds.cmd'
     $uninstallPath = Join-Path $InstallRoot 'uninstall_windows.ps1'
 
     $runXmdsCmd = @'
@@ -325,6 +519,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run_xmds.ps1" %*
 @echo off
 setlocal
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0run_plot.ps1" %*
+'@
+
+    $uninstallCmd = @'
+@echo off
+setlocal
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0uninstall_windows.ps1" %*
 '@
 
     $runXmdsPs1 = @'
@@ -434,7 +634,7 @@ function Ensure-ToolchainHeadersAvailable {
     }
 
     foreach ($item in Get-ChildItem -LiteralPath $sourceInclude -Force) {
-        Copy-Item -LiteralPath $item.FullName -Destination $targetInclude -Recurse -Force
+        Copy-ItemTreeIfMissing -SourcePath $item.FullName -TargetRoot $targetInclude
     }
 }
 
@@ -640,20 +840,73 @@ if ($exitCode -ne 0) {
 
     $uninstallPs1 = @'
 [CmdletBinding()]
-param()
+param(
+    [switch]$Force
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+function Read-YesNoPrompt {
+    param(
+        [string]$Prompt,
+        [bool]$DefaultValue
+    )
+
+    $suffix = if ($DefaultValue) { '[Y/n]' } else { '[y/N]' }
+    $rawValue = Read-Host "$Prompt $suffix"
+    if ([string]::IsNullOrWhiteSpace($rawValue)) {
+        return $DefaultValue
+    }
+
+    switch ($rawValue.Trim().ToLowerInvariant()) {
+        'y' { return $true }
+        'yes' { return $true }
+        'n' { return $false }
+        'no' { return $false }
+        default { throw "Unsupported response '$rawValue'. Please answer yes or no." }
+    }
+}
+
+function Get-UserPathEntries {
+    $currentPath = (Get-ItemProperty -Path 'HKCU:\Environment' -Name Path -ErrorAction SilentlyContinue).Path
+    if (-not $currentPath) {
+        return @()
+    }
+
+    return @($currentPath.Split(';') | Where-Object { $_ -and $_.Trim() })
+}
+
+function Update-EnvironmentBroadcast {
+    $signature = @"
+using System;
+using System.Runtime.InteropServices;
+public static class NativeMethods {
+  [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
+  public static extern IntPtr SendMessageTimeout(
+    IntPtr hWnd,
+    uint Msg,
+    UIntPtr wParam,
+    string lParam,
+    uint fuFlags,
+    uint uTimeout,
+    out UIntPtr lpdwResult
+  );
+}
+"@
+
+    if (-not ([System.Management.Automation.PSTypeName]'NativeMethods').Type) {
+        Add-Type $signature
+    }
+
+    [UIntPtr]$result = [UIntPtr]::Zero
+    [void][NativeMethods]::SendMessageTimeout([IntPtr]0xffff, 0x001A, [UIntPtr]::Zero, 'Environment', 0x0002, 5000, [ref]$result)
+}
+
 function Remove-UserPathEntry {
     param([string]$PathEntry)
 
-    $currentPath = (Get-ItemProperty -Path 'HKCU:\Environment' -Name Path -ErrorAction SilentlyContinue).Path
-    if (-not $currentPath) {
-        return
-    }
-
-    $entries = @($currentPath.Split(';') | Where-Object { $_ -and $_.Trim() })
+    $entries = Get-UserPathEntries
     $filtered = @(
         $entries | Where-Object {
             -not [string]::Equals($_.TrimEnd('\'), $PathEntry.TrimEnd('\'), [System.StringComparison]::OrdinalIgnoreCase)
@@ -661,27 +914,79 @@ function Remove-UserPathEntry {
     )
 
     Set-ItemProperty -Path 'HKCU:\Environment' -Name Path -Value ($filtered -join ';')
+    Update-EnvironmentBroadcast
 }
 
 $InstallRoot = $PSScriptRoot
 $StateFile = Join-Path $InstallRoot 'state\install.json'
+$installState = $null
 
 if (Test-Path -LiteralPath $StateFile) {
-    $state = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json
-    if ($state.add_install_dir_to_path) {
-        Remove-UserPathEntry -PathEntry $InstallRoot
-        Write-Host 'Removed install directory from the user PATH.'
+    $installState = Get-Content -LiteralPath $StateFile -Raw | ConvertFrom-Json
+}
+
+$confirmed = if ($Force) {
+    $true
+}
+else {
+    Read-YesNoPrompt -Prompt "Uninstall XMDS Extended from '$InstallRoot'?" -DefaultValue $false
+}
+if (-not $confirmed) {
+    throw 'Uninstall cancelled by user.'
+}
+
+if ($installState -and $installState.add_install_dir_to_path) {
+    Remove-UserPathEntry -PathEntry $InstallRoot
+    Write-Host 'Removed the installation directory from the user PATH.'
+}
+
+$cleanupScript = Join-Path $env:TEMP ("xmds-uninstall-" + [guid]::NewGuid().ToString('N') + '.ps1')
+$currentPid = $PID
+$cleanupScriptContent = @"
+param(
+    [string]`$InstallRoot,
+    [int]`$ParentPid
+)
+
+`$deadline = (Get-Date).AddMinutes(5)
+while ((Get-Process -Id `$ParentPid -ErrorAction SilentlyContinue) -and (Get-Date) -lt `$deadline) {
+    Start-Sleep -Milliseconds 500
+}
+
+for (`$attempt = 0; `$attempt -lt 40; `$attempt++) {
+    if (-not (Test-Path -LiteralPath `$InstallRoot)) {
+        break
+    }
+
+    try {
+        Remove-Item -LiteralPath `$InstallRoot -Recurse -Force
+    }
+    catch {
+        Start-Sleep -Milliseconds 500
     }
 }
 
-Write-Host 'Delete this installation directory manually after closing the terminal if you no longer need it:'
-Write-Host "  $InstallRoot"
+Remove-Item -LiteralPath `$PSCommandPath -Force -ErrorAction SilentlyContinue
+"@
+
+Set-Content -LiteralPath $cleanupScript -Value $cleanupScriptContent -Encoding UTF8
+Start-Process -FilePath 'powershell.exe' -ArgumentList @(
+    '-NoProfile',
+    '-ExecutionPolicy', 'Bypass',
+    '-File', $cleanupScript,
+    '-InstallRoot', $InstallRoot,
+    '-ParentPid', $currentPid
+) -WindowStyle Hidden
+
+Write-Host 'Scheduled background cleanup of the installation directory.'
+Write-Host 'You can close this terminal now.'
 '@
 
     Set-Content -LiteralPath $runXmdsCmdPath -Value $runXmdsCmd -Encoding ASCII
     Set-Content -LiteralPath $runXmdsPs1Path -Value $runXmdsPs1 -Encoding UTF8
     Set-Content -LiteralPath $runPlotCmdPath -Value $runPlotCmd -Encoding ASCII
     Set-Content -LiteralPath $runPlotPs1Path -Value $runPlotPs1 -Encoding UTF8
+    Set-Content -LiteralPath $uninstallCmdPath -Value $uninstallCmd -Encoding ASCII
     Set-Content -LiteralPath $uninstallPath -Value $uninstallPs1 -Encoding UTF8
 }
 
@@ -692,19 +997,39 @@ function Write-InstallState {
         [string]$RuntimeDir,
         [string]$ToolchainDir,
         [bool]$AddInstallDirToPath,
-        [pscustomobject]$Manifest
+        [pscustomobject]$Manifest,
+        [string]$InstallMode,
+        [string]$RuntimeSpecHash,
+        [string]$RuntimePythonVersion,
+        [string]$RuntimeAction,
+        [pscustomobject]$PreviousState,
+        [string]$BackupRoot
     )
 
     $state = [ordered]@{
         installed_at = (Get-Date).ToString('s')
+        install_mode = $InstallMode
         install_dir = $InstallRoot
         runtime_dir = $RuntimeDir
         toolchain_dir = $ToolchainDir
         add_install_dir_to_path = $AddInstallDirToPath
+        uninstall_command = (Join-Path $InstallRoot 'uninstall_xmds.cmd')
         package = [ordered]@{
             name = $Manifest.package.name
             version = $Manifest.package.version
             app_revision = $Manifest.package.app_revision
+        }
+        runtime = [ordered]@{
+            python_version = $RuntimePythonVersion
+            spec_hash = $RuntimeSpecHash
+            provisioner_version = '1'
+            action = $RuntimeAction
+        }
+        history = [ordered]@{
+            previous_version = if ($PreviousState) { [string]$PreviousState.package.version } else { '' }
+            previous_app_revision = if ($PreviousState) { [string]$PreviousState.package.app_revision } else { '' }
+            last_upgrade_at = if ($InstallMode -eq 'upgrade') { (Get-Date).ToString('s') } else { '' }
+            backup_root = $BackupRoot
         }
     }
 
@@ -730,17 +1055,25 @@ Write-Host "XMDS Windows Portable Installer $($manifest.package.version)"
 $InstallDir = if ($InstallDir) { $InstallDir } else { Read-InputOrDefault -Prompt 'Install directory' -DefaultValue $DefaultInstallDir }
 $InstallDir = [System.IO.Path]::GetFullPath($InstallDir)
 Assert-SafePortableInstallPath -Path $InstallDir -MaxLength $MaxPortableInstallPathLength
-$ShouldAddToPath = switch ($AddToPath) {
-    'Yes' { $true }
-    'No' { $false }
-    default { Read-YesNoPrompt -Prompt 'Add run_xmds command to PATH?' -DefaultValue $true }
-}
+$AppInstallRoot = Join-Path $InstallDir 'app'
+$ToolchainInstallRoot = Join-Path $InstallDir 'toolchain'
+$BundledToolchainDir = Join-Path $ToolchainInstallRoot 'mingw64'
+$RuntimeDir = Join-Path $InstallDir 'runtime'
+$StateDir = Join-Path $InstallDir 'state'
+$StateFile = Join-Path $StateDir 'install.json'
+$PackageSpecs = @($manifest.runtime.conda_packages | ForEach-Object { [string]$_ })
+$RuntimePythonVersion = if ($manifest.runtime.python_version) { [string]$manifest.runtime.python_version } else { '3.11' }
+$RuntimeSpecHash = Get-RuntimeSpecHash -PackageSpecs $PackageSpecs
+$ExistingState = Get-ExistingInstallState -StateFile $StateFile
+$InstallMode = 'fresh'
 
 if (Test-Path -LiteralPath $InstallDir) {
     $existingEntries = @(Get-ChildItem -LiteralPath $InstallDir -Force -ErrorAction SilentlyContinue)
     if ($existingEntries.Count -gt 0) {
-        $existingState = Join-Path $InstallDir 'state\install.json'
-        if (-not (Test-Path -LiteralPath $existingState)) {
+        if ($ExistingState) {
+            $InstallMode = 'upgrade'
+        }
+        else {
             $continueInstall = Read-YesNoPrompt -Prompt "Install directory '$InstallDir' is not empty. Continue and overwrite managed files?" -DefaultValue $false
             if (-not $continueInstall) {
                 throw 'Installation cancelled by user.'
@@ -749,41 +1082,119 @@ if (Test-Path -LiteralPath $InstallDir) {
     }
 }
 
+$defaultAddToPath = $true
+if ($ExistingState -and ($ExistingState.PSObject.Properties.Name -contains 'add_install_dir_to_path')) {
+    $defaultAddToPath = [bool]$ExistingState.add_install_dir_to_path
+}
+
+$ShouldAddToPath = switch ($AddToPath) {
+    'Yes' { $true }
+    'No' { $false }
+    default { Read-YesNoPrompt -Prompt 'Add run_xmds command to PATH?' -DefaultValue $defaultAddToPath }
+}
+
+$RuntimeAction = Get-RuntimeAction -ExistingState $ExistingState -RuntimeDir $RuntimeDir -PythonVersion $RuntimePythonVersion -SpecHash $RuntimeSpecHash
+
+Write-Section "Installation summary"
+Write-Host "Mode: $InstallMode"
+if ($ExistingState) {
+    Write-Host "Current install version: $($ExistingState.package.version)"
+}
+Write-Host "Target version: $($manifest.package.version)"
+Write-Host "Runtime action: $RuntimeAction"
+Write-Host "Add install directory to PATH: $ShouldAddToPath"
+
 $Proceed = Read-YesNoPrompt -Prompt 'Proceed with installation?' -DefaultValue $true
 if (-not $Proceed) {
     throw 'Installation cancelled by user.'
 }
 
-$CondaCommand = Resolve-CondaCommand -PreferredCommand $CondaCommand
-$AppInstallRoot = Join-Path $InstallDir 'app'
-$ToolchainInstallRoot = Join-Path $InstallDir 'toolchain'
-$BundledToolchainDir = Join-Path $ToolchainInstallRoot 'mingw64'
-$RuntimeDir = Join-Path $InstallDir 'runtime'
-$StateDir = Join-Path $InstallDir 'state'
-$StateFile = Join-Path $StateDir 'install.json'
-$PackageSpecs = @($manifest.runtime.conda_packages | ForEach-Object { [string]$_ })
+$CondaCommand = $null
+if ($RuntimeAction -ne 'Reuse') {
+    $CondaCommand = Resolve-CondaCommand -PreferredCommand $CondaCommand
+}
 
-Write-Section "Preparing directories"
-Ensure-Directory -Path $InstallDir
-Ensure-Directory -Path $StateDir
+$BackupRoot = ''
+$MovedItems = @()
+$PreviousStateJson = if (Test-Path -LiteralPath $StateFile) { Get-Content -LiteralPath $StateFile -Raw } else { '' }
 
-Write-Section "Copying application payload"
-Copy-PayloadDirectory -SourceRoot $AppPayloadRoot -TargetRoot $AppInstallRoot
+try {
+    Write-Section "Preparing directories"
+    Ensure-Directory -Path $InstallDir
+    Ensure-Directory -Path $StateDir
 
-Write-Section "Copying bundled toolchain"
-Copy-PayloadDirectory -SourceRoot $ToolchainPayloadRoot -TargetRoot $ToolchainInstallRoot
+    if ($InstallMode -eq 'upgrade') {
+        $BackupRoot = Join-Path $StateDir ("backups\" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
+        Ensure-Directory -Path $BackupRoot
 
-Ensure-RuntimeEnvironment -RuntimeDir $RuntimeDir -Executable $CondaCommand -PackageSpecs $PackageSpecs
-Merge-ToolchainHeadersIntoRuntimeInclude -RuntimeDir $RuntimeDir -ToolchainDir $BundledToolchainDir
-Ensure-Hdf5ImportLibraries -RuntimeDir $RuntimeDir -ToolchainDir $BundledToolchainDir
+        $managedItems = Get-ManagedInstallItems -InstallRoot $InstallDir
+        if ($RuntimeAction -eq 'Reuse') {
+            $managedItems = @($managedItems | Where-Object { -not [string]::Equals($_, $RuntimeDir, [System.StringComparison]::OrdinalIgnoreCase) })
+        }
 
-Write-Section "Writing launchers"
-Write-LauncherFiles -InstallRoot $InstallDir
-Write-InstallState -StateFile $StateFile -InstallRoot $InstallDir -RuntimeDir $RuntimeDir -ToolchainDir $BundledToolchainDir -AddInstallDirToPath $ShouldAddToPath -Manifest $manifest
+        Write-Section "Backing up existing installation"
+        $MovedItems = @(Move-ItemsToBackup -ItemPaths $managedItems -BackupRoot $BackupRoot)
+    }
 
-if ($ShouldAddToPath) {
-    Write-Section "Updating PATH"
-    Add-InstallDirToUserPath -PathEntry $InstallDir
+    Write-Section "Copying application payload"
+    Copy-PayloadDirectory -SourceRoot $AppPayloadRoot -TargetRoot $AppInstallRoot
+
+    Write-Section "Copying bundled toolchain"
+    Copy-PayloadDirectory -SourceRoot $ToolchainPayloadRoot -TargetRoot $ToolchainInstallRoot
+
+    Ensure-RuntimeEnvironment -RuntimeDir $RuntimeDir -Executable $CondaCommand -PackageSpecs $PackageSpecs -Mode $RuntimeAction
+    Merge-ToolchainHeadersIntoRuntimeInclude -RuntimeDir $RuntimeDir -ToolchainDir $BundledToolchainDir
+    Ensure-Hdf5ImportLibraries -RuntimeDir $RuntimeDir -ToolchainDir $BundledToolchainDir
+
+    Write-Section "Writing launchers"
+    Write-LauncherFiles -InstallRoot $InstallDir -AddInstallDirToPath $ShouldAddToPath
+
+    if ($ShouldAddToPath) {
+        Write-Section "Updating PATH"
+        Add-InstallDirToUserPath -PathEntry $InstallDir
+    }
+    elseif ($ExistingState -and $ExistingState.add_install_dir_to_path) {
+        Write-Section "Updating PATH"
+        Remove-InstallDirFromUserPath -PathEntry $InstallDir
+    }
+
+    Write-InstallState `
+        -StateFile $StateFile `
+        -InstallRoot $InstallDir `
+        -RuntimeDir $RuntimeDir `
+        -ToolchainDir $BundledToolchainDir `
+        -AddInstallDirToPath $ShouldAddToPath `
+        -Manifest $manifest `
+        -InstallMode $InstallMode `
+        -RuntimeSpecHash $RuntimeSpecHash `
+        -RuntimePythonVersion $RuntimePythonVersion `
+        -RuntimeAction $RuntimeAction `
+        -PreviousState $ExistingState `
+        -BackupRoot $BackupRoot
+}
+catch {
+    if ($MovedItems.Count -gt 0) {
+        Write-Warning 'Installation failed. Restoring the previous installation.'
+        Restore-BackupItems -MovedItems $MovedItems
+    }
+
+    if ($ExistingState -and $ExistingState.add_install_dir_to_path) {
+        Remove-InstallDirFromUserPath -PathEntry $InstallDir
+        Add-InstallDirToUserPath -PathEntry $InstallDir
+    }
+    else {
+        Remove-InstallDirFromUserPath -PathEntry $InstallDir
+    }
+
+    if ($PreviousStateJson) {
+        Ensure-Directory -Path $StateDir
+        Set-Content -LiteralPath $StateFile -Value $PreviousStateJson -Encoding UTF8
+    }
+    elseif (Test-Path -LiteralPath $StateFile) {
+        Remove-Item -LiteralPath $StateFile -Force
+    }
+
+    throw
 }
 
 Write-Section "Installation complete"
@@ -793,8 +1204,10 @@ Write-Host ''
 Write-Host 'Usage examples:'
 Write-Host "  $InstallDir\run_xmds.cmd C:\path\to\simulation.xmds"
 Write-Host "  $InstallDir\run_plot.cmd C:\path\to\plot_script.py"
+Write-Host "  $InstallDir\uninstall_xmds.cmd"
 if ($ShouldAddToPath) {
     Write-Host ''
     Write-Host 'Because the install directory was added to PATH, new terminals can also run:'
     Write-Host '  run_xmds C:\path\to\simulation.xmds'
+    Write-Host '  uninstall_xmds'
 }

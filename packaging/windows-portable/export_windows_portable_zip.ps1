@@ -2,7 +2,8 @@
 param(
     [string]$OutputDir = 'dist',
     [string]$PackageVersion = 'v1',
-    [string]$ToolchainSource = 'D:\mingw64'
+    [string]$ToolchainSource = 'D:\mingw64',
+    [switch]$SkipZip
 )
 
 Set-StrictMode -Version Latest
@@ -78,6 +79,10 @@ Quick start:
 
 4. Follow the prompts to choose an install directory and whether to add run_xmds to PATH.
 
+Upgrade:
+
+- To upgrade an existing portable install, run the installer again and choose the same install directory.
+
 Notes:
 
 - This first portable installer expects an existing Conda or Miniforge installation on the target machine.
@@ -91,6 +96,14 @@ After installation:
 
 - With PATH integration:
   run_xmds C:\path\to\simulation.xmds
+
+Uninstall:
+
+- With PATH integration:
+  uninstall_xmds
+
+- Without PATH integration:
+  <InstallDir>\uninstall_xmds.cmd
 '@
 
     Set-Content -LiteralPath $Path -Value $contents -Encoding ASCII
@@ -137,6 +150,7 @@ $manifest = [ordered]@{
         app_revision = (Get-AppRevision)
     }
     runtime = [ordered]@{
+        python_version = '3.11'
         conda_packages = @(
             'python=3.11',
             'cheetah3',
@@ -154,7 +168,8 @@ $manifest = [ordered]@{
         source_items = $sourceItems
         entry_points = @(
             'run_xmds.cmd',
-            'run_plot.cmd'
+            'run_plot.cmd',
+            'uninstall_xmds.cmd'
         )
     }
 }
@@ -162,7 +177,14 @@ $manifest = [ordered]@{
 $manifest | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $ManifestRoot 'install-manifest.json') -Encoding UTF8
 Write-QuickstartReadme -Path (Join-Path $PackageRoot 'README.txt')
 
-Compress-Archive -LiteralPath $PackageRoot -DestinationPath $ZipPath -CompressionLevel Optimal
+if (-not $SkipZip) {
+    Compress-Archive -LiteralPath $PackageRoot -DestinationPath $ZipPath -CompressionLevel Optimal
+}
 
 Write-Host "Portable package root: $PackageRoot"
-Write-Host "Portable package zip:  $ZipPath"
+if ($SkipZip) {
+    Write-Host "Portable package zip:  skipped"
+}
+else {
+    Write-Host "Portable package zip:  $ZipPath"
+}
