@@ -562,7 +562,7 @@ if ($exitCode -ne 0) {
 }
 '@
 
-    $runPlotPs1 = @'
+$runPlotPs1 = @'
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0)]
@@ -605,23 +605,17 @@ if (-not (Test-Path -LiteralPath $PythonExe)) {
     throw "Runtime python was not found: $PythonExe"
 }
 
-if (-not (Test-Path -LiteralPath $ToolchainDir)) {
-    throw "Bundled MinGW toolchain was not found: $ToolchainDir"
-}
-
 Clear-HostCondaEnvironment
 Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
 Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
 $env:PYTHONNOUSERSITE = '1'
 Add-ProcessPathEntries -Entries @(
-    (Join-Path $ToolchainDir 'bin'),
     (Join-Path $RuntimeDir 'Library\usr\bin'),
-        (Join-Path $RuntimeDir 'Library\bin'),
-        (Join-Path $RuntimeDir 'Scripts'),
+    (Join-Path $RuntimeDir 'Library\bin'),
+    (Join-Path $RuntimeDir 'Scripts'),
     (Join-Path $RuntimeDir 'bin'),
     $RuntimeDir
 )
-Ensure-ToolchainHeadersAvailable -RuntimeDir $RuntimeDir -ToolchainDir $ToolchainDir
 $env:PYTHONPATH = $AppRoot
 $env:MPLBACKEND = 'Agg'
 

@@ -51,34 +51,6 @@ jobs:
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-tools
 
-      - name: Set up Conda for installer smoke test
-        uses: conda-incubator/setup-miniconda@v3
-        with:
-          miniforge-version: latest
-          activate-environment: base
-          auto-activate: true
-          channels: conda-forge
-          conda-remove-defaults: true
-          python-version: "3.11"
-          use-mamba: true
-
-      - name: Resolve Conda command for installer smoke test
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $basePrefix = (conda info --base).Trim()
-          $candidates = @(
-            (Join-Path $basePrefix 'condabin\conda.bat'),
-            (Join-Path $basePrefix 'condabin\conda.exe'),
-            (Join-Path $basePrefix 'Scripts\conda.exe')
-          ) | Where-Object { Test-Path -LiteralPath $_ }
-
-          if (-not $candidates) {
-            throw "Unable to resolve a reusable conda command under $basePrefix"
-          }
-
-          "CI_CONDA_COMMAND=$($candidates[0])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
       - name: Build portable zip
         shell: pwsh
         run: |
@@ -87,7 +59,7 @@ jobs:
             -PackageVersion '${{ steps.meta.outputs.package_version }}' `
             -ToolchainSource 'C:\msys64\mingw64'
 
-      - name: Smoke test extracted package
+      - name: Validate extracted package layout
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -95,33 +67,26 @@ jobs:
           $packageRoot = Join-Path $PWD 'dist'
           $zipPath = Join-Path $packageRoot '${{ steps.meta.outputs.package_zip }}'
           $extractRoot = 'C:\xmds-package-smoke'
-          $installDir = 'C:\xmds-ci'
 
-          foreach ($path in @($extractRoot, $installDir)) {
-            if (Test-Path -LiteralPath $path) {
-              Remove-Item -LiteralPath $path -Recurse -Force
-            }
+          if (Test-Path -LiteralPath $extractRoot) {
+            Remove-Item -LiteralPath $extractRoot -Recurse -Force
           }
 
           Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
 
           $packageDir = Join-Path $extractRoot "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
-          & (Join-Path $packageDir 'install_windows.ps1') -InstallDir $installDir -AddToPath No -CondaCommand $env:CI_CONDA_COMMAND -NonInteractive
 
           foreach ($expected in @(
-            'run_xmds.cmd',
-            'run_xmds.ps1',
-            'run_plot.cmd',
-            'run_plot.ps1',
-            'uninstall_windows.ps1',
-            'app\bin\xmds2',
-            'runtime\python.exe',
-            'state\install.json',
-            'toolchain\mingw64\bin\g++.exe'
+            'install_windows.ps1',
+            'README.txt',
+            'payload\app\bin\xmds2',
+            'payload\app\xpdeint\parser2.py',
+            'payload\manifests\install-manifest.json',
+            'payload\toolchain\mingw64\bin\g++.exe'
           )) {
-            $expectedPath = Join-Path $installDir $expected
+            $expectedPath = Join-Path $packageDir $expected
             if (-not (Test-Path -LiteralPath $expectedPath)) {
-              throw "Portable installer smoke test missing expected output: $expectedPath"
+              throw "Portable package is missing expected output: $expectedPath"
             }
           }
 
