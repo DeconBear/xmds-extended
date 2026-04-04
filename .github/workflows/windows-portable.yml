@@ -55,8 +55,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          activate-environment: xmds-portable-ci
-          auto-activate: false
+          auto-activate-base: true
           channels: conda-forge
           conda-remove-defaults: true
           python-version: "3.11"
