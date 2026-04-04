@@ -62,6 +62,23 @@ jobs:
           python-version: "3.11"
           use-mamba: true
 
+      - name: Resolve Conda command for installer smoke test
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $basePrefix = (conda info --base).Trim()
+          $candidates = @(
+            (Join-Path $basePrefix 'condabin\conda.bat'),
+            (Join-Path $basePrefix 'condabin\conda.exe'),
+            (Join-Path $basePrefix 'Scripts\conda.exe')
+          ) | Where-Object { Test-Path -LiteralPath $_ }
+
+          if (-not $candidates) {
+            throw "Unable to resolve a reusable conda command under $basePrefix"
+          }
+
+          "CI_CONDA_COMMAND=$($candidates[0])" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Build portable zip
         shell: pwsh
         run: |
@@ -90,7 +107,7 @@ jobs:
           Expand-Archive -LiteralPath $zipPath -DestinationPath $extractRoot -Force
 
           $packageDir = Join-Path $extractRoot "xmds-extended-windows-portable-${{ steps.meta.outputs.package_version }}"
-          & (Join-Path $packageDir 'install_windows.ps1') -InstallDir $installDir -AddToPath No -NonInteractive
+          & (Join-Path $packageDir 'install_windows.ps1') -InstallDir $installDir -AddToPath No -CondaCommand $env:CI_CONDA_COMMAND -NonInteractive
 
           New-Item -ItemType Directory -Path $caseDir -Force | Out-Null
           Copy-Item -LiteralPath .\examples\lorenz.xmds -Destination (Join-Path $caseDir 'lorenz.xmds') -Force
