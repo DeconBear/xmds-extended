@@ -19,53 +19,69 @@ jobs:
   build:
     name: Build Pages artifact
     runs-on: ubuntu-latest
+    outputs:
+      pages_enabled: ${{ steps.pages.outputs.enabled }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Ensure GitHub Pages is enabled
+      - name: Check or enable GitHub Pages
+        id: pages
         uses: actions/github-script@v7
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const payload = {
-              owner,
-              repo,
-              build_type: 'workflow',
-              source: {
-                branch: 'main',
-                path: '/'
-              }
-            };
-
             try {
               await github.request('GET /repos/{owner}/{repo}/pages', { owner, repo });
-              await github.request('PUT /repos/{owner}/{repo}/pages', payload);
-              core.info('Updated existing GitHub Pages configuration.');
+              core.setOutput('enabled', 'true');
+              core.info('GitHub Pages is already enabled.');
+              return;
             } catch (error) {
-              if (error.status === 404) {
-                await github.request('POST /repos/{owner}/{repo}/pages', payload);
-                core.info('Created GitHub Pages configuration.');
-              } else if (error.status === 409) {
-                core.info('GitHub Pages is already being configured; continuing.');
-              } else {
-                throw error;
+              if (error.status !== 404) {
+                core.warning(`Unable to query GitHub Pages: ${error.message}`);
               }
             }
 
+            try {
+              await github.request('POST /repos/{owner}/{repo}/pages', {
+                owner,
+                repo,
+                build_type: 'workflow',
+                source: {
+                  branch: 'main',
+                  path: '/'
+                }
+              });
+              core.setOutput('enabled', 'true');
+              core.info('GitHub Pages has been enabled.');
+            } catch (error) {
+              core.setOutput('enabled', 'false');
+              core.warning(`Unable to enable GitHub Pages automatically: ${error.message}`);
+            }
+
       - name: Configure GitHub Pages
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: steps.pages.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
 
+      - name: Pages configuration note
+        if: steps.pages.outputs.enabled != 'true'
+        run: |
+          echo "GitHub Pages could not be enabled automatically for this repository." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "A repository admin must enable Pages once in GitHub Settings > Pages and choose GitHub Actions as the source." >> $GITHUB_STEP_SUMMARY
+
   deploy:
     name: Deploy GitHub Pages
     needs: build
+    if: needs.build.outputs.pages_enabled == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
