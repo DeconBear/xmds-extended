@@ -24,6 +24,37 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Ensure GitHub Pages is enabled
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const payload = {
+              owner,
+              repo,
+              build_type: 'workflow',
+              source: {
+                branch: 'main',
+                path: '/'
+              }
+            };
+
+            try {
+              await github.request('GET /repos/{owner}/{repo}/pages', { owner, repo });
+              await github.request('PUT /repos/{owner}/{repo}/pages', payload);
+              core.info('Updated existing GitHub Pages configuration.');
+            } catch (error) {
+              if (error.status === 404) {
+                await github.request('POST /repos/{owner}/{repo}/pages', payload);
+                core.info('Created GitHub Pages configuration.');
+              } else if (error.status === 409) {
+                core.info('GitHub Pages is already being configured; continuing.');
+              } else {
+                throw error;
+              }
+            }
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
