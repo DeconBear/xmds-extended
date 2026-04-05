@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XMDS Extended</title>
+  <meta name="description" content="XMDS Extended is an unofficial XMDS2 fork focused on native Windows support, portable installation, and practical cross-platform use.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">XMDS Extended</div>
+      <div class="lang-switch">
+        <a class="chip active" href="./">English</a>
+        <a class="chip" href="zh/">简体中文</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Unofficial XMDS2 Fork</span>
+        <h1>Native Windows XMDS, with a cleaner way to learn and use it.</h1>
+        <p>
+          <code>xmds-extended</code> keeps XMDS2 practical across platforms and adds a Windows-first workflow:
+          portable installation, one-command compile-and-run, upgrade support, uninstall support, and bilingual project documentation.
+        </p>
+        <div class="hero-actions">
+          <a class="primary-link" href="https://github.com/DeconBear/xmds-extended/releases">Download Releases</a>
+          <a class="secondary-link" href="tutorial.html">Open Tutorial</a>
+          <a class="secondary-link" href="https://github.com/DeconBear/xmds-extended">View Repository</a>
+        </div>
+      </div>
+      <aside class="hero-panel">
+        <span class="eyebrow">At a Glance</span>
+        <div class="stat-list">
+          <div class="stat"><strong>Windows-native workflow</strong><br>Portable install, <code>run_xmds</code>, in-place upgrade, and <code>uninstall_xmds</code>.</div>
+          <div class="stat"><strong>Cross-platform CI</strong><br>Windows, Linux, and macOS validation in GitHub Actions.</div>
+          <div class="stat"><strong>Bilingual docs</strong><br>English and Chinese entry points for the project and tutorial.</div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="cards">
+      <a class="card-link" href="https://github.com/DeconBear/xmds-extended/releases">
+        <strong>Releases</strong>
+        Download the portable Windows zip and install XMDS without MSYS or WSL.
+      </a>
+      <a class="card-link" href="tutorial.html">
+        <strong>Tutorial</strong>
+        Start with installation, the Lorenz example, and the XMDS file-to-output pipeline.
+      </a>
+      <a class="card-link" href="https://xmds.sourceforge.net/">
+        <strong>Upstream XMDS2</strong>
+        Read the official documentation, worked examples, and XML schema reference.
+      </a>
+    </div>
+
+    <div class="grid-2">
+      <section class="section-card">
+        <h2>What this fork adds</h2>
+        <ul>
+          <li>Native Windows support without MSYS or WSL.</li>
+          <li>Portable installer published through GitHub Releases.</li>
+          <li><code>run_xmds</code> for compile-and-run from any working directory.</li>
+          <li>Upgrade-aware installer flow and real uninstall entry points.</li>
+          <li>GitHub Pages, release notes, and public-facing maintenance material.</li>
+        </ul>
+      </section>
+
+      <section class="section-card">
+        <h2>Quick install</h2>
+        <ol>
+          <li>Download the latest Windows portable zip from Releases.</li>
+          <li>Extract it to a temporary directory.</li>
+          <li>Run <code>powershell -ExecutionPolicy Bypass -File .\install_windows.ps1</code>.</li>
+          <li>Choose a short install path such as <code>D:\xmds</code>.</li>
+          <li>Optionally add the install directory to <code>PATH</code>.</li>
+        </ol>
+        <div class="code-block">run_xmds C:\path\to\simulation.xmds</div>
+      </section>
+    </div>
+
+    <section class="callout">
+      <span class="eyebrow">Learn XMDS Here</span>
+      <h2>Use this fork for day-to-day work, then learn the language from upstream examples.</h2>
+      <p>
+        The project tutorial explains the workflow of this repository. For XMDS itself, the official site remains the primary reference:
+        the welcome page, installation guide, worked examples, and XML schema reference are the best places to keep learning.
+      </p>
+      <ul>
+        <li><a href="https://xmds.sourceforge.net/">Official overview</a></li>
+        <li><a href="https://xmds.sourceforge.net/worked_examples.html">Worked examples</a></li>
+        <li><a href="https://xmds.sourceforge.net/installation.html">Installation reference</a></li>
+        <li><a href="https://xmds.sourceforge.net/reference_schema.html">XML schema reference</a></li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      XMDS2 remains the upstream project. This site documents the current downstream fork and its Windows-focused workflow.
+    </div>
+  </div>
+</body>
+</html>

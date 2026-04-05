@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>XMDS Extended 教程</title>
+  <meta name="description" content="xmds-extended 的双语教程入口，覆盖安装、运行与学习路径。">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="nav-links">
+        <a class="nav-link" href="./">项目页</a>
+        <a class="nav-link" href="https://github.com/DeconBear/xmds-extended/releases">Releases</a>
+        <a class="nav-link" href="https://github.com/DeconBear/xmds-extended/blob/main/tutorials/README-zh.md">仓库完整教程</a>
+      </div>
+      <div class="lang-switch">
+        <a class="chip" href="../tutorial.html">English</a>
+        <a class="chip active" href="tutorial.html">简体中文</a>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">教程</span>
+        <h1>从安装、运行到理解 XMDS 脚本结构。</h1>
+        <p>
+          这份页面优先服务于 <code>xmds-extended</code> 的实际使用路径：先装 Windows 便携版，再跑 Lorenz 示例，然后把一个
+          <code>.xmds</code> 文件和它最终生成的输出文件对应起来。
+        </p>
+      </div>
+      <aside class="hero-panel">
+        <span class="eyebrow">推荐路径</span>
+        <div class="stat-list">
+          <div class="stat"><strong>第 1 步</strong><br>先安装 Windows 便携版。</div>
+          <div class="stat"><strong>第 2 步</strong><br>先跑通 <code>examples/lorenz.xmds</code>。</div>
+          <div class="stat"><strong>第 3 步</strong><br>再去读官方 worked examples。</div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="grid-2">
+      <section class="section-card">
+        <h2>1. Windows 安装</h2>
+        <ol>
+          <li>从 Releases 下载最新便携 zip。</li>
+          <li>解压到临时目录。</li>
+          <li>运行安装脚本。</li>
+          <li>选择较短的安装路径。</li>
+          <li>按需决定是否加入 <code>PATH</code>。</li>
+        </ol>
+        <div class="code-block">powershell -ExecutionPolicy Bypass -File .\install_windows.ps1</div>
+      </section>
+
+      <section class="section-card">
+        <h2>2. 用 Lorenz 示例验证</h2>
+        <p>安装完成后，先编译并运行仓库自带的 Lorenz 示例。</p>
+        <div class="code-block">run_xmds E:\path\to\xmds-extended\examples\lorenz.xmds</div>
+        <p>运行后通常会得到 <code>lorenz.cc</code>、<code>lorenz.exe</code>、<code>lorenz.cmd</code>、<code>lorenz.h5</code> 和 <code>lorenz.xsil</code>。</p>
+      </section>
+    </div>
+
+    <div class="grid-2">
+      <section class="section-card">
+        <h2>3. 文件流水线</h2>
+        <ul>
+          <li><code>.xmds</code>：模型描述</li>
+          <li><code>.cc</code>：生成的 C++ 源码</li>
+          <li><code>.exe</code>：编译后的程序</li>
+          <li><code>.cmd</code>：补齐 DLL 路径的 Windows 启动器</li>
+          <li><code>.xsil</code> / <code>.h5</code> / <code>.dat</code>：输出结果</li>
+        </ul>
+      </section>
+
+      <section class="section-card">
+        <h2>4. 先从简单脚本读起</h2>
+        <p><code>examples/lorenz.xmds</code> 很适合作为第一个脚本，因为它能清楚展示 XMDS 的主要结构：</p>
+        <ul>
+          <li><code>&lt;features&gt;</code>：全局常量</li>
+          <li><code>&lt;geometry&gt;</code>：传播维度与空间维度</li>
+          <li><code>&lt;vector&gt;</code>：演化变量</li>
+          <li><code>&lt;sequence&gt;</code>：积分器与方程</li>
+          <li><code>&lt;output&gt;</code>：输出量</li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="callout">
+      <span class="eyebrow">继续学习</span>
+      <h2>学习 XMDS 语言本体，请继续看官方文档。</h2>
+      <ul>
+        <li><a href="https://xmds.sourceforge.net/">官方首页</a></li>
+        <li><a href="https://xmds.sourceforge.net/worked_examples.html">Worked Examples</a></li>
+        <li><a href="https://xmds.sourceforge.net/installation.html">安装文档</a></li>
+        <li><a href="https://xmds.sourceforge.net/reference_schema.html">XML 结构参考</a></li>
+      </ul>
+      <p>
+        如果你想看完整教程，包括升级、卸载、排错和推荐工作流，请直接打开仓库里的完整版教程。
+      </p>
+    </section>
+
+    <div class="footer">
+      完整教程源码：<a href="https://github.com/DeconBear/xmds-extended/blob/main/tutorials/README-zh.md">tutorials/README-zh.md</a>
+    </div>
+  </div>
+</body>
+</html>
